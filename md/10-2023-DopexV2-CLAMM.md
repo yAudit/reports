@@ -56,37 +56,37 @@ yAudit and the auditors make no warranties regarding the security of the code an
 Code Evaluation Matrix
 ---
 
-| Category                 | Mark    | Description |
-| ------------------------ | ------- | ----------- |
-| Access Control           | Average | Some functions have access control modifiers for certain roles to perform special functions. Modifiers appear to be used properly and are not missing or overused. |
-| Mathematics              | Average | There is no complex math, only internal accounting math. Uniswap Q notation is used for price handling. |
+| Category                 | Mark    | Description                                                                                                                                                                                          |
+| ------------------------ | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Access Control           | Average | Some functions have access control modifiers for certain roles to perform special functions. Modifiers appear to be used properly and are not missing or overused.                                   |
+| Mathematics              | Average | There is no complex math, only internal accounting math. Uniswap Q notation is used for price handling.                                                                                              |
 | Complexity               | Average | The protocol relies on user depositors and traders to match to enable higher earnings for both sides. No complexity but the user should be guided to provide liquidity in specific liquidity ranges. |
-| Libraries                | Good | Only OpenZeppelin and Uniswap V3 external libraries were imported. Additional code was borrowed from Uniswap V3 for adding liquidity. |
-| Decentralization         | Low | The protocol does not have decentralized governance yet and the protocol team still controls many key protocol values and can withdraw all the funds from the protocol. |
-| Code stability           | Average | Due to tight timelines, the code did not receive an ideal level of test coverage. The protocol has a well-defined flow but some optimizations could be made in calls between different contracts. |
-| Documentation            | Good | The development team provided a document about system design and possible problems. Proper NatSpec and detailed comments existed on the functions that needed explaining. |
-| Monitoring               | Average | Events were emitted where applicable but missing in some functions. Indexing values would be useful. |
-| Testing and verification | Low | Only a few tests were available at the time of the review. |
+| Libraries                | Good    | Only OpenZeppelin and Uniswap V3 external libraries were imported. Additional code was borrowed from Uniswap V3 for adding liquidity.                                                                |
+| Decentralization         | Low     | The protocol does not have decentralized governance yet and the protocol team still controls many key protocol values and can withdraw all the funds from the protocol.                              |
+| Code stability           | Average | Due to tight timelines, the code did not receive an ideal level of test coverage. The protocol has a well-defined flow, but some optimizations could be made in calls between different contracts.   |
+| Documentation            | Good    | The development team provided a document about system design and possible problems. Proper NatSpec and detailed comments existed on the functions that needed explaining.                            |
+| Monitoring               | Average | Events were emitted where applicable but missing in some functions. Indexing values would be useful.                                                                                                 |
+| Testing and verification | Low     | Only a few tests were available at the time of the review.                                                                                                                                           |
 
 ## Findings Explanation
 
 Findings are broken down into sections by their respective impact:
  - Critical, High, Medium, Low impact
-     - These are findings that range from attacks that may cause loss of funds, impact control/ownership of the contracts, or cause any unintended consequences/actions that are outside the scope of the requirements
+     - These are findings that range from attacks that may cause loss of funds, impact control/ownership of the contracts, or cause any unintended consequences/actions that are outside the scope of the requirements.
  - Gas savings
-     - Findings that can improve the gas efficiency of the contracts
+     - Findings that can improve the gas efficiency of the contracts.
  - Informational
-     - Findings including recommendations and best practices
+     - Findings including recommendations and best practices.
 
 ---
 ## Critical Findings
 
 ### 1. Critical - Failure to consume full allowance when minting leads to DoS
 
-When minting positions via the `DopexV2PositionManager`, the token allowances required for the specified liquidity amount are granted via OpenZeppelin's `safeApprove()`. This function is [deprecated](https://github.com/OpenZeppelin/openzeppelin-contracts/issues/2219). If the existing allowance is non-zero, `safeApprove()` will revert. A user can craft a call to `DopexV2PositionManager#mintPosition()` such that not all of the allowance is consumed, and all future calls to `mintPosition()` for a given token will revert.
+When minting positions via the `DopexV2PositionManager`, the token allowances required for the specified liquidity amount are granted via OpenZeppelin's `safeApprove()`. This function is [deprecated](https://github.com/OpenZeppelin/openzeppelin-contracts/issues/2219). If the existing allowance is non-zero, `safeApprove()` will revert. A user can craft a call to `DopexV2PositionManager#mintPosition()` such that not all the allowance is consumed, and all future calls to `mintPosition()` for a given token will revert.
 
 #### Technical Details
-The issue lies in the usage of `safeApprove()` in `DopexV2PositionManager#mintPosition()`. It is currently possible for any user to mint an in-range position such that not all of the tokens approved are consumed. All subsequent calls to `token.safeApprove()` would thus revert.  
+The issue lies in the usage of `safeApprove()` in `DopexV2PositionManager#mintPosition()`. It is currently possible for any user to mint an in-range position such that not all the tokens approved are consumed. All subsequent calls to `token.safeApprove()` would thus revert.  
 
 The following functions in `DopexV2PositionManager` use `safeApprove()` and would be rendered unusable: 
 - `mintPosition()`
@@ -149,10 +149,10 @@ Note that the proof of concept above is non-exhaustive. There are additional way
 
 #### Impact
 
-Critical. any user is able to render the system largely unusable.
+Critical. Any user is able to render the system largely unusable.
 
 #### Recommendation
-Avoid using the deprecated `safeApprove`, opting instead for `safeIncreaseAllowance` and `safeDecreaseAllowance`
+Avoid using the deprecated `safeApprove()`, opting instead for `safeIncreaseAllowance()` and `safeDecreaseAllowance()`.
 
 #### Developer Response
 
@@ -168,7 +168,7 @@ Converting the price per call asset in quote asset units is incorrect for `sqrtP
 
 The function [`_getPrice()`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L726) returns the price of call asset in quote asset. It returns the correct values as long [`sqrtPriceX96` is below `type(uint128).max`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L730). 
 
-When the price is above, calculating [`priceX192`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L744) is incorrect because the amount is `priceX128`. The calculation multiples [`sqrtPriceX96`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L745) with itself to get `priceX192` but it also divides the value with [`1 << 64`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L747) which lowers the precision to `priceX128 = priceX192 / X64`. After confirming that the calculated price is in X128 and not in X192 precision, converting the price to quote asset must be changed. To get the correct price precision, the value `1 << 128` must be used instead of `1 << 192`[here](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L754) and [here](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L757).
+When the price is above, calculating [`priceX192`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L744) is incorrect because the amount is `priceX128`. The calculation multiples [`sqrtPriceX96`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L745) with itself to get `priceX192`, but it also divides the value with [`1 << 64`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L747) which lowers the precision to `priceX128 = priceX192 / X64`. After confirming that the calculated price is in X128 and not in X192 precision, converting the price to quote asset must be changed. To get the correct price precision, the value `1 << 128` must be used instead of `1 << 192`[here](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L754) and [here](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L757).
 
 #### Impact
 
@@ -232,7 +232,7 @@ In [UniswapV3SingleTickLiquidityHandler compounding liquidity pool fees](https:/
 
 [Swapping fees is done without any slippage protection](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/handlers/UniswapV3SingleTickLiquidityHandler.sol#L675). The team specified in the design document that they are aware of MEV attacks but don't see it as a problem but define it as "auto-compounding cost". It's defined as a game theory problem where MEVs will race each other to the bottom to get minimal profit. Additionally, minting new positions will auto-compound fees and lower slippage problems by calling the swap more frequently. 
 
-This theory assumes that minting new positions will be frequent enough to lower the profitability of MEV attacks. It is a big assumption to take and it is advised to lower this attack surface.
+This theory assumes that minting new positions will be frequent enough to lower the profitability of MEV attacks. It is a big assumption to take, and it is advised to lower this attack surface.
 
 #### Impact
 
@@ -242,7 +242,7 @@ Medium. MEV can take fees earned by users.
 
 There are a few possibilities to lower the MEV attack:
 1. Use Chainlink Oracle to have a non-manipulated asset price.
-2. Define the maximum amount that can be used in a single swap. This is not an ideal solution but it can eliminate the need for frequent new mints by users. `UniswapV3SingleTickLiquidityHandler` handles multiple pools and assets so it should have a mapping of assets to maximum amounts. These values should be changeable by the owner.
+2. Define the maximum amount that can be used in a single swap. This is not an ideal solution, but it can eliminate the need for frequent new mints by users. `UniswapV3SingleTickLiquidityHandler` handles multiple pools and assets, so it should have a mapping of assets to maximum amounts. These values should be changeable by the owner.
 
 #### Developer Response
 
@@ -260,7 +260,7 @@ DopexV2OptionPools uses user deposits to create options by pulling deposits. The
 
 After the option is created, [DopexV2OptionPools](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol) holds user deposits. The deposits can be returned by calling [`exerciseOptionRoll()`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L306) by position owner or [`settleOptionRoll()`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L411) which is limited only to [settlers](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L414). If the settlers addresses won't call the function, user deposit will stay locked inside DopexV2OptionPools contract.
 
-The second, less common case is when user deposits can get locked, settlers are working but the option is inside the liquidity pool range. This comes as an error by the user when defining too wide a liquidity range. Now attackers can lock user deposits by creating an option with the highest possible range and minimal TTL to pay the minimum premium. Because [the option cannot be settled](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L443) while it's inside the range, user deposit is locked until the position gets out of the range.
+The second, less common case is when user deposits can get locked, settlers are working, but the option is inside the liquidity pool range. This comes as an error by the user when defining too wide a liquidity range. Now attackers can lock user deposits by creating an option with the highest possible range and minimal TTL to pay the minimum premium. Because [the option cannot be settled](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L443) while it's inside the range, user deposit is locked until the position gets out of the range.
 
 #### Impact
 
@@ -268,9 +268,9 @@ Medium. A user must wait for settlers to call the settle function. Also, a user 
 
 #### Recommendation
 
-Change function `settleOptionRoll()` to be permissionless so anyone can settle options and return deposits. If the protocol wants to keep guarding this call only for settlers it can be done by adding additional time after which anyone can call the function. This way settlers have priority but there is no fear that the deposits will stay locked.
+Change function `settleOptionRoll()` to be permissionless, so anyone can settle options and return deposits. If the protocol wants to keep guarding this call only for settlers it can be done by adding additional time after which anyone can call the function. This way settlers have priority, but there is no fear that the deposits will stay locked.
 
-The guard for the second case is to limit the maximum range that can be used when creating the option. This will limit the attackers from creating unsettable options and keep the user deposit safe and earning swap fees for their liquidity. Maximum range value can be defined as variable so it can be changed by the contract owner if needed.
+The guard for the second case is to limit the maximum range that can be used when creating the option. This will limit the attackers from creating unsettable options and keep the user deposit safe and earning swap fees for their liquidity. Maximum range value can be defined as variable, so it can be changed by the contract owner if needed.
 
 #### Developer Response
 
@@ -280,7 +280,7 @@ The guard for the second case is to limit the maximum range that can be used whe
 
 ### 3. Medium - Insecure calculation of premium donate liquidity
 
-To mint an option, the user must pay the premium. This value is converted to pool liquidity but the user can manipulate [ calculation of pool liquidity amount](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L259).
+To mint an option, the user must pay the premium. This value is converted to pool liquidity, but the user can manipulate [calculation of pool liquidity amount](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L259).
 
 #### Technical Details
 
@@ -292,7 +292,7 @@ Test [`testBuyCallOptionRoll()`](https://github.com/dopex-io/dopex-v2-clamm/blob
 
 #### Impact
 
-Medium. The user manipulating liquidity calculation cannot extract the value but it will cause loss value for users that provide liquidity.
+Medium. The user manipulating liquidity calculation cannot extract the value, but it will cause loss value for users that provide liquidity.
 
 #### Recommendation
 
@@ -314,15 +314,15 @@ UniswapV3SingleTickLiquidityHandler is using `block.number` to track the time be
 Tracking time between donations is done by [storing `block.number`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/handlers/UniswapV3SingleTickLiquidityHandler.sol#L567). Different L2 chains use different approach for value `block.number`:
 - [Arbitrum](https://docs.arbitrum.io/for-devs/concepts/differences-between-arbitrum-ethereum/block-numbers-and-time) uses the value of L1, synced every minute. This means that the Arbitrum block number is updated on every 4th L1 block. [Example from Aribtrum docs](https://docs.arbitrum.io/for-devs/concepts/differences-between-arbitrum-ethereum/block-numbers-and-time#example):
 
-| Wall Clock time | 12:00 AM | 12:00:15 AM | 12:00:30 AM | 12:00:45 AM | 12:01 AM | 12:01:15 AM |
-|-----------------|----------|-------------|-------------|-------------|----------|-------------|
-| L1 block.number | 1000     | 1001        | 1002        | 1003        | 1004     | 1005        |
-| L2 block.number | 1000     | 1000        | 1000        | 1000        | 1004     | 1004        |
-| Arbitrum Block number (from RPCs) | 370000 | 370005 | 370006 | 370008 | 370012 | 370015 |
+| Wall Clock time                   | 12:00 AM | 12:00:15 AM | 12:00:30 AM | 12:00:45 AM | 12:01 AM | 12:01:15 AM |
+| --------------------------------- | -------- | ----------- | ----------- | ----------- | -------- | ----------- |
+| L1 block.number                   | 1000     | 1001        | 1002        | 1003        | 1004     | 1005        |
+| L2 block.number                   | 1000     | 1000        | 1000        | 1000        | 1004     | 1004        |
+| Arbitrum Block number (from RPCs) | 370000   | 370005      | 370006      | 370008      | 370012   | 370015      |
 
 It can cause a loss for a user if he burns the position on 3rd block because [shares are converted to asset](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/handlers/UniswapV3SingleTickLiquidityHandler.sol#L282) and [donation liquidity is tracked using block number](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/handlers/UniswapV3SingleTickLiquidityHandler.sol#L830). [Default lock duration](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/handlers/UniswapV3SingleTickLiquidityHandler.sol#L122) is set to 100 which means that the user can lose up to 4% of donation.
-- [Optimism](https://stack.optimism.io/docs/releases/bedrock/differences/#accessing-l1-information) uses the value of it's own L2 block number which is [updated every 2 seconds](https://stack.optimism.io/docs/releases/bedrock/differences/#blocks) but it may [change in the future](https://community.optimism.io/docs/developers/bedrock/bedrock/#block-production). This implementation won't cause a loss of donation liquidity for the user.
-- [zkSync](https://github.com/zkSync-Community-Hub/zkync-developers/discussions/87) was using L1 block number but it have switched to returning L2 block number for `block.number`. Chains can switch the implementation and this must be verified before deploying to the specific chain.
+- [Optimism](https://stack.optimism.io/docs/releases/bedrock/differences/#accessing-l1-information) uses the value of its own L2 block number which is [updated every 2 seconds](https://stack.optimism.io/docs/releases/bedrock/differences/#blocks), but it may [change in the future](https://community.optimism.io/docs/developers/bedrock/bedrock/#block-production). This implementation won't cause a loss of donation liquidity for the user.
+- [zkSync](https://github.com/zkSync-Community-Hub/zkync-developers/discussions/87) was using L1 block number, but it has switched to returning L2 block number for `block.number`. Chains can switch the implementation and this must be verified before deploying to the specific chain.
 
 #### Impact
 
@@ -381,9 +381,9 @@ Position manager is used to transfer the tokens between handler and option pool 
 
 #### Technical Details
 
-- [`mintPosition()`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2PositionManager.sol#L96) calls transfer for all provided tokens but the handler expects to receive only one token and [fails if two tokens are sent](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/handlers/UniswapV3SingleTickLiquidityHandler.sol#L646).
-- [`usePosition()` and `unusePosition()`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2PositionManager.sol#L145) calls transfer for all tokens but only [one token is approved to position manager](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L376) for transfer in option pools contract. That means only one token will be [transferred from the position manager](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2PositionManager.sol#L162).
-- [`donateToPosition`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2PositionManager.sol#L204) call transfer from on all tokens from the list but it gets [approved only token from option pools contract](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L257).
+- [`mintPosition()`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2PositionManager.sol#L96) calls transfer for all provided tokens, but the handler expects to receive only one token and [fails if two tokens are sent](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/handlers/UniswapV3SingleTickLiquidityHandler.sol#L646).
+- [`usePosition()` and `unusePosition()`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2PositionManager.sol#L145) calls transfer for all tokens, but only [one token is approved to position manager](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L376) for transfer in option pools contract. That means only one token will be [transferred from the position manager](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2PositionManager.sol#L162).
+- [`donateToPosition()`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2PositionManager.sol#L204) call transfer from on all tokens from the list, but it gets [approved only token from option pools contract](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L257).
 
 Additionally, [some tokens will revert when sending zero amounts](https://github.com/d-xo/weird-erc20?tab=readme-ov-file#revert-on-zero-value-transfers) which would block the protocol from using these tokens. 
 
@@ -437,7 +437,7 @@ Overall gas change: -567583 (-2.287%)
 
 Fix - https://github.com/dopex-io/dopex-v2-clamm/pull/4/commits/5a9c540d26241c9d4a5320549b020defa7193060 and https://github.com/dopex-io/dopex-v2-clamm/pull/4/commits/523d500729090d7fbce12d8618781d8032461408
 
-### 2. Gas - Cache values outside of the loop
+### 2. Gas - Cache values outside the loop
 
 Some values can be stored in variables before loops to reduce the gas cost compared to fetching the same value inside each iteration.
 
@@ -447,7 +447,7 @@ In function [`exerciseOptionRoll()`](https://github.com/dopex-io/dopex-v2-clamm/
 
 The same can be applied in function [`settleOptionRoll()`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L411).
 
-In both functions, variable [`isAmount0`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L438) is defined inside a loop but can be calculated only once outside of the loop because it is dependant on the [`primePool`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L328) which won't change.
+In both functions, variable [`isAmount0`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L438) is defined inside a loop but can be calculated only once outside the loop because it is dependent on the [`primePool`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L328) which won't change.
 
 #### Impact
 
@@ -460,7 +460,7 @@ Extract two addresses to variables `assetToUse` and `assetToGet`:
 ERC20 assetToUse = ERC20(oData.isCall ? callAsset : putAsset);
 ERC20 assetToGet = ERC20(oData.isCall ? putAsset : callAsset);
 ```
-Move `isAmount0` outside of the loops.
+Move `isAmount0` outside the loops.
 
 #### Developer Response
 
@@ -468,7 +468,7 @@ Fix - https://github.com/dopex-io/dopex-v2-clamm/pull/1/commits/46e38a7e72a97e82
 
 ### 3. Gas - Store immutable token decimals
 
-In DopexV2OptionPools contract, token decimals are fetched multiple times in a few functions. These values won't change in the contract and they can be stored to save gas.
+In DopexV2OptionPools contract, token decimals are fetched multiple times in a few functions. These values won't change in the contract, and they can be stored to save gas.
 
 #### Technical Details
 
@@ -492,7 +492,7 @@ Storing fetched values from the map can provide gas reduction.
 
 #### Technical Details
 
-Value from map [`ttlToVEID`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L180) is fetch [twice](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L237) inside the same function. Storing the value in the variable will reduce gas cost.
+Value from map [`ttlToVEID`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L180) is fetched [twice](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L237) inside the same function. Storing the value in the variable will reduce gas cost.
 
 #### Impact
 
@@ -525,7 +525,7 @@ Fix - https://github.com/dopex-io/dopex-v2-clamm/pull/1/commits/26993c2a79e4efc1
 
 #### Technical Details
 
-Pool contract [function is called to get token0 address](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L214) but this data is already available for calling [position manager](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L209). We can verify that handler returns [the same address of token0](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/handlers/UniswapV3SingleTickLiquidityHandler.sol#L411). This value is initialized when creating new storage [`tki` to pool token0](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/handlers/UniswapV3SingleTickLiquidityHandler.sol#L179).
+Pool contract [function is called to get token0 address](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L214), but this data is already available for calling [position manager](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L209). We can verify that handler returns [the same address of token0](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/handlers/UniswapV3SingleTickLiquidityHandler.sol#L411). This value is initialized when creating new storage [`tki` to pool token0](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/handlers/UniswapV3SingleTickLiquidityHandler.sol#L179).
 
 #### Impact
 
@@ -722,7 +722,7 @@ Gas savings.
 
 #### Recommendation
 
-With the current system architecture, where DopexV2PositionManager is the only entry point for all user interactions, reentrancy protection can be handled only in the position manager. If all calls to the handler are going through the whitelisted app, position manager, it makes sense to move all reentrancy protection to position manager only. `ReentrancyGuard` can be removed from the handler but additional calls in the position manager must have reentrancy protection like [`usePosition()`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2PositionManager.sol#L145), [`unusePosition()`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2PositionManager.sol#L175) and [`donateToPosition()`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2PositionManager.sol#L204).
+With the current system architecture, where DopexV2PositionManager is the only entry point for all user interactions, reentrancy protection can be handled only in the position manager. If all calls to the handler are going through the whitelisted app, position manager, it makes sense to move all reentrancy protection to position manager only. `ReentrancyGuard` can be removed from the handler, but additional calls in the position manager must have reentrancy protection like [`usePosition()`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2PositionManager.sol#L145), [`unusePosition()`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2PositionManager.sol#L175) and [`donateToPosition()`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2PositionManager.sol#L204).
  Gas savings data from provided tests:
 ```log
 testSettleOptionPutITMRoll() (gas: -4 (-0.000%))
@@ -798,7 +798,7 @@ Function parameter that is always the same can be removed as a parameter to save
 
 #### Technical Details
 
-Functions [`_convertToShares`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/handlers/UniswapV3SingleTickLiquidityHandler.sol#L843) and [`_convertToAssets`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/handlers/UniswapV3SingleTickLiquidityHandler.sol#L866) are called always called with the same value. 
+Functions [`_convertToShares()`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/handlers/UniswapV3SingleTickLiquidityHandler.sol#L843) and [`_convertToAssets()`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/handlers/UniswapV3SingleTickLiquidityHandler.sol#L866) are called always called with the same value. 
 
 #### Impact
 
@@ -806,7 +806,7 @@ Gas savings.
 
 #### Recommendation
 
-Remove param `rounding` from both functions. `_convertToShares` uses `Math.Rounding.Down` and `_convertToAssets` uses `Math.Rounding.Up` as a constant value.
+Remove param `rounding` from both functions. `_convertToShares()` uses `Math.Rounding.Down` and `_convertToAssets()` uses `Math.Rounding.Up` as a constant value.
 Gas savings data from provided tests:
 ```log
 testUsePosition() (gas: -5 (-0.000%))
@@ -832,7 +832,7 @@ The transfer logic in the system will fail for fee-on-transfer tokens because of
 
 #### Technical Details
 
-In position manager, `mintPosition()` has a combination of transfer from the user to the position manager and approval of the same amount to the handler. The handler will try to transfer the same amount which will revert when transferring a fee-on-transfer token. This is because the initial transfer from the user will result in less funds for the handler transfer call but it is expecting the same amount.
+In position manager, `mintPosition()` has a combination of transfer from the user to the position manager and approval of the same amount to the handler. The handler will try to transfer the same amount which will revert when transferring a fee-on-transfer token. This is because the initial transfer from the user will result in less funds for the handler transfer call, but it is expecting the same amount.
 
 #### Impact
 
@@ -878,7 +878,7 @@ The premium amount for creating options is calculated using the pool spot price 
 
 [`premiumAmount`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L232) value is calculated using [the prime pool spot price](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L236). Spot price can be manipulated to pay a lower premium amount which would harm users that provided liquidity. Good design is to define `primePool` instead of using a user-provided pool for spot price. 
 
-Contract owners have the option to [change the option pricing contract](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L805) which can change premium calculation if needed. Option pricing contracts were not in the scope of this audit so the math behind price manipulation for premium amounts cannot be verified. 
+Contract owners have the option to [change the option pricing contract](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L805) which can change premium calculation if needed. Option pricing contracts were not in the scope of this audit, so the math behind price manipulation for premium amounts cannot be verified. 
 
 #### Impact
 
@@ -923,7 +923,7 @@ DopexV2OptionPools token id is initialized to 1 and the first token id will have
 
 #### Technical Details
 
-The token id counter is [initialized to 1](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L132) but before each miting counter is [incremented](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L169). This means that the first token id will be 2.
+The token id counter is [initialized to 1](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L132), but before each minting counter is [incremented](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L169). This means that the first token id will be 2.
 
 #### Impact
 
@@ -1005,7 +1005,7 @@ One possibility is [when minting the first shares](https://github.com/dopex-io/d
 sharesMinted = liquidity - 1;
 ```
 
-This could produce a small loss for the first depositor but the final withdrawer can withdraw all shares. Another option is to limit the last withdrawal on the frontend to the number of shares minus 1 share so the transaction won't revert. The most important thing is to limit the possibility of reverting when the last user tries to withdraw all shares.
+This could produce a small loss for the first depositor, but the final withdrawer can withdraw all shares. Another option is to limit the last withdrawal on the frontend to the number of shares minus 1 share, so the transaction won't revert. The most important thing is to limit the possibility of reverting when the last user tries to withdraw all shares.
 
 #### Developer Response
 
@@ -1083,7 +1083,7 @@ There is inconsistency in encoding and decoding `uint`, integer sizes.
 
 #### Technical Details
 
-When encoding [`UsePositionData`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/handlers/UniswapV3SingleTickLiquidityHandler.sol#L69) in [DopexV2OptionPools](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L206) last value liquidity is in uint256 while in decoding it's expecting uint128. The same problem is applicable for [`UnusePositionParams`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/handlers/UniswapV3SingleTickLiquidityHandler.sol#L80) and [`DonateParams`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/handlers/UniswapV3SingleTickLiquidityHandler.sol#L87). [Here](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L275) encoded donate amount is uint256 but decoding it in uint128. [Calling unuse position](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L385) is also encoding uint256 value.
+When encoding [`UsePositionData`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/handlers/UniswapV3SingleTickLiquidityHandler.sol#L69) in [DopexV2OptionPools](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L206) last value liquidity is in uint256 while in decoding its expecting uint128. The same problem is applicable for [`UnusePositionParams`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/handlers/UniswapV3SingleTickLiquidityHandler.sol#L80) and [`DonateParams`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/handlers/UniswapV3SingleTickLiquidityHandler.sol#L87). [Here](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L275) encoded donate amount is uint256 but decoding it in uint128. [Calling unuse position](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L385) is also encoding uint256 value.
 
 #### Impact
 
@@ -1123,7 +1123,7 @@ Validating values at the start of the function will provide clear code and poten
 
 #### Technical Details
 
-- [Here](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/handlers/UniswapV3SingleTickLiquidityHandler.sol#L646) is the validation for `amount0` and `amount1` inside a function `_compoundFees()` but this validation should be done immediately [after the values are calculated inside `mintPositionHandler()`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/handlers/UniswapV3SingleTickLiquidityHandler.sol#L184).
+- [Here](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/handlers/UniswapV3SingleTickLiquidityHandler.sol#L646) is the validation for `amount0` and `amount1` inside a function `_compoundFees()`, but this validation should be done immediately [after the values are calculated inside `mintPositionHandler()`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/handlers/UniswapV3SingleTickLiquidityHandler.sol#L184).
 - In `DopexV2OptionPools`, [validation that the pool is approved](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L199) can be done before making state changes to [`opTickMap`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L189).
 - In function `positionSplitter()` storage variable [`optionIds`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L567) should be increased only after [the first](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L569) and [the second validation](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/DopexV2OptionPools.sol#L573) has passed.
 
@@ -1139,7 +1139,7 @@ Validate values as early as possible.
 
 Fix - https://github.com/dopex-io/dopex-v2-clamm/blob/feat/events/src/handlers/UniswapV3SingleTickLiquidityHandler.sol#L196
 
-### 13. Informational -  Non-descriptive variable names 
+### 13. Informational - Non-descriptive variable names
 
 Some variable names do not clearly describe what the variable values refer to.
 
@@ -1147,7 +1147,7 @@ Some variable names do not clearly describe what the variable values refer to.
 
 Some variable names could be improved:
 - [`a00`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/handlers/UniswapV3SingleTickLiquidityHandler.sol#L305) to `userLiquidity0`.
-- [`a11`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/handlers/UniswapV3SingleTickLiquidityHandler.sol#L311) to  `userLiquidity1`.
+- [`a11`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/handlers/UniswapV3SingleTickLiquidityHandler.sol#L311) to `userLiquidity1`.
 - [`a0`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/handlers/UniswapV3SingleTickLiquidityHandler.sol#L317) to `totalLiquidity0`.
 - [`a1`](https://github.com/dopex-io/dopex-v2-clamm/blob/ceb91c7d403da4a3b3eea831c195305e6a5362f9/src/handlers/UniswapV3SingleTickLiquidityHandler.sol#L323) to `totalLiquidity1`.
 
@@ -1165,7 +1165,7 @@ Fix - https://github.com/dopex-io/dopex-v2-clamm/pull/1/commits/e84fecb5abfed698
 
 ## Final remarks
 
-DopexV2 CLAMM is a novel approach to providing an on-chain options market by using Uniswap V3 concentrated liquidity positions as collateral to write options. The focus of the system is to connect users providing liquidity for narrow liquidity ranges with traders who want to create options. If the Uniswap V3 liquidity position is used by an options buyer, the Uniswap V3 liquidity position provider gets paid a premium which will be higher than the earned fees from Uniswap V3 alone. Calculating the premium is done using a contract that wasn't in the scope of this review. If the Uniswap V3 liquidity position is not used by an options buyer, it can earn the normal fees from Uniswap V3. These fees are auto-compounded and reinvested in the position with no slippage protection, meaning that MEV bots may be able extract value from the earned fees.
+DopexV2 CLAMM is a novel approach to providing an on-chain options market by using Uniswap V3 concentrated liquidity positions as collateral to write options. The focus of the system is to connect users providing liquidity for narrow liquidity ranges with traders who want to create options. If the Uniswap V3 liquidity position is used by an options buyer, the Uniswap V3 liquidity position provider gets paid a premium which will be higher than the earned fees from Uniswap V3 alone. Calculating the premium is done using a contract that wasn't in the scope of this review. If the Uniswap V3 liquidity position is not used by an options buyer, it can earn the normal fees from Uniswap V3. These fees are auto-compounded and reinvested in the position with no slippage protection, meaning that MEV bots may be able to extract value from the earned fees.
 
 The system design does not use a decentralized price oracle like Chainlink, meaning that the system is vulnerable to price manipulation. The system is also vulnerable to MEV because of the lack of slippage protection. On the other hand, the choice not to rely on a decentralized oracle provider allows the protocol to support a greater range of tokens, because any token that has a Uniswap V3 pool can be used in the protocol.
 
