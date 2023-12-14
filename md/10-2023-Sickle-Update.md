@@ -1,6 +1,6 @@
 ---
 layout: default
-title: 10-2023-Sickle
+title: 10-2023-Sickle-Update
 description: Sickle Update yAudit Report
 nav_order: 38
 image: assets/images/logo.png
@@ -15,14 +15,23 @@ The code repositories and a gist of things that had changed since the last revie
 
 **Auditors:**
 
+- Sjkelleyjr (Jackson)
 - HHK
-- Jackson
 
 ## Table of Contents
 {: .no_toc }
 
 1. TOC
 {:toc}
+
+## Review Summary
+
+**Sickle**
+
+This review is an update to a prior review of the Sickle contracts done in June 2023. Only the new updates were in scope. These new updates include a simplified strategy architecture, leading to the deprecation of the `PermitManager`, `FlashloanOpsRegistry`, and `CashManager` contracts, and the replacement of the `FlashloanStub` with a `FlashloanStrategy`.
+
+The contracts of the [Sickle Protocol](https://github.com/vfat-tools/sickle-contracts/tree/8e0e9d5fcb328857182eb948fa682f81d1474913) were reviewed over 7 days. The code review was performed by 2 auditors between October 2, 2023, and October 9, 2023. The repository was not under active development during the review, and the review was limited to the latest commit at the start of the review. This was commit [8e0e9d5fcb328857182eb948fa682f81d1474913](https://github.com/vfat-tools/sickle-contracts/tree/8e0e9d5fcb328857182eb948fa682f81d1474913) for the Sickle repo.
+
 
 ## Scope
 
