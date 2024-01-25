@@ -914,6 +914,7 @@ uint160 _rewardsSqrtPriceX96 = V3_TWAP_UTILS.sqrtPriceX96FromPoolAndInterval(_po
 ```
 
 2. Selling indexToken on v2 pool will revert.
+   
 ```solidity
     function test_sell_v2_with_no_v3_pool() public {
         // seed tokens
@@ -954,7 +955,6 @@ uint160 _rewardsSqrtPriceX96 = V3_TWAP_UTILS.sqrtPriceX96FromPoolAndInterval(_po
         }
         vm.stopPrank();
     }
-
 ```
 
 #### Impact
