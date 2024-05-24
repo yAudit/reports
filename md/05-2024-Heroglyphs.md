@@ -2,7 +2,7 @@
 layout: default
 title: 05-2024-Heroglyphs
 description: Heroglyphs yAudit Report
-nav_order: 57
+nav_order: 54
 image: assets/images/logo.png
 ---
 
