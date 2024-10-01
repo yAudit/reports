@@ -1,17 +1,17 @@
 ---
 layout: default
-title: 06-2024-JRF-Recheck
-description: JRF Base Layer Recheck yAudit report
+title: 06-2024-Multiplier-Technologies-Recheck
+description: Multiplier Technologies Lending Base Layer Recheck yAudit report
 nav_order: 63
 image: assets/images/logo.png
 ---
 
-# yAudit JRF Base Layer Recheck Review <!-- omit in toc -->
+# yAudit Multiplier Technologies Lending Base Layer Recheck Review <!-- omit in toc -->
 {: .no_toc }
 
 **Review Resources:**
 
-- Previous JRF audit report by yAudit
+- Previous Multiplier Technologies audit report by yAudit
 - Internal design docs were shared
 
 **Auditors:**
@@ -27,13 +27,13 @@ image: assets/images/logo.png
 
 ## Review Summary
 
-**JRF Base Layer**
+**Multiplier Technologies Lending Base Layer**
 
-JRF Base Layer provides the flexible foundations for new lending protocols to be built on top of. The Base Layer repository contains the contracts that verify key invariants always hold. These invariants are documented in the protocol team's main design doc. The JRF Base Layer is intended to be flexible and reusable, supporting assets by relying on custom adapter contracts. Because the JRF Base Layer code is only one piece of the overall lending protocol, it does not handle any logic related to asset prices, bad debt, liquidations, interest rates, or similar lending protocol concepts.
+MT Lending Base Layer provides the flexible foundations for new lending protocols to be built on top of. The Base Layer repository contains the contracts that verify key invariants always hold. These invariants are documented in the protocol team's main design doc. The MT Lending Base Layer is intended to be flexible and reusable, supporting assets by relying on custom adapter contracts. Because the MT Lending Base Layer code is only one piece of the overall lending protocol, it does not handle any logic related to asset prices, bad debt, liquidations, interest rates, or similar lending protocol concepts.
 
-This was the second review of the JRF Base Layer repository. Mitigations were added between the first and second reviews. Hence, this review aimed to verify that the mitigations worked as expected and to check for any new issues the changes may have introduced.
+This was the second review of the MT Lending Base Layer repository. Mitigations were added between the first and second reviews. Hence, this review aimed to verify that the mitigations worked as expected and to check for any new issues the changes may have introduced.
 
-The contracts of the JRF Base Layer [Repo](https://github.com/JRFin/jrf-base-layer) were reviewed over 2.5 days. The code review was performed by 2 auditors between June 10 and June 12, 2024. The repository was under active development during the review, but the review was limited to the latest commit at the start of the review. This was commit [a16d9231fb3c2d1754da378455ba0cfe2d7df111](https://github.com/JRFin/jrf-base-layer/tree/a16d9231fb3c2d1754da378455ba0cfe2d7df111) for the JRF Base Layer repo. A final review of the changes made to address the issues in this report was performed at commit [1d9a63253fea0948e1a8168913ba6903e993aed5](https://github.com/JRFin/jrf-base-layer/tree/1d9a63253fea0948e1a8168913ba6903e993aed5). The mitigations introduced in commit 1d9a63253fea0948e1a8168913ba6903e993aed5 properly addressed the issues documented in this report.
+The contracts of the MT Lending Base Layer [Repo](https://github.com/JRFin/jrf-base-layer) were reviewed over 2.5 days. The code review was performed by 2 auditors between June 10 and June 12, 2024. The repository was under active development during the review, but the review was limited to the latest commit at the start of the review. This was commit [a16d9231fb3c2d1754da378455ba0cfe2d7df111](https://github.com/JRFin/jrf-base-layer/tree/a16d9231fb3c2d1754da378455ba0cfe2d7df111) for the MT Lending Base Layer repo. A final review of the changes made to address the issues in this report was performed at commit [1d9a63253fea0948e1a8168913ba6903e993aed5](https://github.com/JRFin/jrf-base-layer/tree/1d9a63253fea0948e1a8168913ba6903e993aed5). The mitigations introduced in commit 1d9a63253fea0948e1a8168913ba6903e993aed5 properly addressed the issues documented in this report.
 
 ## Scope
 
@@ -67,11 +67,11 @@ contracts
     └── VaultFactory.sol
 ```
 
-After the findings were presented to the JRF team, fixes were made and included in several PRs.
+After the findings were presented to the Multiplier Technologies team, fixes were made and included in several PRs.
 
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
-yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, JRF and users of the contracts agree to use the code at their own risk.
+yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Multiplier Technologies and users of the contracts agree to use the code at their own risk.
 
 
 ## Code Evaluation Matrix
@@ -79,11 +79,11 @@ yAudit and the auditors make no warranties regarding the security of the code an
 | Category                 | Mark    | Description |
 | ------------------------ | ------- | ----------- |
 | Access Control           | Average | Only a few actions can be performed by the privileged owner role, such as pausing the Vault Controller, adding licensees that can register lenders, and registering adapters. |
-| Mathematics              | Good | Only addition and subtraction are used for accounting in the JRF Base Layer because the more complicated math will be in the other part of the protocol. |
-| Complexity               | Average | The codebase was not very large, but the JRF Base Layer is not a complete protocol and the interaction/responsibilities with external contracts were unclear. Much of the complexity and trust is outsourced to external contracts. |
+| Mathematics              | Good | Only addition and subtraction are used for accounting in the MT Lending Base Layer because the more complicated math will be in the other part of the protocol. |
+| Complexity               | Average | The codebase was not very large, but the MT Lending Base Layer is not a complete protocol and the interaction/responsibilities with external contracts were unclear. Much of the complexity and trust is outsourced to external contracts. |
 | Libraries                | Average | Only the well-known OpenZeppelin external library is used. |
 | Decentralization         | Average | While there is a plan to remove the privileged owner role from the Vault Controller in the future, the timelines for this were not hard coded. They will be decided later by protocol governance. |
-| Code stability           | Average | The JRF Base Layer is well thought out and is nearly production-ready, but a few small changes would still be helpful before the final roll-out. |
+| Code stability           | Average | The MT Lending Base Layer is well thought out and is nearly production-ready, but a few small changes would still be helpful before the final roll-out. |
 | Documentation            | Low | There were only a few pages of internal documentation for the protocol that was not very reader-friendly. There was almost no NatSpec in the code. |
 | Monitoring               | Average | Events were absent from some important function calls. Depending on the events on the external code that tightly integrates with this base layer repo, it may not be necessary to include events at this layer of the protocol. |
 | Testing and verification | Average | Most contracts in the repository have good test coverage. |
@@ -834,11 +834,11 @@ Acknowledged. We believe that our chosen trust assumptions strike a reasonable b
 
 The mitigations introduced in response to the findings in the first yAudit audit report fixed nearly all of the original issues identified. Only a few remaining items need to be modified slightly. Some larger refactoring changes were made, such as using transient storage and removing the adapter design entirely. Still, these changes have been made properly without adding notable new issues.
 
-The JRF Base Layer code does meet the requirements outlined in the whitepaper provided by the development team, which was one of the primary goals of this audit.
+The MT Lending Base Layer code does meet the requirements outlined in the whitepaper provided by the development team, which was one of the primary goals of this audit.
 
 Some assumptions changed between the initial commit hash reviewed (commit [46b15970a90fb06d2efbbc338f0eaf06bb24438b](https://github.com/JRFin/jrf-base-layer/tree/46b15970a90fb06d2efbbc338f0eaf06bb24438b)) and the newer commit hash reviewed in this report (commit [a16d9231fb3c2d1754da378455ba0cfe2d7df111](https://github.com/JRFin/jrf-base-layer/tree/a16d9231fb3c2d1754da378455ba0cfe2d7df111)). One of these changes is that not all terms are checked in `_doBatchDispatch()` like in the only commit hash, but only terms that are added to transient storage from a `_checkAuthority()` call are checked. Another change is that anyone can create a vault, whereas the creation of adapters with `registerAdapter()` was previously limited to the `onlyOwner` modifier. No new issues were found to be introduced by these changes other than what is documented in this report.
 
-The JRF lending solution is highly modular, and with modularity comes flexibility. This flexibility can also be viewed as complexity because of the larger design space in which different contracts can live in. One example of a risk with this design is that the protocol implementation layer must choose ownership contracts carefully to provide a trusted approach to governance that ensures borrowers can't get instantly rugged. The lending account owner should be a comptroller contract with a timelock to allow borrowers to borrow confidently, knowing that the loan terms will not change without notice. Another integration that must be done properly is writing the terms contract to avoid any loss of value for the lender or the borrower. But these risks are out of the scope of the JRF Base Layer protocol code and, if done properly, will not create any problems for the end solution.
+The Multiplier Technologies lending solution is highly modular, and with modularity comes flexibility. This flexibility can also be viewed as complexity because of the larger design space in which different contracts can live in. One example of a risk with this design is that the protocol implementation layer must choose ownership contracts carefully to provide a trusted approach to governance that ensures borrowers can't get instantly rugged. The lending account owner should be a comptroller contract with a timelock to allow borrowers to borrow confidently, knowing that the loan terms will not change without notice. Another integration that must be done properly is writing the terms contract to avoid any loss of value for the lender or the borrower. But these risks are out of the scope of the MT Lending Base Layer protocol code and, if done properly, will not create any problems for the end solution.
 
 
 
