@@ -32,7 +32,7 @@ The scope of the review consisted of the following contracts at the specific com
 src/adapter/pendle/PendleOracle.sol
 ```
 
-After the findings were presented to the Euler Hook Target Firewall team, fixes were made and included in several PRs.
+After the findings were presented to the Euler team, fixes were made and included in several PRs.
 
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
@@ -88,7 +88,7 @@ None
 
 ## Informational Findings
 
-1. Informational - Add a `MAX_TWAP_WINDOW` constant
+### 1. Informational - Add a `MAX_TWAP_WINDOW` constant
 
 #### Technical Details
 
