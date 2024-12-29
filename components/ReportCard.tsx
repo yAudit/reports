@@ -1,12 +1,12 @@
-import React from 'react';
-import Link from 'next/link';
+import React from "react";
+import Link from "next/link";
+import { useRouter } from "next/router";
 
 interface ReportCardProps {
   title: string;
   description: string;
   date: string;
   slug: string;
-  author: string;
   tags: string[];
 }
 
@@ -15,27 +15,29 @@ const ReportCard: React.FC<ReportCardProps> = ({
   description,
   date,
   slug,
-  author,
-  tags
+  tags,
 }) => {
   // Format the date to be more readable
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
     });
   };
 
+  const router = useRouter();
+
   return (
-    <div className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow duration-200 overflow-hidden">
+    <div
+      className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow duration-200 overflow-hidden hover:cursor-pointer duration-700"
+      onClick={() => router.push(`/reports/${slug}`)}
+    >
       <div className="p-6">
         <div className="flex items-center justify-between mb-2">
           <Link href={`/reports/${slug}`}>
             <h2 className="text-xl font-semibold text-black">{title}</h2>
           </Link>
-          <p className="text-sm text-gray-500">{formatDate(date)}</p>
         </div>
         <p className="text-gray-600 mb-4">{description}</p>
         <div className="flex items-center justify-between">
@@ -49,14 +51,8 @@ const ReportCard: React.FC<ReportCardProps> = ({
               </span>
             ))}
           </div>
-          <p className="text-sm text-gray-500">By {author}</p>
+          <p className="text-sm text-gray-500">{formatDate(date)}</p>
         </div>
-        <Link 
-          href={`/reports/${slug}`}
-          className="mt-4 inline-flex items-center text-sm font-medium text-black hover:text-emeraldlight duration-700"
-        >
-          Read More →
-        </Link>
       </div>
     </div>
   );

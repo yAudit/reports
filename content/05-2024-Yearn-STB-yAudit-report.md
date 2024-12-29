@@ -1,3 +1,11 @@
+---
+tags: ["solidity"]
+title: 05-2022-Yearn-STB
+description: Yearn STB yAudit Report
+nav_order: 7
+image: assets/images/logo.png
+---
+
 # yAudit Yearn - STB Review <!-- omit in toc -->
 
 **Review Resources:**

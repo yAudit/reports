@@ -1,13 +1,13 @@
 import { GetStaticProps, GetStaticPaths } from "next";
 
-import path from 'path';
-import fs from 'fs';
-import { processMarkdown } from "../../lib/markdown";
+import path from "path";
+import fs from "fs";
+import { extractDate, processMarkdown } from "../../lib/utils";
+import Link from "next/link";
 
 interface ReportPageProps {
   title: string;
   content: string;
-  author: string;
   date: string;
   tags: string[];
 }
@@ -15,19 +15,25 @@ interface ReportPageProps {
 export default function ReportPage({
   title,
   content,
-  author,
   date,
   tags,
 }: ReportPageProps) {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    <main className="bg-gray-50 flex flex-col min-h-screen">
+      <div className=" bg-gray-50 mt-10 mx-auto">
+        <Link href="/"><h2 className="text-xl mb-4 text-black">← Back to Blogs</h2></Link>
+
+        <div className="max-w-7xl bg-white shadow py-6 sm:px-6 flex flex-row justify-between ">
           <h1 className="text-3xl font-bold text-black">{title}</h1>
           <div className="mt-2 flex items-center text-sm text-gray-500">
-            <span>By {author}</span>
-            <span className="mx-2">•</span>
-            <span>{new Date(date).toLocaleDateString()}</span>
+            {/* <span>By {author}</span>
+            <span className="mx-2">•</span> */}
+            <span>
+              {new Date(date).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+              })}
+            </span>
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
             {tags.map((tag, index) => (
@@ -40,19 +46,14 @@ export default function ReportPage({
             ))}
           </div>
         </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <div className="bg-white rounded-lg shadow px-5 py-6 sm:px-6">
-            <div
-              className="prose prose-lg max-w-none prose-table:shadow-lg prose-table:border prose-td:p-2 prose-th:p-2 prose-th:bg-gray-100"
-              dangerouslySetInnerHTML={{ __html: content }}
-            />
-          </div>
+        <div className="max-w-7xl bg-white shadow py-6 mt-4 sm:px-6">
+          <div
+            className="prose prose-lg max-w-none prose-table:shadow-lg prose-table:border prose-td:p-2 prose-th:p-2 prose-th:bg-gray-100"
+            dangerouslySetInnerHTML={{ __html: content }}
+          />
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
   );
 }
 
@@ -80,13 +81,11 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
     const fileContent = fs.readFileSync(filePath, "utf8");
     const { frontMatter, content } = await processMarkdown(fileContent);
 
-
     return {
       props: {
-        title: frontMatter.title || "Untitled",
+        title: frontMatter.title.split("-").slice(2).join(" ") || "Untitled",
         content: content || "",
-        author: frontMatter.author || "Anonymous",
-        date: frontMatter.date || new Date().toISOString(),
+        date: extractDate(slug) || new Date(),
         tags: Array.isArray(frontMatter.tags) ? frontMatter.tags : [],
       },
       revalidate: 3600, // Revalidate every hour

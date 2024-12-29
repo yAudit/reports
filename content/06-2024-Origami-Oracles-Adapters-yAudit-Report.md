@@ -1,3 +1,11 @@
+---
+tags: ["solidity"]
+title: 6-2024-Origami-Oracles-Adapters
+description: Origami Oracles Adapters yAudit Report
+nav_order: 71
+image: assets/images/logo.png
+---
+
 # yAudit Origami oracles adapters Review <!-- omit in toc -->
 {: .no_toc }
 

@@ -1,3 +1,11 @@
+---
+tags: ["solidity"]
+title: 10-2024-GuessOurBlock
+description: Guess Our Block 
+nav_order: 71
+image: assets/images/logo.png
+---
+
 # yAudit GuessOurBlock Review <!-- omit in toc -->
 {: .no_toc }
 

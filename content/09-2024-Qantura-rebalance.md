@@ -1,3 +1,11 @@
+---
+tags: ["solidity"]
+title: 9-2024-Qantura
+description: Qantura yAudit Report
+nav_order: 71
+image: assets/images/logo.png
+---
+
 # yAudit Qantura Rebalance Review <!-- omit in toc -->
 {: .no_toc }
 

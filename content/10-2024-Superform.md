@@ -1,3 +1,10 @@
+---
+tags: ["solidity"]
+title: 10-2024-Superform
+description: Superform yAudit Report
+nav_order: 71
+image: assets/images/logo.png
+---
 # yAudit Superform Router Plus and Super Vaults Review <!-- omit in toc -->
 {: .no_toc }
 

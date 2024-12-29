@@ -1,7 +1,7 @@
 ---
 tags: ["solidity"]
 title: 06-2022-LevGeist
-description: LevGeist yAudit Report
+description: LevGeist yAcademy Report
 nav_order: 7
 image: assets/images/logo.png
 ---

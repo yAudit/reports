@@ -1,7 +1,7 @@
 ---
 tags: ["solidity"]
 title: 06-2022-Superfluid
-description: Superfluid yAudit Report
+description: Superfluid yAcademy Report
 nav_order: 8
 image: assets/images/logo.png
 ---

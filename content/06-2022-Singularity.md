@@ -1,7 +1,7 @@
 ---
 tags: ["solidity"]
 title: 06-2022-Singularity
-description: Singularity yAudit Report
+description: Singularity yAcademy Report
 nav_order: 6
 image: assets/images/logo.png
 ---

@@ -1,3 +1,11 @@
+---
+tags: ["solidity"]
+title: 10-2024-Obelisk
+description: Obelisk yAudit Report
+nav_order: 71
+image: assets/images/logo.png
+---
+
 # yAudit Obelisk Review <!-- omit in toc -->
 {: .no_toc }
 

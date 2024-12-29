@@ -1,3 +1,11 @@
+---
+tags: ["solidity"]
+title: 9-2024-Euler-Price-Oracles
+description: Euler Price Oracles yAudit Report
+nav_order: 71
+image: assets/images/logo.png
+---
+
 # yAudit Euler Price Oracles Update Review <!-- omit in toc -->
 {: .no_toc }
 

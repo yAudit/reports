@@ -5,6 +5,21 @@ import remarkGfm from 'remark-gfm';
 import { Node } from 'unist';
 import { visit } from 'unist-util-visit';
 
+export function extractDate(filename: string): string | null {
+  // Match pattern: "MM-YYYY" from the start of the string
+  const match = filename.match(/^(\d{2})-(\d{4})/);
+
+  if (match) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [_, month, year] = match;
+    // Create date object (using 1st of the month)
+    const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+    return date.toISOString();;
+  }
+
+  return null;
+}
+
 interface ImageNode extends Node {
   type: 'image';
   url: string;

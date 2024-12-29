@@ -1,3 +1,11 @@
+---
+tags: ["solidity"]
+title: 10-2024-Sickle-Strategies
+description: Sickle Strategies yAudit Report
+nav_order: 71
+image: assets/images/logo.png
+---
+
 # yAudit Sickle Strategies Review <!-- omit in toc -->
 {: .no_toc }
 
