@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 
-import React, { useState } from 'react';
-import Link from 'next/link';
+import React, { useState } from "react";
+import Link from "next/link";
 import { CloseCircleOutlined, MenuOutlined } from "@ant-design/icons";
 
 // Button component for consistent styling
@@ -21,7 +21,7 @@ const Navbar = () => {
       <nav className="w-full bg-white flex h-18 items-center justify-between top-0 p-6">
         {/* Logo section */}
         <div className="flex flex-row gap-4 text-emeraldlight items-center text-xl lg:ml-36">
-          <Link href="https://effortless-crepe-67200a.netlify.app/">
+          <Link href="https://electisec.tech/">
             <img alt="Logo" src="/logo.svg" className="h-10" />
           </Link>
         </div>
@@ -36,22 +36,24 @@ const Navbar = () => {
 
         {/* Desktop menu */}
         <div className="hidden lg:flex flex-row items-center gap-1 lg:mr-[8vw]">
-          <Link href="https://effortless-crepe-67200a.netlify.app/members">
+          <Link href="https://electisec.tech/members">
             <Button text="Members" />
           </Link>
-          <Link href="/">
-            <Button text="Reports" />
+          <Link href="https://reports.electisec.tech/">
+            <button className="px-6 py-3 rounded-xl text-sm hover:text-darkgreen text-bold text-emeraldlight duration-700">
+              Reports
+            </button>
           </Link>
-          <Link href="/">
-            <Button text="Research" />
+          <Link href="https://blog.electisec.tech/">
+            <Button text="Blog" />
           </Link>
-          <Link href="https://effortless-crepe-67200a.netlify.app/fellowships">
+          <Link href="https://electisec.tech/fellowships">
             <Button text="Fellowships" />
           </Link>
-          <Link href="https://effortless-crepe-67200a.netlify.app/services">
+          <Link href="https://electisec.tech/services">
             <Button text="Services" />
           </Link>
-          <Link href="https://effortless-crepe-67200a.netlify.app/contact-us">
+          <Link href="https://electisec.tech/contact-us">
             <button className="px-8 py-3 rounded-xl text-md text-darkgreen text-bold bg-emeraldlight bg-opacity-25 hover:bg-opacity-5 hover:text-emeraldlight duration-700">
               Contact Us
             </button>
@@ -61,15 +63,15 @@ const Navbar = () => {
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div className="w-full h-full z-40 duration-700">
-          <div className="mt-8 mx-auto flex flex-col p-8 gap-2">
+        <div className="w-full bg-white h-full z-40 duration-700">
+          <div className="pt-8 mx-auto flex flex-col p-8 gap-2">
             <button
               onClick={() => setMenuOpen(false)}
               className="text-green-400"
             >
               <CloseCircleOutlined style={{ fontSize: "2rem" }} />
             </button>
-            <Link href="/members">
+            <Link href="https://electisec.tech/members">
               <button
                 onClick={() => setMenuOpen(false)}
                 className="p-6 rounded-xl w-full text-xl text-zinc-400 hover:text-emeraldlight hover:bg-white hover:bg-opacity-5 duration-700"
@@ -77,17 +79,17 @@ const Navbar = () => {
                 Members
               </button>
             </Link>
-            <Link href="/">
+            <Link href="https://reports.electisec.tech/">
               <button className="p-6 rounded-xl w-full text-xl text-zinc-400 hover:text-emeraldlight hover:bg-darkgreen hover:bg-opacity-5 duration-700">
                 Reports
               </button>
             </Link>
-            <Link href="/">
-              <button className="p-6 rounded-xl w-full text-xl text-zinc-400 hover:text-emeraldlight hover:bg-darkgreen hover:bg-opacity-5 duration-700">
+            <Link href="https://blog.electisec.tech/">
+              <button className="p-6 rounded-xl w-full text-xl text-emeraldlight hover:bg-darkgreen hover:bg-opacity-5 duration-700">
                 Blog
               </button>
             </Link>
-            <Link href="https://effortless-crepe-67200a.netlify.app/fellowships">
+            <Link href="https://electisec.tech/fellowships">
               <button
                 onClick={() => setMenuOpen(false)}
                 className="p-6 rounded-xl w-full text-xl text-zinc-400 hover:text-emeraldlight hover:bg-darkgreen hover:bg-opacity-5 duration-700"
@@ -95,7 +97,7 @@ const Navbar = () => {
                 Fellowships
               </button>
             </Link>
-            <Link href="https://effortless-crepe-67200a.netlify.app/services">
+            <Link href="https://electisec.tech/services">
               <button
                 onClick={() => setMenuOpen(false)}
                 className="p-6 rounded-xl w-full text-xl text-zinc-400 hover:text-emeraldlight hover:bg-white hover:bg-opacity-5 duration-700"
@@ -103,7 +105,7 @@ const Navbar = () => {
                 Services
               </button>
             </Link>
-            <Link href="https://effortless-crepe-67200a.netlify.app/contact-us">
+            <Link href="https://electisec.tech/contact-us">
               <button
                 onClick={() => setMenuOpen(false)}
                 className="p-6 rounded-xl w-full text-xl text-emeraldlight text-bold hover:bg-darkgreen hover:bg-opacity-5 duration-700"
