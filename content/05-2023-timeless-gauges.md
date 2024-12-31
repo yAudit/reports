@@ -1,5 +1,5 @@
 ---
-tags: ["solidity"]
+tags: ["vyper"]
 title: 05-2023-Timeless-Gauge
 description: Timeless Finance Gauge yAudit Report
 nav_order: 24

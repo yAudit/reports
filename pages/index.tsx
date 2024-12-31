@@ -24,7 +24,7 @@ export default function Home({ reports }: HomeProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
-  const tags = ["solidity", "circom", "zk", "vyper", "halo2"];
+  const tags = reports.map((report) => report.tags).flat();
 
   const filteredReports = useMemo(() => {
     const query = searchQuery?.toLowerCase();
