@@ -24,7 +24,14 @@ export default function Home({ reports }: HomeProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
-  const tags = reports.map((report) => report.tags).flat();
+  const tags = reports
+    .map((report) => report.tags) 
+    .flat() 
+    .filter((tag) => tag.trim() !== "") 
+    .reduce((unique, tag) => {
+      if (!unique.includes(tag)) unique.push(tag); 
+      return unique;
+    }, [] as string[]);
 
   const filteredReports = useMemo(() => {
     const query = searchQuery?.toLowerCase();
