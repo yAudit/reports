@@ -19,3 +19,54 @@ body {
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
 }
+/* Add to your CSS */
+.prose ul {
+  list-style-type: decimal;
+  padding-left: 1.25em;
+}
+
+.prose ul {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Style the TOC links */
+.prose a {
+  text-decoration: none;
+}
+
+.prose a:hover {
+  text-decoration: underline;
+}
+
+/* Add to your global CSS or component styles */
+.table-of-contents {
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.table-of-contents a {
+  color: #2563eb; /* text-blue-600 */
+  transition: color 0.3s;
+
+  &:hover {
+    color: #1e40af; /* text-blue-800 */
+  }
+}
+
+/* Style the main numbered items */
+.table-of-contents > p {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+/* Style the lettered sub-items */
+.table-of-contents > p[data-letter] {
+  margin-left: 1.5rem; /* equivalent to ml-6 */
+}
