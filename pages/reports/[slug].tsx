@@ -21,7 +21,7 @@ export default function ReportPage({
   return (
     <main className="bg-gray-50 flex flex-col min-h-screen">
       <div className=" bg-gray-50 mt-10 mx-auto">
-        <Link href="/"><h2 className="text-xl mb-4 text-black">← Back to Blogs</h2></Link>
+        <Link href="/"><h2 className="text-xl mb-4 text-black">← Back to Reports</h2></Link>
 
         <div className="max-w-7xl bg-white shadow py-6 sm:px-6 flex flex-row justify-between ">
           <h1 className="text-3xl font-bold text-black">{title}</h1>
