@@ -25,7 +25,7 @@ export default function ReportPage({
           <h2 className="text-xl mb-4 text-black">← Back to Reports</h2>
         </Link>
 
-        <div className="max-w-7xl bg-white shadow py-6 sm:px-6 flex flex-row justify-between ">
+        <div className="max-w-6xl bg-white shadow py-6 sm:px-6 flex flex-row justify-between ">
           <h1
             className="text-3xl font-bold text-black"
             id={title.toLocaleLowerCase()}
@@ -53,7 +53,7 @@ export default function ReportPage({
             ))}
           </div>
         </div>
-        <div className="max-w-7xl bg-white shadow py-6 mt-4 sm:px-6">
+        <div className="max-w-6xl bg-white shadow py-6 mt-4 sm:px-6">
           <div
             className="prose prose-lg max-w-none prose-table:shadow-lg prose-table:border prose-td:p-2 prose-th:p-2 prose-th:bg-gray-100"
             dangerouslySetInnerHTML={{ __html: content }}

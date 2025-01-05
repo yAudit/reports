@@ -36,14 +36,15 @@ export default function Home({ reports }: HomeProps) {
   // Enhanced useEffect to handle multiple URL tags
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const tagParam = params.get('tag');
-    
+    const tagParam = params.get("tag");
+
     if (tagParam) {
       // Split the tag parameter by commas and filter out any invalid tags
-      const urlTags = tagParam.split(',')
-        .map(tag => tag.trim())
-        .filter(tag => tags.includes(tag));
-      
+      const urlTags = tagParam
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter((tag) => tags.includes(tag));
+
       if (urlTags.length > 0) {
         setSelectedTags(urlTags);
       }
@@ -75,29 +76,31 @@ export default function Home({ reports }: HomeProps) {
       const newTags = prevTags.includes(tag)
         ? prevTags.filter((t) => t !== tag)
         : [...prevTags, tag];
-      
+
       // Update URL with all selected tags
       const params = new URLSearchParams(window.location.search);
       if (newTags.length > 0) {
-        params.set('tag', newTags.join(','));
+        params.set("tag", newTags.join(","));
       } else {
-        params.delete('tag');
+        params.delete("tag");
       }
-      
+
       // Update URL without refreshing the page
       window.history.replaceState(
         {},
-        '',
-        `${window.location.pathname}${newTags.length ? `?${params.toString()}` : ''}`
+        "",
+        `${window.location.pathname}${
+          newTags.length ? `?${params.toString()}` : ""
+        }`
       );
-      
+
       return newTags;
     });
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <main className="max-w-6xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 sm:px-0 mb-8 text-gray-400">
           <SearchBar onSearch={handleSearch} />
           <div className="flex flex-wrap gap-2 mx-auto mt-4 justify-center">

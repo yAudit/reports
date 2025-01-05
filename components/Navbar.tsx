@@ -20,7 +20,7 @@ const Navbar = () => {
     <>
       <nav className="w-full bg-white flex h-18 items-center justify-between top-0 py-6">
         {/* Logo section */}
-        <div className="flex flex-row gap-4 text-emeraldlight items-center text-xl lg:ml-64">
+        <div className="flex flex-row gap-4 text-emeraldlight items-center text-xl lg:ml-80">
           <Link href="https://electisec.tech/">
             <img alt="Logo" src="/logo.svg" className="h-10" />
           </Link>
