@@ -19,6 +19,16 @@ body {
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+pre {
+  background: #f5f5f5 !important;
+}
+
+pre code {
+  color: black !important;
+}
+
+
 /* Add to your CSS */
 .prose ul {
   list-style-type: decimal;
