@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { GetStaticProps } from "next";
 import SearchBar from "../components/SearchBar";
 import ReportCard from "../components/ReportCard";
@@ -25,13 +25,30 @@ export default function Home({ reports }: HomeProps) {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   const tags = reports
-    .map((report) => report.tags) 
-    .flat() 
-    .filter((tag) => tag.trim() !== "") 
+    .map((report) => report.tags)
+    .flat()
+    .filter((tag) => tag.trim() !== "")
     .reduce((unique, tag) => {
-      if (!unique.includes(tag)) unique.push(tag); 
+      if (!unique.includes(tag)) unique.push(tag);
       return unique;
     }, [] as string[]);
+
+  // Enhanced useEffect to handle multiple URL tags
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tagParam = params.get('tag');
+    
+    if (tagParam) {
+      // Split the tag parameter by commas and filter out any invalid tags
+      const urlTags = tagParam.split(',')
+        .map(tag => tag.trim())
+        .filter(tag => tags.includes(tag));
+      
+      if (urlTags.length > 0) {
+        setSelectedTags(urlTags);
+      }
+    }
+  }, [tags]);
 
   const filteredReports = useMemo(() => {
     const query = searchQuery?.toLowerCase();
@@ -52,6 +69,32 @@ export default function Home({ reports }: HomeProps) {
     setSearchQuery(query);
   };
 
+  // Enhanced tag selection handler for multiple tags
+  const handleTagSelection = (tag: string) => {
+    setSelectedTags((prevTags) => {
+      const newTags = prevTags.includes(tag)
+        ? prevTags.filter((t) => t !== tag)
+        : [...prevTags, tag];
+      
+      // Update URL with all selected tags
+      const params = new URLSearchParams(window.location.search);
+      if (newTags.length > 0) {
+        params.set('tag', newTags.join(','));
+      } else {
+        params.delete('tag');
+      }
+      
+      // Update URL without refreshing the page
+      window.history.replaceState(
+        {},
+        '',
+        `${window.location.pathname}${newTags.length ? `?${params.toString()}` : ''}`
+      );
+      
+      return newTags;
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
@@ -67,13 +110,7 @@ export default function Home({ reports }: HomeProps) {
                     ? " bg-emerald bg-opacity-25 text-darkgreen"
                     : "")
                 }
-                onClick={() =>
-                  setSelectedTags((prevTags) =>
-                    prevTags.includes(tag)
-                      ? prevTags.filter((t) => t !== tag)
-                      : [...prevTags, tag]
-                  )
-                }
+                onClick={() => handleTagSelection(tag)}
               >
                 {tag} {selectedTags.includes(tag) && "x"}
               </button>
