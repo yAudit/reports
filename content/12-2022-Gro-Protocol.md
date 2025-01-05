@@ -8,8 +8,6 @@ image: assets/images/logo.png
 
 # yAudit Gro Protocol Review
 
-{: .no_toc }
-
 **Review Resources:**
 
 - [Current Gro Protocol docs](https://docs.gro.xyz/gro-docs/)
@@ -20,8 +18,6 @@ image: assets/images/logo.png
 - usmannk
 
 ## Table of Contents
-
-{: .no_toc }
 
 1. TOC
    {:toc}

@@ -8,8 +8,6 @@ image: assets/images/logo.png
 
 # yAudit Heroglyphs Review
 
-{: .no_toc }
-
 **Review Resources:**
 
 - [Whitepaper](https://github.com/Finallyt/Heroglyph/blob/main/Heroglyphs%20-%20Unclassified.pdf)
@@ -20,8 +18,6 @@ image: assets/images/logo.png
 - Spalen
 
 ## Table of Contents <!-- omit in toc -->
-
-{: .no_toc }
 
 1. TOC
    {:toc}

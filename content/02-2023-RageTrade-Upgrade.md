@@ -8,8 +8,6 @@ image: assets/images/logo.png
 
 # yAudit Rage Trade Upgrade Review
 
-{: .no_toc }
-
 **Review Resources:**
 
 - [Rage Trade Docs](https://docs.rage.trade/4TdI-overview)
@@ -20,8 +18,6 @@ image: assets/images/logo.png
 - Invader-tak
 
 ## Table of Contents
-
-{: .no_toc }
 
 1. TOC
    {:toc}

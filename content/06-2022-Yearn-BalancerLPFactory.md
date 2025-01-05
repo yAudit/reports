@@ -8,8 +8,6 @@ image: assets/images/logo.png
 
 # yAudit Yearn BalancerLpFactory Review
 
-{: .no_toc }
-
 **Review Resources:**
 
 - Additional documentation was not provided, but a presentation was given regarding contract functionalities.
@@ -21,8 +19,6 @@ image: assets/images/logo.png
 **All fellows participated on this audit. Fellows' names are listed on each finding.**
 
 ## Table of Contents
-
-{: .no_toc }
 
 1. TOC
    {:toc}

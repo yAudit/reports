@@ -7,7 +7,6 @@ image: assets/images/logo.png
 ---
 
 # yAudit Origami oracles adapters Review <!-- omit in toc -->
-{: .no_toc }
 
 **Review Resources:**
 
@@ -19,10 +18,9 @@ image: assets/images/logo.png
 - Panda
 
 ## Table of Contents <!-- omit in toc -->
-{: .no_toc }
 
 1. TOC
-{:toc}
+   {:toc}
 
 ## Review Summary
 
@@ -49,26 +47,25 @@ This review is a code review to identify potential vulnerabilities in the code. 
 
 yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Origami oracles adapters and users of the contracts agree to use the code at their own risk.
 
-
 ## Oracle analysis
 
 In this section, we focused on analyzing the different oracles used by the contracts. This included evaluating their reliability and effectiveness in providing accurate data for the contract operations.
 
 ### Overview
 
-| | ezETH | rsETH | swETH | rswETH | weETH |
-| --- | --- | --- | --- | --- | --- |
-| **Protocol** | [Renzo Protocol](https://www.renzoprotocol.com/) | [KelpDAO](https://kelpdao.xyz/) | [Swell Network](https://www.swellnetwork.io/) | [Swell Network](https://www.swellnetwork.io/) | [Ether.fi](https://www.ether.fi/) |
-| **Assets** | wBETH, stETH | stETH, ETHx, sfrxETH, Native ETH | ETH | ETH | ETH |
-| **Oracle address** | [Etherscan](https://etherscan.io/address/0x5a12796f7e7EBbbc8a402667d266d2e65A814042#code) | [Etherscan](https://etherscan.io/address/0x349A73444b1a310BAe67ef67973022020d70020d) | [Etherscan](https://etherscan.io/address/0xf951E335afb289353dc249e82926178EaC7DEd78) | [Etherscan](https://etherscan.io/address/0xFAe103DC9cf190eD75350761e95403b7b8aFa6c0) | [Etherscan](https://etherscan.io/address/0xCd5fE23C85820F7B72D0926FC9b05b43E359b7ee) |
-| **Atomic price manipulation** | Possible | Possible | No | No | No |
-| **Hardcoded oracle values** | None | stETH and frxETH values assumed to be 1:1 with ETH | None  | None | None |
-| **Oracle price** | 1.013 | 1.014 | 1.063 | 1.011 | 1.042 |
-| **Market price** | 1.006 | 1.007 | 1.060 | 0.998 | 1.040 |
-| **Chainlink usage** | Yes | No | No  | No | No  |
-| **EOA controls the price** | No | No | Yes | Yes | Yes (limited) |
-| **Upgradable contracts** | Yes | Yes | Yes | Yes | Yes |
-| **Withdrawals enabled** | Limited | Yes | Yes | No | Yes |
+|                               | ezETH                                                                                     | rsETH                                                                                | swETH                                                                                | rswETH                                                                               | weETH                                                                                |
+| ----------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| **Protocol**                  | [Renzo Protocol](https://www.renzoprotocol.com/)                                          | [KelpDAO](https://kelpdao.xyz/)                                                      | [Swell Network](https://www.swellnetwork.io/)                                        | [Swell Network](https://www.swellnetwork.io/)                                        | [Ether.fi](https://www.ether.fi/)                                                    |
+| **Assets**                    | wBETH, stETH                                                                              | stETH, ETHx, sfrxETH, Native ETH                                                     | ETH                                                                                  | ETH                                                                                  | ETH                                                                                  |
+| **Oracle address**            | [Etherscan](https://etherscan.io/address/0x5a12796f7e7EBbbc8a402667d266d2e65A814042#code) | [Etherscan](https://etherscan.io/address/0x349A73444b1a310BAe67ef67973022020d70020d) | [Etherscan](https://etherscan.io/address/0xf951E335afb289353dc249e82926178EaC7DEd78) | [Etherscan](https://etherscan.io/address/0xFAe103DC9cf190eD75350761e95403b7b8aFa6c0) | [Etherscan](https://etherscan.io/address/0xCd5fE23C85820F7B72D0926FC9b05b43E359b7ee) |
+| **Atomic price manipulation** | Possible                                                                                  | Possible                                                                             | No                                                                                   | No                                                                                   | No                                                                                   |
+| **Hardcoded oracle values**   | None                                                                                      | stETH and frxETH values assumed to be 1:1 with ETH                                   | None                                                                                 | None                                                                                 | None                                                                                 |
+| **Oracle price**              | 1.013                                                                                     | 1.014                                                                                | 1.063                                                                                | 1.011                                                                                | 1.042                                                                                |
+| **Market price**              | 1.006                                                                                     | 1.007                                                                                | 1.060                                                                                | 0.998                                                                                | 1.040                                                                                |
+| **Chainlink usage**           | Yes                                                                                       | No                                                                                   | No                                                                                   | No                                                                                   | No                                                                                   |
+| **EOA controls the price**    | No                                                                                        | No                                                                                   | Yes                                                                                  | Yes                                                                                  | Yes (limited)                                                                        |
+| **Upgradable contracts**      | Yes                                                                                       | Yes                                                                                  | Yes                                                                                  | Yes                                                                                  | Yes                                                                                  |
+| **Withdrawals enabled**       | Limited                                                                                   | Yes                                                                                  | Yes                                                                                  | No                                                                                   | Yes                                                                                  |
 
 Note: market and oracles prices were taken on 27th June, 2024.
 
@@ -81,9 +78,9 @@ Note: market and oracles prices were taken on 27th June, 2024.
 **Oracle Address**: [Etherscan](https://etherscan.io/address/0x5a12796f7e7EBbbc8a402667d266d2e65A814042#code)
 
 #### Atomic price manipulation
+
 The current implementation of the price determination mechanism in the Renzo Protocol is subjective to potential manipulation. The price is determined by the restake manager, relying on the number of operators' respective balances.
 We have identified a potential attack vector that could be exploited to manipulate the price of the token. The `withdrawalQueue` balance is checked to assess the protocol price. A transfer of tokens to the queue will increase the price. This mechanism could be exploited to artificially inflate the price of the token.
-
 
 #### Chainlink usage
 
@@ -91,8 +88,7 @@ The Renzo Protocol uses Chainlink oracles to determine the price of the `stETH` 
 
 #### Withdrawal
 
-While withdrawals are enabled, the amount of funds available to withdraw are really limited: an amount in the order of one ETH has been observed to be withdrawable. In a future update, the protocol will introduce a withdrawal queue mechanism allowing users to request a withdrawal regardless of the buffer amount. 
-
+While withdrawals are enabled, the amount of funds available to withdraw are really limited: an amount in the order of one ETH has been observed to be withdrawable. In a future update, the protocol will introduce a withdrawal queue mechanism allowing users to request a withdrawal regardless of the buffer amount.
 
 ### KelpDAO Oracle
 
@@ -101,7 +97,6 @@ While withdrawals are enabled, the amount of funds available to withdraw are rea
 **Assets**: stETH, ETHx, sfrxETH, Native ETH
 
 **Oracle Address**: [Etherscan](https://etherscan.io/address/0x349A73444b1a310BAe67ef67973022020d70020d)
-
 
 #### Hardcoded price values
 
@@ -113,11 +108,9 @@ The [SfrxETHPriceOracle](https://etherscan.io/address/0x8546A7C8C3C537914C3De248
 
 A transfer of tokens to the [LRTDepositPool](https://etherscan.io/address/0x036676389e48133b63a802f8635ad39e752d375d) can manipulate the price. This vulnerability could be exploited to artificially inflate the token price. The attack is possible via a [`balanceOf()` call](https://github.com/Kelp-DAO/LRT-rsETH/blob/e75e9ef168a7b192abf76869977cd2ac8134849c/contracts/LRTDepositPool.sol#L87).
 
-
 #### Withdrawal
 
 Unstake requests are processed in 7-10 days, subject to exit queue on Ethereum network and delays imposed by EigenLayer.
-
 
 ### Swell Network Oracle
 
@@ -127,16 +120,13 @@ Unstake requests are processed in 7-10 days, subject to exit queue on Ethereum n
 
 **Oracle Address**: [Etherscan](https://etherscan.io/address/0xf951E335afb289353dc249e82926178EaC7DEd78)
 
-
 #### Centralization risk
 
 The price determination mechanism in the swETH and rswETH protocols relies on an off-chain entity to calculate the price. This is done through a protected call to the [`reprice()`](https://github.com/SwellNetwork/v3-core-public/blob/dab410f4c4ea4f70f5ed3563eb1bf433a4d22bdf/contracts/lst/contracts/implementations/swETH.sol#L204) function, based on the input data provided by the repricer. The repricer is a single address entity, not a consensus of multiple entities, which carry a risk of centralization.
 
-#### Withdrawal 
+#### Withdrawal
 
 Withdrawal is enabled for swETH but not for rswETH. The delay is on average 12 days.
-
-
 
 ### weETH Oracle
 
@@ -170,18 +160,23 @@ Findings are broken down into sections by their respective impact:
   - Findings including recommendations and best practices.
 
 ---
+
 ## Critical Findings
 
 None
+
 ## High Findings
 
 None
+
 ## Medium Findings
 
 None
+
 ## Low Findings
 
 None
+
 ## Gas Saving Findings
 
 ### 1. Gas - Cache oracle address in ezETH and rsETH
@@ -210,12 +205,11 @@ Gas savings.
 
 #### Recommendation
 
-Provide these addresses as constants. 
+Provide these addresses as constants.
 
 #### Developer Response
 
 I intentionally followed the underlying protocol implementations where they do not mark these addresses as constants. That implied to me that the addresses may change and shouldn't be marked as constants.
-
 
 ## Informational Findings
 
@@ -237,8 +231,7 @@ Make sure you can update the contract address if the oracle needs to be updated.
 
 #### Developer Response
 
-This oracle adapter is intended to be used to price debt<>collateral within Morpho Blue markets, where the Oracle is immutable -- in the event of a required update, a new Morpho Blue market shall be created, rather than a contract update/migration. 
-
+This oracle adapter is intended to be used to price debt<>collateral within Morpho Blue markets, where the Oracle is immutable -- in the event of a required update, a new Morpho Blue market shall be created, rather than a contract update/migration.
 
 ### 2. Informational - Market price and exchange rate tradeoff
 
@@ -274,4 +267,4 @@ Noted that there is a balance of risks between using a market price (where that 
 
 ## Final remarks
 
-The review highlighted operational details and risks such as atomic price manipulation and centralization. No critical vulnerabilities were found, with recommendations for gas efficiency optimization and awareness of potential market-exchange rate discrepancies. 
+The review highlighted operational details and risks such as atomic price manipulation and centralization. No critical vulnerabilities were found, with recommendations for gas efficiency optimization and awareness of potential market-exchange rate discrepancies.

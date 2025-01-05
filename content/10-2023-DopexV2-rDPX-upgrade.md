@@ -8,8 +8,6 @@ image: assets/images/logo.png
 
 # yAudit Dopex RDPX Token Review
 
-{: .no_toc }
-
 **Review Resources:**
 
 - [Dopex docs](https://docs.dopex.io/)
@@ -20,8 +18,6 @@ image: assets/images/logo.png
 - spalen
 
 ## Table of Contents
-
-{: .no_toc }
 
 1. TOC
    {:toc}

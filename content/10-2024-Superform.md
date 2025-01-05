@@ -5,8 +5,8 @@ description: Superform yAudit Report
 nav_order: 71
 image: assets/images/logo.png
 ---
+
 # yAudit Superform Router Plus and Super Vaults Review <!-- omit in toc -->
-{: .no_toc }
 
 **Review Resources:**
 
@@ -19,10 +19,9 @@ image: assets/images/logo.png
 - Jackson
 
 ## Table of Contents <!-- omit in toc -->
-{: .no_toc }
 
 1. TOC
-{:toc}
+   {:toc}
 
 ## Review Summary
 
@@ -68,17 +67,17 @@ yAudit and the auditors make no warranties regarding the security of the code an
 
 ## Code Evaluation Matrix
 
-| Category                 | Mark    | Description                                                                                                                                                    |
-| ------------------------ | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Access Control           | Good    | Proper access control mechanisms are implemented, ensuring only authorized users or contracts can interact with critical functions.                            |
-| Mathematics              | Good    | The mathematical calculations are handled correctly.                                                                                                           |
-| Complexity               | Average | The new code is well-structured and straightforward in terms of contract logic. However, the overall system is fairly complex.                                      |
-| Libraries                | Good    | The project effectively uses standard and custom libraries, following best practices in code modularity.                                                       |
-| Decentralization         | Average | Cross-chain rebalances are designed to be completed by a keeper. The client highlighted this as a critical point in the code that should be investigated.                           |
-| Code stability           | Good    | The code appears stable.                                                                                                                                       |
+| Category                 | Mark    | Description                                                                                                                                                      |
+| ------------------------ | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Access Control           | Good    | Proper access control mechanisms are implemented, ensuring only authorized users or contracts can interact with critical functions.                              |
+| Mathematics              | Good    | The mathematical calculations are handled correctly.                                                                                                             |
+| Complexity               | Average | The new code is well-structured and straightforward in terms of contract logic. However, the overall system is fairly complex.                                   |
+| Libraries                | Good    | The project effectively uses standard and custom libraries, following best practices in code modularity.                                                         |
+| Decentralization         | Average | Cross-chain rebalances are designed to be completed by a keeper. The client highlighted this as a critical point in the code that should be investigated.        |
+| Code stability           | Good    | The code appears stable.                                                                                                                                         |
 | Documentation            | Average | The comprehensive documentation explains the core functions and overall system architecture of the Superform system but lacks documentation of the new features. |
-| Monitoring               | Good    | Monitoring mechanisms are in place to track key events and changes within the system.                                                                          |
-| Testing and verification | Good    | The codebase includes unit, fuzz, and invariant testing.                                                                                                       |
+| Monitoring               | Good    | Monitoring mechanisms are in place to track key events and changes within the system.                                                                            |
+| Testing and verification | Good    | The codebase includes unit, fuzz, and invariant testing.                                                                                                         |
 
 ## Findings Explanation
 

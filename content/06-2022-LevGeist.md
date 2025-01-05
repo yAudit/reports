@@ -8,8 +8,6 @@ image: assets/images/logo.png
 
 # yAudit LevGeist Review
 
-{: .no_toc }
-
 **Review Resources:**
 Documentation was provided
 
@@ -25,8 +23,6 @@ Documentation was provided
 - Jib
 
 ## Table of Contents
-
-{: .no_toc }
 
 1. TOC
    {:toc}

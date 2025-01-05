@@ -8,8 +8,6 @@ image: assets/images/logo.png
 
 # yAudit Dopex rDPX v2 Review <!-- omit in toc -->
 
-{: .no_toc }
-
 **Review Resources:**
 
 - [Dopex docs](https://docs.dopex.io/)
@@ -21,8 +19,6 @@ image: assets/images/logo.png
 - securerodd
 
 ## Table of Contents <!-- omit in toc -->
-
-{: .no_toc }
 
 1. TOC
    {:toc}

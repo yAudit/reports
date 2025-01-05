@@ -8,8 +8,6 @@ image: assets/images/logo.png
 
 # yAudit OpenMEV Review
 
-{: .no_toc }
-
 **Review Resources:**
 
 - [Wiki](https://github.com/manifoldfinance/OpenMevRouter/wiki)
@@ -21,8 +19,6 @@ image: assets/images/logo.png
 - engn33r
 
 ## Table of Contents
-
-{: .no_toc }
 
 1. TOC
    {:toc}

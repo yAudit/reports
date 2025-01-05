@@ -8,8 +8,6 @@ image: assets/images/logo.png
 
 # yAudit Singularity v2 Review
 
-{: .no_toc }
-
 **Review Resources:**
 
 - [Docs](https://docs.revenantlabs.io/singularity/)
@@ -34,8 +32,6 @@ image: assets/images/logo.png
 - cmichel
 
 ## Table of Contents
-
-{: .no_toc }
 
 1. TOC
    {:toc}

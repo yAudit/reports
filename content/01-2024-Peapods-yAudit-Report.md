@@ -8,8 +8,6 @@ image: assets/images/logo.png
 
 # yAudit Peapods Review
 
-{: .no_toc }
-
 **Review Resources:**
 
 - [Protocol documentation](https://docs.peapods.finance/).
@@ -20,8 +18,6 @@ image: assets/images/logo.png
 - puxyz
 
 ## Table of Contents
-
-{: .no_toc }
 
 1. TOC
    {:toc}

@@ -8,8 +8,6 @@ image: assets/images/logo.png
 
 # yAudit Dopex V2 CLAMM Review <!-- omit in toc -->
 
-{: .no_toc }
-
 **Review Resources:**
 
 - [Design document](https://docs.google.com/document/d/1uEXBgGJc6ZeAbvMAOpAYotPtfRF2oeneLwTCReSKw6Y/)
@@ -22,8 +20,6 @@ image: assets/images/logo.png
 - popular
 
 ## Table of Contents <!-- omit in toc -->
-
-{: .no_toc }
 
 1. TOC
    {:toc}

@@ -8,8 +8,6 @@ image: assets/images/logo.png
 
 # yAudit Euler EVC Review
 
-{: .no_toc }
-
 **Review Resources:**
 
 - [Documentation and diagrams](https://github.com/euler-xyz/ethereum-vault-connector/tree/master/docs)
@@ -21,8 +19,6 @@ image: assets/images/logo.png
 - NibblerExpress
 
 ## Table of Contents
-
-{: .no_toc }
 
 1. TOC
    {:toc}

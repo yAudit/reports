@@ -8,8 +8,6 @@ image: assets/images/logo.png
 
 # yAudit Sickle Update Review
 
-{: .no_toc }
-
 **Review Resources:**
 
 The code repositories and a gist of things that had changed since the last review.
@@ -20,8 +18,6 @@ The code repositories and a gist of things that had changed since the last revie
 - HHK
 
 ## Table of Contents
-
-{: .no_toc }
 
 1. TOC
    {:toc}

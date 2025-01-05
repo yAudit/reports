@@ -8,8 +8,6 @@ image: assets/images/logo.png
 
 # yAudit Timeless Yield Daddy Review
 
-{: .no_toc }
-
 **Review Resources:**
 None beyond the code repositories
 
@@ -19,8 +17,6 @@ None beyond the code repositories
 - Benjamin Samuels
 
 ## Table of Contents
-
-{: .no_toc }
 
 1. TOC
    {:toc}

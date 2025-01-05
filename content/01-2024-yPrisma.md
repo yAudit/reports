@@ -8,8 +8,6 @@ image: assets/images/logo.png
 
 # yAudit yPrisma Review <!-- omit in toc -->
 
-{: .no_toc }
-
 **Review Resources:**
 
 - Repository containing the codebase.
@@ -20,8 +18,6 @@ image: assets/images/logo.png
 - hhk
 
 ## Table of Contents <!-- omit in toc -->
-
-{: .no_toc }
 
 1. TOC
    {:toc}

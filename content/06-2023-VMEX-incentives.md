@@ -8,8 +8,6 @@ image: assets/images/logo.png
 
 # yAudit VMEX Incentives Review
 
-{: .no_toc }
-
 **Review Resources:**
 
 A pull request of the feature, and two notion documents explaining the use case and context of the feature were provided.
@@ -20,8 +18,6 @@ A pull request of the feature, and two notion documents explaining the use case 
 - HHK
 
 ## Table of Contents
-
-{: .no_toc }
 
 1. TOC
    {:toc}

@@ -8,8 +8,6 @@ image: assets/images/logo.png
 
 # yAudit Yearn Stargate Strategy Review
 
-{: .no_toc }
-
 **Review Resources:**
 
 - [Stargate User Docs](https://stargateprotocol.gitbook.io/stargate/v/user-docs/)
@@ -28,8 +26,6 @@ image: assets/images/logo.png
 - DecorativePineapple
 
 ## Table of Contents
-
-{: .no_toc }
 
 1. TOC
    {:toc}

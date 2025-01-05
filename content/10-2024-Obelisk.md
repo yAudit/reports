@@ -7,7 +7,6 @@ image: assets/images/logo.png
 ---
 
 # yAudit Obelisk Review <!-- omit in toc -->
-{: .no_toc }
 
 **Review Resources:**
 
@@ -19,10 +18,9 @@ image: assets/images/logo.png
 - HHK
 
 ## Table of Contents <!-- omit in toc -->
-{: .no_toc }
 
 1. TOC
-{:toc}
+   {:toc}
 
 ## Review Summary
 
@@ -67,7 +65,6 @@ This review is a code review to identify potential vulnerabilities in the code. 
 
 yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Obelisk and users of the contracts agree to use the code at their own risk.
 
-
 ## Code Evaluation Matrix
 
 | Category                 | Mark    | Description                                                                                                                                           |
@@ -94,6 +91,7 @@ Findings are broken down into sections by their respective impact:
   - Findings including recommendations and best practices.
 
 ---
+
 ## Critical Findings
 
 ### 1. Critical - Any user can forfeit another user's rewards
@@ -128,40 +126,39 @@ Consider reverting if `_claimRequirements()` returns `false` or always set the `
 
 Resolved: [458ce2d46c53147748158aa7c1d35d5971df7e7b](https://github.com/HeroglyphEVM/Obelisk/pull/19/commits/458ce2d46c53147748158aa7c1d35d5971df7e7b)
 
-
-
 ### 2. Critical - `_claim` function should update `userYieldSnapshot`
 
 The `userYieldSnapshot` mapping tracks the accumulated yield per token for each user at the time of their last interaction (deposit, withdrawal, or claim). On a claim, the value should be updated to reflect the distribution of rewards, but it's not.
 
 #### Technical Details
 
-While the `_afterVirtualDeposit` and `_afterVirtualWithdraw` are updating `userYieldSnapshot`, the [`claim`](https://github.com/HeroglyphEVM/Obelisk/blob/74ca9c65a1d93d2b0fbd0c15225ea500a0291353/src/services/tickers/LiteTicker.sol#L42-L42) function doesn't. This introduces the opportunity to claim multiple times. With the `userYieldSnapshot` not updated, the `sendingReward`remains positive and continually grows. 
+While the `_afterVirtualDeposit` and `_afterVirtualWithdraw` are updating `userYieldSnapshot`, the [`claim`](https://github.com/HeroglyphEVM/Obelisk/blob/74ca9c65a1d93d2b0fbd0c15225ea500a0291353/src/services/tickers/LiteTicker.sol#L42-L42) function doesn't. This introduces the opportunity to claim multiple times. With the `userYieldSnapshot` not updated, the `sendingReward`remains positive and continually grows.
 
 ```solidity
 File: Megapool.sol
-115: 
+115:
 116:   function _claim(address _holder, bool _ignoreRewards) internal nonReentrant {
 117:     INTEREST_MANAGER.claim();
 118:     uint256 currentYieldBalance = REWARD_TOKEN.balanceOf(address(this));
-119: 
+119:
 120:     if (totalShares > 0) {
 121:       yieldPerTokenInRay = yieldPerTokenInRay + ShareableMath.rdiv(_getNewYield(), totalShares);
 122:     } else if (currentYieldBalance != 0) {
 123:       REWARD_TOKEN.transfer(owner(), currentYieldBalance);
 124:     }
-125: 
+125:
 126:     uint256 last = userYieldSnapshot[_holder];
 127:     uint256 curr = ShareableMath.rmul(userShares[_holder], yieldPerTokenInRay);
-128: 
+128:
 129:     if (curr > last && !_ignoreRewards) {
 130:       uint256 sendingReward = curr - last;
 131:       REWARD_TOKEN.transfer(_holder, sendingReward);
 132:     }
-133: 
+133:
 134:     yieldBalance = REWARD_TOKEN.balanceOf(address(this));
 135:   }
 ```
+
 #### Impact
 
 Critical.
@@ -173,7 +170,6 @@ Update `userYieldSnapshot` on a claim.
 #### Developer Response
 
 Resolved: [11ed1315205a589195ce181930922134005bb6f2](https://github.com/HeroglyphEVM/Obelisk/pull/19/commits/11ed1315205a589195ce181930922134005bb6f2)
-
 
 ## High Findings
 
@@ -198,8 +194,8 @@ High.
 Remove the ETH transfer or transfer the axpEth to the registry instead of the user and unwrap the token into ETH.
 
 #### Developer Response
-Resolved: [c66d74ccad065760036c8ea57b6712a1a9ca8038](https://github.com/HeroglyphEVM/Obelisk/pull/19/commits/c66d74ccad065760036c8ea57b6712a1a9ca8038)
 
+Resolved: [c66d74ccad065760036c8ea57b6712a1a9ca8038](https://github.com/HeroglyphEVM/Obelisk/pull/19/commits/c66d74ccad065760036c8ea57b6712a1a9ca8038)
 
 ### 2. High - `InterestManager` will miss some rewards
 
@@ -250,7 +246,6 @@ Add an `onlyOwner()` function to add pools to the `isWrappedNFT()` mapping on th
 
 Resolved: [5e0abf1718084cebec17a86d5b6ab0a751a1f559](https://github.com/HeroglyphEVM/Obelisk/pull/19/commits/5e0abf1718084cebec17a86d5b6ab0a751a1f559)
 
-
 ## Medium Findings
 
 ### 1. Medium - swap with `amountOutMinimum`set to zero is not recommended
@@ -267,7 +262,6 @@ Medium.
 
 You could explore the possibility of using cowswap orders, but that would require changes in how you distribute rewards. It will protect the protocol from MEV and get a better price than the hardcoded DAI<>ETH pool.
 An example can be found [here](https://github.com/curvefi/curve-burners/blob/86041b94ac8ba3bb0c97c13d032b903c8f48842e/contracts/burners/CowSwapBurner.vy#L6).
-
 
 #### Developer Response
 
@@ -296,8 +290,6 @@ Consider allowing free wrapping only once per NFT ID or add a fee and/or a delay
 #### Developer Response
 
 resolved: [6b76f778102a0d78c94c40b6f601b889225005fd](https://github.com/HeroglyphEVM/Obelisk/pull/19/commits/6b76f778102a0d78c94c40b6f601b889225005fd)
-
-
 
 ### 3. Medium - The HCT multiplier will not update automatically
 
@@ -371,7 +363,6 @@ Remove the function.
 
 Resolved: [e4df808289475e24365c070ef1ff94b0caf775ca](https://github.com/HeroglyphEVM/Obelisk/pull/19/commits/e4df808289475e24365c070ef1ff94b0caf775ca)
 
-
 ### 2. Low - Review Math formula in `HCT`
 
 The math formula in HCT seems wrong. Once simplified, it makes no use of the `totalPower`
@@ -396,10 +387,11 @@ Now, if we replace `_userInfo.multiplier`.
 uint256 rateReward = Math.sqrt(_userInfo.power * totalMultiplier * PRECISION / totalPower) / 1 days;
 ```
 
-`_userInfo.power`  being `totalPower` when we simplify we get:
-```solidity
+`_userInfo.power` being `totalPower` when we simplify we get:
+
+````solidity
  uint256 rateReward = Math.sqrt(totalMultiplier * PRECISION) / 1 days;```
-```
+````
 
 #### Impact
 
@@ -410,8 +402,8 @@ Low. The math formula seems wrong.
 Review the math formula.
 
 #### Developer Response
-Resolved: [3e79a2f813f60a82a1f21a59c9896f17a3399511](https://github.com/HeroglyphEVM/Obelisk/commit/3e79a2f813f60a82a1f21a59c9896f17a3399511)
 
+Resolved: [3e79a2f813f60a82a1f21a59c9896f17a3399511](https://github.com/HeroglyphEVM/Obelisk/commit/3e79a2f813f60a82a1f21a59c9896f17a3399511)
 
 ### 3. Low - HCT tokens can't be claimed
 
@@ -434,8 +426,6 @@ Add a public claim function.
 
 resolved: [b6a3bf51e23429342ffb93a34ab2813acc12cf3f](https://github.com/HeroglyphEVM/Obelisk/commit/b6a3bf51e23429342ffb93a34ab2813acc12cf3f)
 
-
-
 ### 4. Low - MegaPool shares can be removed
 
 Shares will always be equal to the virtual deposit amount. They can be removed.
@@ -447,19 +437,15 @@ Shares will always be equal to the virtual deposit amount. They can be removed.
 ```solidity
 File: Megapool.sol
 48:     uint256 addedShare = 1e18;
-49: 
+49:
 50:     virtualBalances[_holder] += DEPOSIT_AMOUNT;
-51: 
+51:
 52:     if (totalShares > 0) {
 53:       addedShare = (totalShares * DEPOSIT_AMOUNT) / totalVirtualBalance;
 54:     }
 ```
 
-This calculation results in:
-    - First deposit: `10**18 = 1.0e18` shares, total shares: 10e18
-    - Second deposit: `10**18 * 10**18 / 10**18 = 1.0e18` shares, total shares: 2 * 10e18
-    - Third deposit: `2*10**18 * 10**18 / 2*10**18 = 1.0e18` shares, total shares: 3 * 10e18
-    - Fourth deposit: `3*10**18 * 10**18 / 3*10**18 = 1.0e18` shares, total shares: 4 * 10e18
+This calculation results in: - First deposit: `10**18 = 1.0e18` shares, total shares: 10e18 - Second deposit: `10**18 * 10**18 / 10**18 = 1.0e18` shares, total shares: 2 * 10e18 - Third deposit: `2*10**18 \* 10**18 / 2*10\*\*18 = 1.0e18` shares, total shares: 3 * 10e18 - Fourth deposit: `3*10**18 * 10**18 / 3*10**18 = 1.0e18` shares, total shares: 4 \* 10e18
 
 2. In `_afterVirtualWithdraw`:
 
@@ -467,23 +453,24 @@ This calculation results in:
 File: Megapool.sol
 78:     uint256 newShare = 0;
 79:     uint256 holderBalance = virtualBalances[_holder];
-80: 
+80:
 81:     if (totalShares > 0 && holderBalance > 0) {
 82:       newShare = (totalShares * holderBalance) / totalVirtualBalance;
 83:     }
-84: 
+84:
 ```
 
 - Before withdrawal: 4e18 shares, 4e18 tokens deposited.
 - Imagine a user with two deposits: 2e18 shares.
-- After withdrawal of one deposit, newShares = (4e18 * 1e18) / 4e18 = 1e18.
+- After withdrawal of one deposit, newShares = (4e18 \* 1e18) / 4e18 = 1e18.
 - Final state: 1e18 shares for the user.
 
 No other part of the codebase changes the `totalVirtualBalance` or the number of `shares`.
 
 Additionally, if changes were made, the share ratio was to fluctuate, the `_afterVirtualWithdraw` will need to be updated as the current implementation will always:
+
 - Reset the user's share value. This means if the user deposited earlier and had a better share value than the current one, withdrawing a part of his deposit will reset his ratio to a new ratio. E.g., Deposited when one share equals one token, now the ratio is one share equals two tokens; if the user deposited 3 NFTs and received three shares and now withdraws 1 NFT, instead of getting his shares reduced by 1/3 (left with two shares), his share ratio is recomputed and leaves him with only one share.
-When recalculating the shares, the `totalShares` and `totalVirtualBalance` are not reduced, while the `holderBalance` is. This means the user will always receive fewer shares than he should have. 
+  When recalculating the shares, the `totalShares` and `totalVirtualBalance` are not reduced, while the `holderBalance` is. This means the user will always receive fewer shares than he should have.
 
 #### Impact
 
@@ -499,7 +486,6 @@ Low
 #### Developer Response
 
 Resolved: [db3c258aee78aeb79214bced4a35e5899fff2261](https://github.com/HeroglyphEVM/Obelisk/pull/19/commits/db3c258aee78aeb79214bced4a35e5899fff2261)
-
 
 ### 5. Low - Pirex ETH deposits can be paused
 
@@ -521,7 +507,6 @@ Make sure transactions aren't broadcasted if `PirexEth`is paused.
 
 Acknowledged.
 
-
 ### 6. Low - Rewards notified before the first deposit will be lost
 
 #### Technical Details
@@ -539,7 +524,6 @@ You could reset the `unixPeriodFinish` on the first deposit when `totalSupply ==
 #### Developer Response
 
 Resolved: [0cc1f855896915ffc12fbccd152c123727fdd956](https://github.com/HeroglyphEVM/Obelisk/pull/19/commits/0cc1f855896915ffc12fbccd152c123727fdd956)
-
 
 ## Gas Saving Findings
 
@@ -568,7 +552,6 @@ Gas savings.
 1. Add the Pot contract as an immutable state variable and read the `chi` value directly from it.
 2. Update the `_beforeWithdrawal` and `claim` functions to use the `chi` value for interest calculations without performing full withdrawals.
 3. Only withdraw the exact amount of Chai tokens needed for the requested operation.
-
 
 Use this function to calculate interest in `_beforeWithdrawal` and `claim`, and only perform withdrawals for the required token amount.
 
@@ -605,7 +588,6 @@ Set the maximum allowance for the Uniswap Router in the constructor.
 
 resolved: [020f9f649481bbeb683b65d212e4b89acaf87720](https://github.com/HeroglyphEVM/Obelisk/pull/19/commits/020f9f649481bbeb683b65d212e4b89acaf87720)
 
-
 ### 3. Gas - Inefficient DAI to APX_ETH conversion in `InterestManager`
 
 The `claim` function in the `InterestManager` contract triggers a conversion of DAI to APX_ETH regardless of the amount of DAI claimed. This process involves swapping DAI for WETH, unwrapping WETH to ETH, and depositing ETH into Pirex ETH. This operation is performed without considering a minimum threshold, potentially leading to inefficient use of gas for small amounts.
@@ -619,7 +601,7 @@ File: InterestManager.sol
 146:     if (daiBalance == 0) return 0;
 147:     // @audit: should trigger based on a minimum amount.
 148:     TransferHelper.safeApprove(address(DAI), SWAP_ROUTER, daiBalance);
-149: 
+149:
 150:     ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
 151:       tokenIn: address(DAI),
 152:       tokenOut: address(WETH),
@@ -644,9 +626,7 @@ Implement a minimum threshold for the DAI balance before proceeding with the con
 
 Resolved: [fee6a7a8aa67a4d4db5a0ff3e4238d2c91daaaa9](https://github.com/HeroglyphEVM/Obelisk/pull/19/commits/fee6a7a8aa67a4d4db5a0ff3e4238d2c91daaaa9)
 
-
 #### Developer Response
-
 
 ### 4. Gas - Redundant state variable getters
 
@@ -664,7 +644,6 @@ File: ObeliskRegistry.sol
 
 [ObeliskRegistry.sol#L346](https://github.com/HeroglyphEVM/Obelisk/tree/74ca9c65a1d93d2b0fbd0c15225ea500a0291353/src/services/nft/ObeliskRegistry.sol#L346)
 
-
 #### Impact
 
 Gas savings.
@@ -679,14 +658,11 @@ Resolved -- supportedCollections is supposed to be internal
 
 [b3c2f4ef765b756d53dce9bd74c59ac291a38522](https://github.com/HeroglyphEVM/Obelisk/pull/19/commits/b3c2f4ef765b756d53dce9bd74c59ac291a38522)
 
-
-
 ### 5. Gas - State variables can be packed into fewer storage slots
 
 If variables occupying the same slot are both written using the same function or by the constructor, a separate Gsset (20000 gas) is avoided. Reads of the variables can also be cheaper.
 
 #### Technical Details
-
 
 ```solidity
 File: InterestManager.sol
@@ -712,21 +688,21 @@ File: InterestManager.sol
 
 23: uint256 public constant PRECISION = 1e18;
 24:   uint24 private constant DAI_POOL_FEE = 500;
-25: 
+25:
 26:   uint64 public epochId;
 27:   uint32 public override epochDuration;
 28:   address public gaugeController;
 29:   IStreamingPool public streamingPool;
-30: 
+30:
 31:   address public immutable SWAP_ROUTER;
 32:   IDripVault public immutable DRIP_VAULT_ETH;
 33:   IDripVault public immutable DRIP_VAULT_DAI;
-34: 
+34:
 35:   IERC20 public immutable DAI;
 36:   IWETH public immutable WETH;
 37:   IERC20 public immutable APX_ETH;
 38:   IPirexEth public immutable PIREX_ETH;
-39: 
+39:
 40:   mapping(address => uint128) internal pendingRewards;
 41:   mapping(uint64 => Epoch) public epochs
 ```
@@ -767,29 +743,28 @@ File: ObeliskRegistry.sol
 23:   uint256 public constant COLLECTION_REWARD_PERCENT = 4000;
 24:   uint256 public constant BPS = 10_000;
 25:   uint128 public constant REQUIRED_ETH_TO_ENABLE_COLLECTION = 100e18;
-26: 
+26:
 27:   address public immutable HCT;
 28:   address public immutable NFT_PASS;
 29:   IERC20 public immutable DAI;
 30:   IDripVault public immutable DRIP_VAULT_ETH;
 31:   IDripVault public immutable DRIP_VAULT_DAI;
-32: 
+32:
 33:   address public treasury;
 34:   address public dataAsserter;
 35:   uint32 public supportId;
 36:   uint256 public maxRewardPerCollection;
-37: 
+37:
 38:   mapping(address => Collection) public supportedCollections;
 39:   mapping(address wrappedCollection => CollectionRewards) internal wrappedCollectionRewards;
 40:   mapping(address wrappedNFT => bool isValid) public override isWrappedNFT;
-41: 
+41:
 42:   mapping(string ticker => address logic) private tickersLogic;
 43:   mapping(address user => mapping(address collection => ContributionInfo)) internal userSupportedCollections;
 44:   mapping(uint32 => Supporter) private supporters
 ```
 
 [ObeliskRegistry.sol#L20](https://github.com/HeroglyphEVM/Obelisk/tree/74ca9c65a1d93d2b0fbd0c15225ea500a0291353/src/services/nft/ObeliskRegistry.sol#L20)
-
 
 #### Impact
 
@@ -803,14 +778,11 @@ Reorder state variables.
 
 resolved: [87c38d1f283ce2cd7b81998dfc82552622ad2535](https://github.com/HeroglyphEVM/Obelisk/pull/19/commits/87c38d1f283ce2cd7b81998dfc82552622ad2535)
 
-
-
 ### 6. Gas - Structs can be packed into fewer storage slots
 
 Each slot saved can avoid an extra Gsset (**20000 gas**) for the first setting of the struct. Subsequent reads, as well as writes, have smaller gas savings.
 
 #### Technical Details
-
 
 ```solidity
 File: IObeliskRegistry.sol
@@ -849,13 +821,11 @@ Reorder variables.
 
 resolved: [bdb6503200f8a47425436185ea30a61990cf996e](https://github.com/HeroglyphEVM/Obelisk/pull/19/commits/bdb6503200f8a47425436185ea30a61990cf996e)
 
-
 ### 7. Gas - Using `storage` instead of `memory` for structs/arrays saves gas
 
-When fetching data from a storage location, assigning the data to a `memory` variable causes all fields of the struct/array to be read from storage, which incurs a Gcoldsload (**2100 gas**) for *each* field of the struct/array. If the fields are read from the new memory variable, they incur an additional `MLOAD` rather than a cheap stack read. Instead of declaring the variable with the `memory` keyword, declaring the variable with the `storage` keyword and caching any fields that need to be re-read in stack variables will be much cheaper, only incurring the Gcoldsload for the fields read.
+When fetching data from a storage location, assigning the data to a `memory` variable causes all fields of the struct/array to be read from storage, which incurs a Gcoldsload (**2100 gas**) for _each_ field of the struct/array. If the fields are read from the new memory variable, they incur an additional `MLOAD` rather than a cheap stack read. Instead of declaring the variable with the `memory` keyword, declaring the variable with the `storage` keyword and caching any fields that need to be re-read in stack variables will be much cheaper, only incurring the Gcoldsload for the fields read.
 
 #### Technical Details
-
 
 ```solidity
 File: NFTPass.sol
@@ -877,13 +847,11 @@ Use a storage variable.
 
 Resolved: [994a489dceaaab406534d31a19d845ad1a130d12](https://github.com/HeroglyphEVM/Obelisk/pull/19/commits/994a489dceaaab406534d31a19d845ad1a130d12)
 
-
 ### 8. Gas - Remove or replace unused state variables
 
 Unused state variables should be removed or replaced to save gas.
 
 #### Technical Details
-
 
 ```solidity
 File: StreamingPool.sol
@@ -892,8 +860,6 @@ File: StreamingPool.sol
 ```
 
 [StreamingPool.sol#L21](https://github.com/HeroglyphEVM/Obelisk/tree/74ca9c65a1d93d2b0fbd0c15225ea500a0291353/src/services/StreamingPool.sol#L21)
-
-
 
 ```solidity
 File: ObeliskHashmask.sol
@@ -904,8 +870,6 @@ File: ObeliskHashmask.sol
 ```
 
 [ObeliskHashmask.sol#L23](https://github.com/HeroglyphEVM/Obelisk/tree/74ca9c65a1d93d2b0fbd0c15225ea500a0291353/src/services/nft/ObeliskHashmask.sol#L23), [ObeliskHashmask.sol#L24](https://github.com/HeroglyphEVM/Obelisk/tree/74ca9c65a1d93d2b0fbd0c15225ea500a0291353/src/services/nft/ObeliskHashmask.sol#L24)
-
-
 
 ```solidity
 File: Megapool.sol
@@ -933,7 +897,6 @@ In the current implementation, when the ETH amount to be refunded is smaller tha
 
 #### Technical Details
 
-
 ```solidity
 File: NFTPass.sol
 60:     (success,) = msg.sender.call{ value: remainingValue }("");  // @audit: do not transfer back if cost more than gas cost.
@@ -941,7 +904,6 @@ File: NFTPass.sol
 ```
 
 [NFTPass.sol#L60-L61](https://github.com/HeroglyphEVM/Obelisk/blob/3964e5c37a16d91e26b0d9db01a11033f30557a8/src/services/nft/NFTPass.sol#L60-L61)
-
 
 #### Impact
 
@@ -952,9 +914,8 @@ Gas savings.
 Return ETH to the user only if it's worth the additional gas.
 
 #### Developer Response
+
 Resolved: [21cfa822451df95bb9d5ad0c7ea1796bd33d1040](https://github.com/HeroglyphEVM/Obelisk/pull/19/commits/21cfa822451df95bb9d5ad0c7ea1796bd33d1040)
-
-
 
 ### 10. Gas - Optimize `updateReceiverAddress()` and `create()` using function polymorphism
 
@@ -962,7 +923,8 @@ The [`updateReceiverAddress()`](https://github.com/HeroglyphEVM/Obelisk/blob/74c
 
 #### Technical Details
 
-For the create() function, the _receiverWallet and _maxCost parameters are optional. The function can be rewritten as:
+For the create() function, the \_receiverWallet and \_maxCost parameters are optional. The function can be rewritten as:
+
 ```solidity
 function create(string calldata _name) external {
   create(_name, msg.sender, type(uint256).max);
@@ -985,7 +947,6 @@ function updateReceiverAddress(uint256 _nftId, _receiver) public {
   // ... existing implementation ...
 }
 ```
-
 
 #### Impact
 
@@ -1045,8 +1006,6 @@ Inline modifiers.
 
 Resolved: [a41562b8755345e5034675e0b4a82ef0b160fc5a](https://github.com/HeroglyphEVM/Obelisk/pull/19/commits/a41562b8755345e5034675e0b4a82ef0b160fc5a)
 
-
-
 ### 12. Gas - State variables are accessed, but the value exists in memory
 
 The state variable has been assigned from a memory variable. It is recommended to use the memory variable instead of the state variable. This can save 100 gas per instance.
@@ -1081,15 +1040,13 @@ Use the existing in-memory value.
 
 Resolved: [abf25599d9b65c2cd28dfdd2b076c16194c4a07f](https://github.com/HeroglyphEVM/Obelisk/pull/19/commits/abf25599d9b65c2cd28dfdd2b076c16194c4a07f)
 
-
-
 ### 13. Gas - Useless `_minAmountOut` in `send()`
 
 #### Technical Details
 
 The function [`send()`](https://github.com/HeroglyphEVM/Obelisk/blob/74ca9c65a1d93d2b0fbd0c15225ea500a0291353/src/services/tickers/WrappedGnosisToken.sol#L49-L49) allows sending `genesisToken` from the Ethereum network back to Arbitrum.
 
-The function has a `_minAmountOut` to protect against slippage; however, there is no fee or any functionality that will change the initial asked amount, as the [_debit()`](https://github.com/HeroglyphEVM/Obelisk/blob/74ca9c65a1d93d2b0fbd0c15225ea500a0291353/src/services/tickers/WrappedGnosisToken.sol#L139-L139) function will just burn the amount asked, making this parameter and the check useless.
+The function has a `_minAmountOut` to protect against slippage; however, there is no fee or any functionality that will change the initial asked amount, as the [\_debit()`](https://github.com/HeroglyphEVM/Obelisk/blob/74ca9c65a1d93d2b0fbd0c15225ea500a0291353/src/services/tickers/WrappedGnosisToken.sol#L139-L139) function will just burn the amount asked, making this parameter and the check useless.
 
 #### Impact
 
@@ -1102,7 +1059,6 @@ Remove the parameter and check.
 #### Developer Response
 
 Resolved: [5b3c79b589da3b4652db5f74f2b6e92e637d05fb](https://github.com/HeroglyphEVM/Obelisk/pull/19/commits/5b3c79b589da3b4652db5f74f2b6e92e637d05fb)
-
 
 ### 14. Gas - Simplify `_queueNewRewards()` check
 
@@ -1123,8 +1079,6 @@ Simplify the check.
 #### Developer Response
 
 Resolved: [f9610d79b6ef39cc8af2aa54e9fc05ecf80a9420](https://github.com/HeroglyphEVM/Obelisk/pull/19/commits/f9610d79b6ef39cc8af2aa54e9fc05ecf80a9420)
-
-
 
 ### 15. Gas - Simplify `_deleteShare()`
 
@@ -1147,7 +1101,6 @@ Simplify the function.
 
 Resolved with issue: ["MegaPool shares can be removed"](https://github.com/HeroglyphEVM/Obelisk/pull/19/commits/db3c258aee78aeb79214bced4a35e5899fff2261)
 
-
 ### 16. Gas - Remove `_maxCost` parameter in `create()`
 
 #### Technical Details
@@ -1167,8 +1120,6 @@ Remove `_maxCost` and the linked checks.
 #### Developer Response
 
 Resolved: [74f427cfb8a7caf5bf22e735117b175fb9b1f3c8](https://github.com/HeroglyphEVM/Obelisk/pull/19/commits/74f427cfb8a7caf5bf22e735117b175fb9b1f3c8)
-
-
 
 ### 17. Gas - Useless caching in `wrap()`
 
@@ -1210,7 +1161,6 @@ Remove the first `if` check in `_credit()`.
 
 Resolved: [ea4a23242f83cf049389ecd371057343f5914c2c](https://github.com/HeroglyphEVM/Obelisk/pull/19/commits/ea4a23242f83cf049389ecd371057343f5914c2c)
 
-
 ### 19. Gas - Useless call to `_queueNewRewards()` when depositing and withdrawing
 
 #### Technical Details
@@ -1231,7 +1181,6 @@ Consider setting up a bot that will call it periodically and save gas for your u
 
 Acknowledged -- Won't modify
 
-
 ### 20. Gas - call `_updateName()` directly in `link()`
 
 #### Technical Details
@@ -1248,9 +1197,7 @@ Call `_updateName()` instead of `_removeOldTickers()`.
 
 #### Developer Response
 
-
 Resolved: [9f673a82d8b878203fd3525bfbecc7ad6b8be88d](https://github.com/HeroglyphEVM/Obelisk/pull/19/commits/9f673a82d8b878203fd3525bfbecc7ad6b8be88d)
-
 
 ### 21. Gas - Useless array in `_addNewTickers()`
 
@@ -1269,9 +1216,8 @@ Gas.
 Replace the array with a `uint256` variable.
 
 #### Developer Response
+
 Resolved: [fce5b55637f05347fb4f43f40ae1cfb5bccbc5d8](https://github.com/HeroglyphEVM/Obelisk/pull/19/commits/fce5b55637f05347fb4f43f40ae1cfb5bccbc5d8)
-
-
 
 ### 22. Gas - Simplify check in `claim()`
 
@@ -1290,9 +1236,8 @@ Gas.
 Simplify the check with the suggestion.
 
 #### Developer Response
-Resolved:  [315d038ef226de17127ea06a32c218afacd71ce4](https://github.com/HeroglyphEVM/Obelisk/pull/19/commits/315d038ef226de17127ea06a32c218afacd71ce4)
 
-
+Resolved: [315d038ef226de17127ea06a32c218afacd71ce4](https://github.com/HeroglyphEVM/Obelisk/pull/19/commits/315d038ef226de17127ea06a32c218afacd71ce4)
 
 ## Informational Findings
 
@@ -1301,7 +1246,6 @@ Resolved:  [315d038ef226de17127ea06a32c218afacd71ce4](https://github.com/Herogly
 Typos found on the code.
 
 #### Technical Details
-
 
 #### Technical Details
 
@@ -1353,7 +1297,6 @@ File: services/nft/ObeliskNFT.sol
 
 [services/nft/ObeliskNFT.sol#L41](https://github.com/HeroglyphEVM/Obelisk/tree/74ca9c65a1d93d2b0fbd0c15225ea500a0291353/services/nft/ObeliskNFT.sol#L41), [services/nft/ObeliskNFT.sol#L42](https://github.com/HeroglyphEVM/Obelisk/tree/74ca9c65a1d93d2b0fbd0c15225ea500a0291353/services/nft/ObeliskNFT.sol#L42), [services/nft/ObeliskNFT.sol#L56](https://github.com/HeroglyphEVM/Obelisk/tree/74ca9c65a1d93d2b0fbd0c15225ea500a0291353/services/nft/ObeliskNFT.sol#L56), [services/nft/ObeliskNFT.sol#L57](https://github.com/HeroglyphEVM/Obelisk/tree/74ca9c65a1d93d2b0fbd0c15225ea500a0291353/services/nft/ObeliskNFT.sol#L57), [services/nft/ObeliskNFT.sol#L63](https://github.com/HeroglyphEVM/Obelisk/tree/74ca9c65a1d93d2b0fbd0c15225ea500a0291353/services/nft/ObeliskNFT.sol#L63), [services/nft/ObeliskNFT.sol#L71](https://github.com/HeroglyphEVM/Obelisk/tree/74ca9c65a1d93d2b0fbd0c15225ea500a0291353/services/nft/ObeliskNFT.sol#L71), [services/nft/ObeliskNFT.sol#L76](https://github.com/HeroglyphEVM/Obelisk/tree/74ca9c65a1d93d2b0fbd0c15225ea500a0291353/services/nft/ObeliskNFT.sol#L76), [services/nft/ObeliskNFT.sol#L91](https://github.com/HeroglyphEVM/Obelisk/tree/74ca9c65a1d93d2b0fbd0c15225ea500a0291353/services/nft/ObeliskNFT.sol#L91)
 
-
 ```solidity
 File: services/nft/ObeliskRegistry.sol
 
@@ -1384,7 +1327,6 @@ File: services/nft/ObeliskRegistry.sol
 
 [services/nft/ObeliskRegistry.sol#L156](https://github.com/HeroglyphEVM/Obelisk/tree/74ca9c65a1d93d2b0fbd0c15225ea500a0291353/services/nft/ObeliskRegistry.sol#L156), [services/nft/ObeliskRegistry.sol#L158](https://github.com/HeroglyphEVM/Obelisk/tree/74ca9c65a1d93d2b0fbd0c15225ea500a0291353/services/nft/ObeliskRegistry.sol#L158), [services/nft/ObeliskRegistry.sol#L164](https://github.com/HeroglyphEVM/Obelisk/tree/74ca9c65a1d93d2b0fbd0c15225ea500a0291353/services/nft/ObeliskRegistry.sol#L164), [services/nft/ObeliskRegistry.sol#L172](https://github.com/HeroglyphEVM/Obelisk/tree/74ca9c65a1d93d2b0fbd0c15225ea500a0291353/services/nft/ObeliskRegistry.sol#L172), [services/nft/ObeliskRegistry.sol#L173](https://github.com/HeroglyphEVM/Obelisk/tree/74ca9c65a1d93d2b0fbd0c15225ea500a0291353/services/nft/ObeliskRegistry.sol#L173), [services/nft/ObeliskRegistry.sol#L176](https://github.com/HeroglyphEVM/Obelisk/tree/74ca9c65a1d93d2b0fbd0c15225ea500a0291353/services/nft/ObeliskRegistry.sol#L176), [services/nft/ObeliskRegistry.sol#L254](https://github.com/HeroglyphEVM/Obelisk/tree/74ca9c65a1d93d2b0fbd0c15225ea500a0291353/services/nft/ObeliskRegistry.sol#L254), [services/nft/ObeliskRegistry.sol#L258](https://github.com/HeroglyphEVM/Obelisk/tree/74ca9c65a1d93d2b0fbd0c15225ea500a0291353/services/nft/ObeliskRegistry.sol#L258)
 
-
 #### Impact
 
 Informational
@@ -1396,7 +1338,6 @@ Fix typos
 #### Developer Response
 
 Resolved: [ca68d94e1fcc9a12fe07607ead0d00139ba3b086](https://github.com/HeroglyphEVM/Obelisk/pull/19/commits/ca68d94e1fcc9a12fe07607ead0d00139ba3b086)
-
 
 ### 2. Informational - Precompute address to remove `initHCT()`
 
@@ -1436,8 +1377,6 @@ Rename the parameter.
 
 Resolved: [41e4f29a52c528bcf63a0952a98e38363c24c4f6](https://github.com/HeroglyphEVM/Obelisk/pull/19/commits/41e4f29a52c528bcf63a0952a98e38363c24c4f6)
 
-
-
 ### 4. Informational - Last user calling `addToCollection()` can pick the `FREE_SLOT_FOR_ODD`
 
 #### Technical Details
@@ -1457,7 +1396,6 @@ Only use the collection address.
 #### Developer Response
 
 Resolved: [0763c70737472baea5011b23bcdb9d3e5a50e18c](https://github.com/HeroglyphEVM/Obelisk/pull/19/commits/0763c70737472baea5011b23bcdb9d3e5a50e18c)
-
 
 ## Final remarks
 

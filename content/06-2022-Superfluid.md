@@ -8,8 +8,6 @@ image: assets/images/logo.png
 
 # yAudit Superfluid Review
 
-{: .no_toc }
-
 **Review Resources:**
 
 - [Docs](https://docs.superfluid.finance/superfluid/)
@@ -34,8 +32,6 @@ image: assets/images/logo.png
 - verypoor
 
 ## Table of Contents
-
-{: .no_toc }
 
 1. TOC
    {:toc}

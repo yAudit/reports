@@ -7,7 +7,6 @@ image: assets/images/logo.png
 ---
 
 # yAudit Euler Price Oracles Update Review <!-- omit in toc -->
-{: .no_toc }
 
 **Review Resources:**
 
@@ -19,10 +18,9 @@ image: assets/images/logo.png
 - Adriro
 
 ## Table of Contents <!-- omit in toc -->
-{: .no_toc }
 
 1. TOC
-{:toc}
+   {:toc}
 
 ## Review Summary
 
@@ -53,7 +51,6 @@ After the findings were presented to the Euler team, fixes were made and include
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
 yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Euler and users of the contracts agree to use the code at their own risk.
-
 
 ## Code Evaluation Matrix
 
@@ -111,12 +108,12 @@ For example, the following test in the codebase expects to convert between XAUt,
 183:     function test_GetQuote_XAUT() public {
 184:         RateProviderOracle oracle = new RateProviderOracle(XAUT, USD, BALANCER_XAUT_RATE_PROVIDER);
 185:         uint256 rate = 2522e18;
-186: 
+186:
 187:         uint256 outAmount = oracle.getQuote(1e18, XAUT, USD);
 188:         uint256 outAmount1000 = oracle.getQuote(1000e18, XAUT, USD);
 189:         assertApproxEqRel(outAmount, rate, REL_PRECISION);
 190:         assertEq(outAmount1000, outAmount * 1000);
-191: 
+191:
 192:         uint256 outAmountInv = oracle.getQuote(outAmount, USD, XAUT);
 193:         assertEq(outAmountInv, 1e18);
 194:         uint256 outAmountInv1000 = oracle.getQuote(outAmount1000, USD, XAUT);

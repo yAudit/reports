@@ -7,7 +7,6 @@ image: assets/images/logo.png
 ---
 
 # yAudit Euler Hook Target Firewall Review <!-- omit in toc -->
-{: .no_toc }
 
 **Review Resources:**
 
@@ -19,10 +18,9 @@ image: assets/images/logo.png
 - Panda
 
 ## Table of Contents <!-- omit in toc -->
-{: .no_toc }
 
 1. TOC
-{:toc}
+   {:toc}
 
 ## Review Summary
 
@@ -45,7 +43,6 @@ After the findings were presented to the Euler Hook Target Firewall team, fixes 
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
 yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Euler Hook Target Firewall and users of the contracts agree to use the code at their own risk.
-
 
 ## Code Evaluation Matrix
 
@@ -73,6 +70,7 @@ Findings are broken down into sections by their respective impact:
   - Findings including recommendations and best practices.
 
 ---
+
 ## Critical Findings
 
 None.
@@ -144,6 +142,7 @@ Medium.
 #### Recommendation
 
 Two propositions were made to fix the issue:
+
 - Ensure the address calling is a registered vault by checking if it has `attesters`. However, this was an incomplete fix, as someone could make up a fake vault.
 - Set a counter per address using the `msg.sender` calling in the mapping. However, this was found to be too hard to integrate as each transaction would likely call multiple vaults, requiring multiple signatures to be registered prior to the call.
 
@@ -194,7 +193,7 @@ Informational
 
 Add a secondary protection based on the number of transactions.
 
-- **Fixed limit:** Restrict the number of transactions to X over a Y-block window.2. 
+- **Fixed limit:** Restrict the number of transactions to X over a Y-block window.2.
 - **Exponential backoff:** Implement an exponential backoff mechanism where the thresholds become more strict as more transactions occur within the window.
 
 #### Developer Response

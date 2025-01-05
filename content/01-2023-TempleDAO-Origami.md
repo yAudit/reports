@@ -8,8 +8,6 @@ image: assets/images/logo.png
 
 # yAudit Temple DAO Origami Review
 
-{: .no_toc }
-
 **Review Resources:**
 
 - Some internal docs and visuals were provided
@@ -21,8 +19,6 @@ image: assets/images/logo.png
 - engn33r
 
 ## Table of Contents
-
-{: .no_toc }
 
 1. TOC
    {:toc}

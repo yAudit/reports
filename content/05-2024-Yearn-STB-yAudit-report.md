@@ -19,10 +19,9 @@ image: assets/images/logo.png
 - Panda
 
 ## Table of Contents <!-- omit in toc -->
-{: .no_toc }
 
 1. TOC
-{:toc}
+   {:toc}
 
 ## Review Summary
 
@@ -47,20 +46,19 @@ This review is a code review to identify potential vulnerabilities in the code. 
 
 yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Yearn - STB and users of the contracts agree to use the code at their own risk.
 
-
 ## Code Evaluation Matrix
 
-| Category                 | Mark    | Description |
-| ------------------------ | ------- | ----------- |
-| Access Control           | Average | Important functions are protected, although the different roles over each contract sometimes make it unclear. |
-| Mathematics              | Good | No complex mathematics is involved. |
-| Complexity               | Average | The contracts logic is pretty simple, but the multichain nature of the protocol and properties of the STB bridge increase the complexity. |
-| Libraries                | Low |  The protocol is built on top of the zkevm-stb library; it's new and had no usage before yearn-stb to be found. It has been audited once and should be used cautiously. |
-| Decentralization         | Low | Multiple admins are involved throughout the life cycle of the protocol. Whether it's for deployment, yield strategies, or bridge ownership. Admins can take control of all the funds. |
-| Code stability           | Good | No commits or changes were introduced during the audit. |
+| Category                 | Mark    | Description                                                                                                                                                                                                                                                              |
+| ------------------------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Access Control           | Average | Important functions are protected, although the different roles over each contract sometimes make it unclear.                                                                                                                                                            |
+| Mathematics              | Good    | No complex mathematics is involved.                                                                                                                                                                                                                                      |
+| Complexity               | Average | The contracts logic is pretty simple, but the multichain nature of the protocol and properties of the STB bridge increase the complexity.                                                                                                                                |
+| Libraries                | Low     | The protocol is built on top of the zkevm-stb library; it's new and had no usage before yearn-stb to be found. It has been audited once and should be used cautiously.                                                                                                   |
+| Decentralization         | Low     | Multiple admins are involved throughout the life cycle of the protocol. Whether it's for deployment, yield strategies, or bridge ownership. Admins can take control of all the funds.                                                                                    |
+| Code stability           | Good    | No commits or changes were introduced during the audit.                                                                                                                                                                                                                  |
 | Documentation            | Average | The [architecture diagram](https://github.com/yearn/yearn-stb/raw/29cf9cd2586f8460eed1967106f481cecf4ff120/image.png) describes what the protocol is trying to achieve, but there is currently no documentation and the Polygon STB's documentation is not always clear. |
-| Monitoring               | Good | Important functions emit events. |
-| Testing and verification | Average | Good test coverage is achieved throughout the codebase with a few exceptions. Testing cross-chain is always difficult. |
+| Monitoring               | Good    | Important functions emit events.                                                                                                                                                                                                                                         |
+| Testing and verification | Average | Good test coverage is achieved throughout the codebase with a few exceptions. Testing cross-chain is always difficult.                                                                                                                                                   |
 
 ## Findings Explanation
 
@@ -74,6 +72,7 @@ Findings are broken down into sections by their respective impact:
   - Findings including recommendations and best practices.
 
 ---
+
 ## Critical Findings
 
 None.

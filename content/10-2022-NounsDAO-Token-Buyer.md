@@ -8,8 +8,6 @@ image: assets/images/logo.png
 
 # yAudit NounsDAO Token Buyer Review
 
-{: .no_toc }
-
 **Review Resources:**
 
 - [Code Repo](https://github.com/nounsDAO/token-buyer/tree/23d64ac7093f504ad4731bc4cf8d41b2c2943657),
@@ -21,8 +19,6 @@ image: assets/images/logo.png
 - blockdev
 
 ## Table of Contents
-
-{: .no_toc }
 
 1. TOC
    {:toc}

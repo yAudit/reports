@@ -8,8 +8,6 @@ image: assets/images/logo.png
 
 # yAudit KEOM Upgrade Review
 
-{: .no_toc }
-
 **Review Resources:**
 
 - The ["Toxic Liquidation Spirals" whitepaper](https://arxiv.org/abs/2212.07306) explains the logic implemented in this code
@@ -21,8 +19,6 @@ image: assets/images/logo.png
 - spalen
 
 ## Table of Contents
-
-{: .no_toc }
 
 1. TOC
    {:toc}

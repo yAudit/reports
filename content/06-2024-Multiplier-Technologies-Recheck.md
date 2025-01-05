@@ -8,8 +8,6 @@ image: assets/images/logo.png
 
 # yAudit Multiplier Technologies Lending Base Layer Recheck Review <!-- omit in toc -->
 
-{: .no_toc }
-
 **Review Resources:**
 
 - Previous Multiplier Technologies audit report by yAudit
@@ -21,8 +19,6 @@ image: assets/images/logo.png
 - fedebianu
 
 ## Table of Contents <!-- omit in toc -->
-
-{: .no_toc }
 
 1. TOC
    {:toc}

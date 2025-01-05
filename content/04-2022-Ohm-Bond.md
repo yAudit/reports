@@ -8,8 +8,6 @@ image: assets/images/logo.png
 
 # yAudit Olympus Bond Review
 
-{: .no_toc }
-
 **Review Resources:**
 
 - [Support Doc](https://docs.google.com/document/d/1Q5IZV25D3Nrlu2D6IvLYqd5-ojL8vsATuzhseKJ0Vm0/edit)
@@ -21,8 +19,6 @@ image: assets/images/logo.png
 - Engn33r
 
 ## Table of Contents
-
-{: .no_toc }
 
 1. TOC
    {:toc}

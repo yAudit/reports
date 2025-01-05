@@ -8,8 +8,6 @@ image: assets/images/logo.png
 
 # yAudit GET Protocol Staking Review
 
-{: .no_toc }
-
 **Review Resources:**
 
 - [Staking documentation](https://docs.get-protocol.io/docs/token-economics-staking)
@@ -31,8 +29,6 @@ image: assets/images/logo.png
 - PraneshASP
 
 ## Table of Contents
-
-{: .no_toc }
 
 1. TOC
    {:toc}

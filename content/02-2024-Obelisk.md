@@ -19,8 +19,6 @@ image: assets/images/logo.png
 
 ## Table of Contents <!-- omit in toc -->
 
-{: .no_toc }
-
 1. TOC
    {:toc}
 

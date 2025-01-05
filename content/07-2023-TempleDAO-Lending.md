@@ -8,8 +8,6 @@ image: assets/images/logo.png
 
 # yAudit TempleDAO Lending Review
 
-{: .no_toc }
-
 **Review Resources:**
 
 - [Existing TempleDAO docs](https://docs.templedao.link/)
@@ -26,8 +24,6 @@ image: assets/images/logo.png
 - adriro
 
 ## Table of Contents
-
-{: .no_toc }
 
 1. TOC
    {:toc}

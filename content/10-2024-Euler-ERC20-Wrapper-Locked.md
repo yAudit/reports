@@ -6,9 +6,7 @@ nav_order: 11
 image: assets/images/logo.png
 ---
 
-
-# yAudit Euler ERC20 Wrapper Locked -  Review <!-- omit in toc -->
-{: .no_toc }
+# yAudit Euler ERC20 Wrapper Locked - Review <!-- omit in toc -->
 
 **Review Resources:**
 
@@ -16,14 +14,13 @@ image: assets/images/logo.png
 
 **Auditors:**
 
-- HHK 
+- HHK
 - Panda
 
 ## Table of Contents <!-- omit in toc -->
-{: .no_toc }
 
 1. TOC
-{:toc}
+   {:toc}
 
 ## Review Summary
 
@@ -31,7 +28,7 @@ image: assets/images/logo.png
 
 The Euler EVK periphery ERC20 Wrapper Locked provides a mechanism for wrapping ERC20 tokens with a time-based unlocking schedule, depending on whether accounts are whitelisted. When whitelisted, users can freely move and withdraw their tokens, while when they're not, their tokens unlock as per the unlocking schedule.
 
-The contracts of the Euler EVK periphery ERC20 Wrapper Locked [PR]([https://github.com/euler-xyz/evk-periphery/](https://github.com/euler-xyz/evk-periphery/pull/110)) were reviewed over two days. Two auditors performed the code review between 2 October and 4 October 2024. The repository was under active development during the review, but the review was limited to the latest commit at the start of the review. This was commit [a6a8024b90b334806c0d99b7bab3b10b45a74bc5](https://github.com/euler-xyz/evk-periphery/blob/a6a8024b90b334806c0d99b7bab3b10b45a74bc5) for the Euler EVK periphery ERC20 Wrapper Locked PR.
+The contracts of the Euler EVK periphery ERC20 Wrapper Locked [PR](<[https://github.com/euler-xyz/evk-periphery/](https://github.com/euler-xyz/evk-periphery/pull/110)>) were reviewed over two days. Two auditors performed the code review between 2 October and 4 October 2024. The repository was under active development during the review, but the review was limited to the latest commit at the start of the review. This was commit [a6a8024b90b334806c0d99b7bab3b10b45a74bc5](https://github.com/euler-xyz/evk-periphery/blob/a6a8024b90b334806c0d99b7bab3b10b45a74bc5) for the Euler EVK periphery ERC20 Wrapper Locked PR.
 
 ## Scope
 
@@ -119,7 +116,7 @@ None.
 
 #### Technical Details
 
-The contract emits events when a lock is created or removed, but it doesn't emit events when a lock is modified. For example, in the [_update()](https://github.com/euler-xyz/evk-periphery/blob/a6a8024b90b334806c0d99b7bab3b10b45a74bc5/src/ERC20/implementation/ERC20WrapperLocked.sol#L294-L294) function, if tokens were already transferred to the address less than a day ago the lock will be updated, but no events will be emitted.
+The contract emits events when a lock is created or removed, but it doesn't emit events when a lock is modified. For example, in the [\_update()](https://github.com/euler-xyz/evk-periphery/blob/a6a8024b90b334806c0d99b7bab3b10b45a74bc5/src/ERC20/implementation/ERC20WrapperLocked.sol#L294-L294) function, if tokens were already transferred to the address less than a day ago the lock will be updated, but no events will be emitted.
 
 #### Impact
 
@@ -133,7 +130,6 @@ Add a `LockModified()` event.
 
 Acknowledged. We do not think that it is justified to add this event. `LockCreated` event does not emit the amount information on purpose. It only emits the `account` and `lockTimestamp` because the lock creation/removal for the account seems to be the only useful information from the off-chain monitoring perspective. The fact that the lock was modified does not convey much additional information. In fact, it seems to be redundant as in can always be paired with a traditional ERC20 `Transfer` event.
 
-
 ### 2. Informational - `EVCAccountOwner` can reschedule unlocks for locked users.
 
 The `setWhitelistStatus` function in the `ERC20WrapperLocked` contract allows the EVC Account Owner to modify the lock schedule for users. This capability can potentially be used to reschedule unlocks for locked users, which may not align with the expected behavior of the locking mechanism.
@@ -143,6 +139,7 @@ The `setWhitelistStatus` function in the `ERC20WrapperLocked` contract allows th
 The `setWhitelistStatus` function is callable by the EVC Account Owner (via the `onlyEVCAccountOwner` modifier) and the contract owner (via the `onlyOwner` modifier). When changing a user's whitelist status, the function performs the following actions:
 
 1. When whitelisting an account (setting status to `true`):
+
    - Removes all existing locks for the account
    - Effectively unlocks all tokens for the account
 

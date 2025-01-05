@@ -1,13 +1,12 @@
 ---
 tags: ["solidity"]
 title: 10-2024-GuessOurBlock
-description: Guess Our Block 
+description: Guess Our Block
 nav_order: 71
 image: assets/images/logo.png
 ---
 
 # yAudit GuessOurBlock Review <!-- omit in toc -->
-{: .no_toc }
 
 **Review Resources:**
 
@@ -19,10 +18,9 @@ image: assets/images/logo.png
 - HHK
 
 ## Table of Contents <!-- omit in toc -->
-{: .no_toc }
 
 1. TOC
-{:toc}
+   {:toc}
 
 ## Review Summary
 
@@ -55,7 +53,6 @@ After the findings were presented to the GuessOurBlock team, fixes were made and
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
 yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, GuessOurBlock and users of the contracts agree to use the code at their own risk.
-
 
 ## Code Evaluation Matrix
 
@@ -96,14 +93,14 @@ None.
 
 ### 1. Medium - Potential for rug pull via `setGob` function
 
-During our discussion with the team, it was mentioned that the [`updateDripVault()`](https://github.com/HeroglyphEVM/GuessOurBlock/blob/30ae3e58017939aa21b79a29c435b68975b960db/src/GuessOurBlockReceiver.sol#L217) function can be invoked by the team to transfer all funds to the team’s treasury address. If the community disapproves of this mechanism, they have the ability to vote and disable this feature. 
+During our discussion with the team, it was mentioned that the [`updateDripVault()`](https://github.com/HeroglyphEVM/GuessOurBlock/blob/30ae3e58017939aa21b79a29c435b68975b960db/src/GuessOurBlockReceiver.sol#L217) function can be invoked by the team to transfer all funds to the team’s treasury address. If the community disapproves of this mechanism, they have the ability to vote and disable this feature.
 
 However, even with the feature disabled, the team retains the ability to withdraw all funds from the drip vaults.
 
 #### Technical Details
 
 The [`setGob()`](https://github.com/HeroglyphEVM/GuessOurBlock/blob/30ae3e58017939aa21b79a29c435b68975b960db/src/dripVaults/BaseDripVault.sol#L50) function within the [BaseDripVault](https://github.com/HeroglyphEVM/GuessOurBlock/blob/30ae3e58017939aa21b79a29c435b68975b960db/src/dripVaults/BaseDripVault.sol) contract allows the contract owner to modify the gob address. Suppose the owner is compromised or acts maliciously. In that case, they can set the gob address to one they control, enabling them to withdraw all funds from the vault regardless of whether `updateDripVault()` is enabled or disabled.
- 
+
 #### Impact
 
 Medium. The team can still take the user funds even when `updateDripVault()` is disabled.
@@ -115,7 +112,6 @@ If possible, remove the `setGob()` function.
 #### Developer Response
 
 Fixed in https://github.com/HeroglyphEVM/GuessOurBlock/pull/8/commits/1f89e4d7a6fe5da48f6c08398fd9dabd5b96a99c.
-
 
 ### 2. Medium - Updating `groupSize` can make existing guesses unwinnable
 
@@ -129,7 +125,9 @@ The current implementation of the `updateGroupSize` function can make existing v
 4. When processing winners, the code checks against the new `_blockTailNumber`, potentially missing valid guesses.
 
 ** Example:**
+
 1. Decreasing `groupSize`:
+
    - Initial `groupSize`: 10
    - User guesses for block 101, resulting in `_blockTailNumber` 100
    - `groupSize` is updated to 3
@@ -155,11 +153,9 @@ Remove `updateGroupSize()`, set `groupSize` via the constructor, and deploy a ne
 
 Fixed in https://github.com/HeroglyphEVM/GuessOurBlock/pull/8/commits/b44aa510315cddcb9c588b5f67a0c9997198948c.
 
-
 ### 3. Medium - Changing `groupSize` can make previously losing guesses become winners
 
 Modifying the `groupSize` in the GuessOurBlockReceiver contract can cause previously losing guesses to become winners, leading to potential conflicts and unfair distribution of rewards. Additionally, this change invalidates the `totalGuessWeight` for affected blocks, further complicating the reward distribution process.
-
 
 #### Technical Details
 
@@ -170,6 +166,7 @@ Modifying the `groupSize` in the GuessOurBlockReceiver contract can cause previo
 5. The `totalGuessWeight` for each block is now incorrect, as it doesn't account for the newly included or excluded guesses.
 
 ** Example:**
+
 - Initial `groupSize`: 10
 - User A guesses for block 102, resulting in `_blockTailNumber` 100
 - User B guesses for block 112, resulting in `_blockTailNumber` 110
@@ -192,14 +189,13 @@ Disable `groupSize`change, add it as a constructor parameter, and deploy a new c
 
 Fixed in https://github.com/HeroglyphEVM/GuessOurBlock/pull/8/commits/b44aa510315cddcb9c588b5f67a0c9997198948c.
 
-
 ### 4. Medium - `onValidatorTriggered()` should be `payable`
 
 The function [`onValidatorTriggered()`](https://github.com/HeroglyphEVM/GuessOurBlock/blob/30ae3e58017939aa21b79a29c435b68975b960db/src/GuessOurBlockSender.sol#L31-L31) integrates with LayerZero however it is non-payable which is an issue as the integration require a `msg.value` to pay the gas fees.
 
 #### Technical Details
 
-The function  [`onValidatorTriggered()`](https://github.com/HeroglyphEVM/GuessOurBlock/blob/30ae3e58017939aa21b79a29c435b68975b960db/src/GuessOurBlockSender.sol#L31-L31) is supposed to be called by the relayer whenever a Heroglyph validator created a block.
+The function [`onValidatorTriggered()`](https://github.com/HeroglyphEVM/GuessOurBlock/blob/30ae3e58017939aa21b79a29c435b68975b960db/src/GuessOurBlockSender.sol#L31-L31) is supposed to be called by the relayer whenever a Heroglyph validator created a block.
 
 The function doesn't have the `payable` keywords, which results in Solidity not allowing a `msg.value` different than 0 when the function is called. This is an issue as this function integrates LayerZero and calls `_quote()` with `_payInLzToken` set to `false` before calling `_lzSend()`.
 This will require a `msg.value` different than 0 to pay for the gas on the destination chain. Because of this, validators won't be able to draw winners.
@@ -219,7 +215,7 @@ contract FakeEndpoint {
         return;
     }
 
-    function quote(MessagingParams calldata _params, address _sender) external view returns (MessagingFee memory) { 
+    function quote(MessagingParams calldata _params, address _sender) external view returns (MessagingFee memory) {
         return MessagingFee({
             nativeFee: 100 wei, //pay in lz is set to false so return amount only for native
             lzTokenFee: 0 wei
@@ -232,7 +228,7 @@ contract POC is Test {
         FakeEndpoint fake = new FakeEndpoint();
         GuessOurBlockSender gob = new GuessOurBlockSender(1, address(fake), address(this), address(address(this)));
         vm.deal(address(gob), 100 ether); //give eth to gob
-        
+
         gob.setPeer(1, bytes32(uint256(1)));
 
         //try with no value
@@ -323,10 +319,9 @@ The current voting mechanism incentivizes users to guess at the edge of `_minimu
 
 #### Technical Details
 
-The current voting mechanism allows users to guess for blocks that are _minimumBlockAgeInBlock or older. However, this creates an imbalance in the voting incentives:
+The current voting mechanism allows users to guess for blocks that are \_minimumBlockAgeInBlock or older. However, this creates an imbalance in the voting incentives:
 
-
-1. Users who guess for blocks close to the _minimumBlockAgeInBlock have a higher chance of recovering their investment and potentially earning rewards.
+1. Users who guess for blocks close to the \_minimumBlockAgeInBlock have a higher chance of recovering their investment and potentially earning rewards.
 2. Users who guess for blocks further in the future face a higher risk of losing their deposit, even if their chosen block is ultimately a winning one.
 
 This is because if a winner is declared before a user's chosen block is reached, that user's deposit may be lost, regardless of the validity of their guess.
@@ -343,7 +338,6 @@ Low.
 #### Developer Response
 
 Acknowledged.
-
 
 ### 2. Low - `updateLzGasLimit()` doesn't update `defaultLzOption`
 
@@ -381,6 +375,7 @@ Low.
 #### Recommendation
 
 Consider applying one or both of these suggestions:
+
 - Update the storage variables before making external calls, especially when transferring ETH with `address.call()`.
 - Use nonreentrant modifiers.
 
@@ -460,21 +455,21 @@ File: src/GuessOurBlockReceiver.sol
 15:     uint32 public constant MAX_BPS = 10_000;
 16:     uint128 public constant TOO_LOW_BALANCE = 0.1e18;
 17:     uint32 public constant ONE_DAY_IN_ETH_BLOCK = 7200;
-18: 
+18:
 19:     FeeStructure private feeBps;
 20:     address public treasury;
 21:     IDripVault public dripVault;
-22: 
+22:
 23:     // 1 complete ticket cost
 24:     uint128 public fullWeightCost;
 25:     uint128 public lot;
 26:     uint32 public groupSize;
-27: 
+27:
 28:     mapping(uint32 blockId => BlockMetadata) private blockData;
 29:     mapping(address user => mapping(uint32 blockId => BlockAction)) private actions;
-30: 
+30:
 31:     uint32 public minimumBlockAge;
-32: 
+32:
 33:     bool public isMigratingDripVault;
 34:     bool public permanentlySetDripVault
 ```
@@ -493,7 +488,6 @@ Re-order state variables.
 
 Fixed in https://github.com/HeroglyphEVM/GuessOurBlock/pull/8/commits/3eb62ff25613432b095d9312384e17ce5baf68ce.
 
-
 ### 3. Gas - Refactor `AaveVault` `_beforeWithdrawal()`
 
 The [`_beforeWithdrawal()`](https://github.com/HeroglyphEVM/GuessOurBlock/blob/30ae3e58017939aa21b79a29c435b68975b960db/src/dripVaults/implementations/AaveVault.sol#L40) function withdraws all funds from Aave to assess the yield generated. Yield can also be evaluated using the `balanceOf()` function, as Aave tokens are rebasing tokens, meaning the balance will increase over time. By using `balanceOf()` instead of withdrawing everything, gas can be saved by avoiding a subsequent redeposit.
@@ -504,17 +498,17 @@ The [`_beforeWithdrawal()`](https://github.com/HeroglyphEVM/GuessOurBlock/blob/3
 File: AaveVault.sol
 40:     function _beforeWithdrawal(address _to, uint256 _amount) internal override {
 41:         uint128 exited = uint128(aaveV3Pool.withdraw(address(weth), type(uint256).max, address(this)));
-42: 
+42:
 43:         uint256 cachedTotalDeposit = getTotalDeposit();
 44:         uint256 interest = exited - cachedTotalDeposit;
 45:         uint256 amountToSupply = cachedTotalDeposit - _amount;
-46: 
+46:
 47:         if (amountToSupply > 0) {
 48:             aaveV3Pool.supply(address(weth), amountToSupply, address(this), 0);
 49:         }
-50: 
+50:
 51:         weth.withdraw(_amount + interest);
-52: 
+52:
 53:         _transfer(address(0), rateReceiver, interest);
 54:         _transfer(address(0), _to, _amount);
 55:     }
@@ -545,12 +539,12 @@ function _beforeWithdrawal(address _to, uint256 _amount) internal override {
 
 Fixed in https://github.com/HeroglyphEVM/GuessOurBlock/pull/8/commits/70aa9fc3840bae4f8447b8fef74bfb447694562d.
 
-
 ### 4. Gas - Reduce storage variables access
 
 #### Technical Details
 
 Some functions read variables from storage multiple times and could be stored in memory instead:
+
 - In the `apxETHVault` and `AaveVault`, the storage variables `apxETH`, `aaveV3Pool`, and `weth` are read multiple times per function.
 - In the function [`_lzReceive()`](https://github.com/HeroglyphEVM/GuessOurBlock/blob/30ae3e58017939aa21b79a29c435b68975b960db/src/GuessOurBlockReceiver.sol#L104-L104) the storage variable `blockMetadata.totalGuessWeigh` and `dripVault` are read multiple times and `lot` can sometimes be updated up to 3 times.
 - In [`updateDripVault()`](https://github.com/HeroglyphEVM/GuessOurBlock/blob/30ae3e58017939aa21b79a29c435b68975b960db/src/GuessOurBlockReceiver.sol#L217-L217) the storage variable `dripVault` is read multiple times.
@@ -623,7 +617,6 @@ File: src/dripVaults/implementations/AaveVault.sol
 
 [AaveVault.sol#L41-L41](https://github.com/HeroglyphEVM/GuessOurBlock/blob/30ae3e58017939aa21b79a29c435b68975b960db/src/dripVaults/implementations/AaveVault.sol#L41-L41)
 
-
 ```solidity
 File: src/GuessOurBlockReceiver.sol
 uint128(Math.mulDiv(_winningLot, _userWeight, _totalGuessWeight));
@@ -670,7 +663,6 @@ Remove the unused import.
 Resolved
 hash: [fce63494f6505b3a9eed1c26c56fb21195c6aef2](https://github.com/HeroglyphEVM/GuessOurBlock/pull/8/commits/fce63494f6505b3a9eed1c26c56fb21195c6aef2)
 
-
 ### 4. Informational - Unused `event` definition
 
 An unused `event` is defined and can be removed.
@@ -701,7 +693,6 @@ Fixed in https://github.com/HeroglyphEVM/GuessOurBlock/pull/8/commits/4a19dd3699
 
 #### Technical Details
 
-
 ```solidity
 File: src/GuessOurBlockSender.sol
 
@@ -719,6 +710,7 @@ File: GuessOurBlockSender.sol
 51:         lzGasLimit = _gasLimit;
 52:     }
 ```
+
 https://github.com/HeroglyphEVM/GuessOurBlock/blob/30ae3e58017939aa21b79a29c435b68975b960db/src/GuessOurBlockSender.sol#L50-L52
 
 #### Impact
@@ -732,7 +724,6 @@ Add events to keep track of the changes off-chain.
 #### Developer Response
 
 Fixed in https://github.com/HeroglyphEVM/GuessOurBlock/pull/8/commits/a7aea04b9eeff9d682110f9c9150f30fe9a1a0d5.
-
 
 ### 6. Informational - `GuessOurBlockReceiver` could be deployed on Arbitrum
 
@@ -753,7 +744,6 @@ Deploy on Arbitrum and remove LayerZero integration.
 #### Developer Response
 
 Acknowledged - Decided to stay on Mainnet.
-
 
 ### 7. Informational - add a `referralCode` to the `AaveVault`
 

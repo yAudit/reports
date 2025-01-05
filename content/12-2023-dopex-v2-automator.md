@@ -7,7 +7,6 @@ image: assets/images/logo.png
 ---
 
 # yAudit Orange Finance Dopex V2 Automator Review <!-- omit in toc -->
-{: .no_toc }
 
 **Review Resources:**
 
@@ -19,10 +18,9 @@ image: assets/images/logo.png
 - spalen
 
 ## Table of Contents <!-- omit in toc -->
-{: .no_toc }
 
 1. TOC
-{:toc}
+   {:toc}
 
 ## Review Summary
 
@@ -48,31 +46,30 @@ This review is a code review to identify potential vulnerabilities in the code. 
 
 yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Orange Finance and users of the contracts agree to use the code at their own risk.
 
-
 ## Code Evaluation Matrix
 
-| Category                 | Mark    | Description |
-| ------------------------ | ------- | ----------- |
-| Access Control           | Good | Only a few functions are access controlled, and these functions have the proper access controls applied. |
-| Mathematics              | Average | Uniswap v3 tick math is used throughout this solution, which adds some complexity. Only basic math is used for accounting of contract balances. |
-| Complexity               | Average | The goals of the protocol are clear, but the logic necessary to build on top of a protocol that provides liquidity to Uniswap v3 (instead of adding liquidity directly to Uniswap v3) and managing multiple assets adds complexity to the design. |
-| Libraries                | Average | Some library dependencies are custom while others are slightly modified from Uniswap. The automator contract specifically has a large number of imported dependencies, adding to the complexity of the design. However, the imported libraries are well-known and considered safe. |
-| Decentralization         | Average | No contracts are deployed behind a proxy where code could be upgraded, but there are access controlled functions around rebalance and fee-setting functions. The Gelato jobs are managed off-chain and are naturally managed in a more centralized way by the owner of the Gelato jobs. |
-| Code stability           | Average | Although an earlier version of the code was deployed to mainnet with very small value for testing, the code changed since that deployment and the findings from this audit demonstrate some other changes are necessary before the code is ready for production. |
-| Documentation            | Low | No docs were provided about the protocol and some of the functions are missing comments and detailed NatSpec. |
-| Monitoring               | Low | There were no events to track the actions on-chain. The Gelato job dashboard does provide a good view of whether assets are rebalanced on schedule, but there is no clear visibility into whether the settings of the protocol are ideal (how much time is the current tick out of the active ticks range, is distributing assets equally across the ticks within 2.5% of the current tick the best approach vs. only allocating to ticks within 1% of the current tick, etc.). |
-| Testing and verification | Average | The tests achieve 100% coverage of the core contracts OrangeDopexV2LPAutomator.sol, OrangeDopexV2LPAutomatorV1Factory.sol, and StrategyHelper.sol, but do not achieve as much coverage on the contracts in /lib and /vendor. |
+| Category                 | Mark    | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ------------------------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Access Control           | Good    | Only a few functions are access controlled, and these functions have the proper access controls applied.                                                                                                                                                                                                                                                                                                                                                                        |
+| Mathematics              | Average | Uniswap v3 tick math is used throughout this solution, which adds some complexity. Only basic math is used for accounting of contract balances.                                                                                                                                                                                                                                                                                                                                 |
+| Complexity               | Average | The goals of the protocol are clear, but the logic necessary to build on top of a protocol that provides liquidity to Uniswap v3 (instead of adding liquidity directly to Uniswap v3) and managing multiple assets adds complexity to the design.                                                                                                                                                                                                                               |
+| Libraries                | Average | Some library dependencies are custom while others are slightly modified from Uniswap. The automator contract specifically has a large number of imported dependencies, adding to the complexity of the design. However, the imported libraries are well-known and considered safe.                                                                                                                                                                                              |
+| Decentralization         | Average | No contracts are deployed behind a proxy where code could be upgraded, but there are access controlled functions around rebalance and fee-setting functions. The Gelato jobs are managed off-chain and are naturally managed in a more centralized way by the owner of the Gelato jobs.                                                                                                                                                                                         |
+| Code stability           | Average | Although an earlier version of the code was deployed to mainnet with very small value for testing, the code changed since that deployment and the findings from this audit demonstrate some other changes are necessary before the code is ready for production.                                                                                                                                                                                                                |
+| Documentation            | Low     | No docs were provided about the protocol and some of the functions are missing comments and detailed NatSpec.                                                                                                                                                                                                                                                                                                                                                                   |
+| Monitoring               | Low     | There were no events to track the actions on-chain. The Gelato job dashboard does provide a good view of whether assets are rebalanced on schedule, but there is no clear visibility into whether the settings of the protocol are ideal (how much time is the current tick out of the active ticks range, is distributing assets equally across the ticks within 2.5% of the current tick the best approach vs. only allocating to ticks within 1% of the current tick, etc.). |
+| Testing and verification | Average | The tests achieve 100% coverage of the core contracts OrangeDopexV2LPAutomator.sol, OrangeDopexV2LPAutomatorV1Factory.sol, and StrategyHelper.sol, but do not achieve as much coverage on the contracts in /lib and /vendor.                                                                                                                                                                                                                                                    |
 
 ## Findings Explanation
 
 Findings are broken down into sections by their respective impact:
 
- - Critical, High, Medium, Low impact
-     - These are findings that range from attacks that may cause loss of funds, impact control/ownership of the contracts, or cause any unintended consequences/actions that are outside the scope of the requirements.
- - Gas savings
-     - Findings that can improve the gas efficiency of the contracts.
- - Informational
-     - Findings including recommendations and best practices.
+- Critical, High, Medium, Low impact
+  - These are findings that range from attacks that may cause loss of funds, impact control/ownership of the contracts, or cause any unintended consequences/actions that are outside the scope of the requirements.
+- Gas savings
+  - Findings that can improve the gas efficiency of the contracts.
+- Informational
+  - Findings including recommendations and best practices.
 
 ---
 
@@ -89,6 +86,7 @@ Under very specific circumstances, it may be possible to steal value from the au
 #### Technical Details
 
 There are two main ways that a user could steal value from a vault: one is to receive more shares during depositing than they should, and the other is to receive more assets during redeeming than they should. The first case, receiving more shares during depositing, is possible in OrangeDopexV2LPAutomator.sol. However, it may not be profitable except in certain cases. The manipulation is possible because in `deposit()`, shares are calculated with [`convertToShares()`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/OrangeDopexV2LPAutomator.sol#L392). `convertToShares()` divides by [`totalAssets()`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/OrangeDopexV2LPAutomator.sol#L286), so a lower `totalAssets()` value means the user gets more shares. The last line of `totalAssets()` uses [`pool.currentTick()`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/OrangeDopexV2LPAutomator.sol#L229), which uses [slot0](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/lib/AutomatorUniswapV3PoolLib.sol#L19) (AKA spot price), which can be manipulated in a sandwich. So for this attack, the user wants to push the counter asset price down during the sandwiched `deposit()`. The sequence would look like:
+
 1. To move the counter asset price down in the WETH-USDC pool, the user takes a WETH flashloan, then sells WETH to get USDC in the Uniswap pool
 2. `deposit()` into automator using the lower value for the counter asset WETH, causing the vault to give more shares to the user than it should
 3. User sells USDC to get WETH in the pool, and returns flashloan
@@ -97,12 +95,14 @@ There are two main ways that a user could steal value from a vault: one is to re
 No `rebalance()` needs to occur for this sandwich attack, because it is the reliance on `pool.currentTick()` in `OracleLibrary.getQuoteAtTick()` in the last line of `totalAssets()` that causes the issue.
 
 Factors that would reduce the cost of this attack include:
+
 - Greater liquidity in the automator contract, specifically in the form of counter assets, will increase the profit that the attacker can receive because the value is extracted from the `OracleLibrary.getQuoteAtTick()` calculation in `totalAssets()`.
 - If the current tick drops below all the ticks where the automator contract has deposited assets into the pool, then the LP positions owned by the automator are 100% in the counterAsset (this is calculated by [`LiquidityAmounts.getAmountsForLiquidity()`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/OrangeDopexV2LPAutomator.sol#L201)). For example, if you LP into the USDC-WETH pool at the current ticks and WETH price drops, you will hold 100% WETH. This scenario makes this attack even more profitable because the automator is holding mostly counterAssets.
 - Even if there is a lot of liquidity in the Uniswap pool at a certain point in time, it is unclear who controls this liquidity. The user who wants to extract value from the automator vault may be able to withdraw (at least some of) this liquidity from Uniswap specifically to make price manipulation easier. Alternatively, if a user has deposited into the pool for the ticks that are passed through during the swap, then they are receiving the 0.05% Uniswap fee payment, so the swap gets closer to free the more liquidity the user has provided to Uniswap (to collect their own fees).
 - The attack would have a lower cost if the liquidity at the current tick and nearby ticks are low, because this reduces the cost of changing the price beyond those ticks. At the time of this audit, the WBTC-USDC Uniswap v3 [pool](https://info.uniswap.org/#/arbitrum/pools/0xac70bd92f89e6739b3a08db9b6081a923912f73d) on Arbitrum only had $225k of liquidity while the Dopex WBTC-USDC [market](https://arbiscan.io/address/0x3808E8C983023a125fFE2714E2A703A3BF02bE0d#readContract) had $330k of liquidity. The scenario of lower liquidity around the current tick might be more likely during rapid price changes, because automated liquidity providers like the automator contract will not have time to increase the liquidity around the current tick.
 
 Factors that would increase the cost of this attack include:
+
 - When the automator contract has more assets and counter assets that would increase the profitability of this attack, the same assets and counter assets that are deposited into the Uniswap v3 pool would make the cost of price manipulation higher
 
 #### Impact
@@ -112,6 +112,7 @@ High. Loss of value may occur but only under very specific circumstances that ar
 #### Recommendation
 
 Use Chainlink price data instead of the Uniswap pool spot price in [`totalAssets()`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/OrangeDopexV2LPAutomator.sol#L229) and [`freeAssets()`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/OrangeDopexV2LPAutomator.sol#L279) calculations. There is a Chainlink oracle for every asset currently supported by Dopex CLAMM:
+
 - USDC/USD https://data.chain.link/arbitrum/mainnet/stablecoins/usdc-usd
 - ETH/USD https://data.chain.link/arbitrum/mainnet/crypto-usd/eth-usd (not WETH, but no difference)
 - WBTC/USD https://data.chain.link/arbitrum/mainnet/crypto-usd/wbtc-usd
@@ -120,8 +121,8 @@ Use Chainlink price data instead of the Uniswap pool spot price in [`totalAssets
 If you want to avoid Chainlink dependency, you could use [Uniswap TWAP](https://blog.uniswap.org/uniswap-v3-oracles) but be careful of Uniswap pool liquidity, defined time period and the cost of price manipulation.
 
 #### Developer Response
-This issue has been confirmed and resolved with a recommended solution.
 
+This issue has been confirmed and resolved with a recommended solution.
 
 ### 2. High - Wrong redeem calculation
 
@@ -130,6 +131,7 @@ In the redeem flow, the user will not get a portion of `counterAsset` for his sh
 #### Technical Details
 
 In OrangeDopexV2LPAutomator shares represent four different assets in the contract:
+
 - `asset` balance
 - `counterAsset` balance
 - redeemable shares in Dopex position
@@ -137,7 +139,7 @@ In OrangeDopexV2LPAutomator shares represent four different assets in the contra
 
 In the [redeem flow](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/OrangeDopexV2LPAutomator.sol#L417), the user should get a portion of four assets. Redeemable shares and redeemed into `asset` or `counterAsset` depending on the current price. After that, all `counterAsset` is swapped for `asset` and it is sent to the user alongside the locked shares which cannot be redeemed at the moment.
 
-The problem in [calculating `counterAsset` user owns](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/OrangeDopexV2LPAutomator.sol#L472)  that will be swapped for asset. In this calculation, the portion of idle `counterAsset` is not accounted for, only `counterAsset` that is received from redeeming Dopex position.
+The problem in [calculating `counterAsset` user owns](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/OrangeDopexV2LPAutomator.sol#L472) that will be swapped for asset. In this calculation, the portion of idle `counterAsset` is not accounted for, only `counterAsset` that is received from redeeming Dopex position.
 
 #### Impact
 
@@ -153,12 +155,12 @@ High. The user will not get a portion of the currently idle counter asset on eve
 ```
 
 #### Developer Response
-This issue has been confirmed and resolved with a recommended solution.
 
+This issue has been confirmed and resolved with a recommended solution.
 
 ## Medium Findings
 
-### 1. Medium -  Scheduled Gelato jobs could be frontrun
+### 1. Medium - Scheduled Gelato jobs could be frontrun
 
 In the [`rebalance()`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/OrangeDopexV2LPAutomator.sol#L534) function, OrangeDopexV2LPAutomator.sol uses swap slippage protection provided by StrategyHelper.sol in [`swapParams`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/StrategyHelper.sol#L132). Slippage protection is implemented by leaving [1%](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/StrategyHelper.sol#L111) of all available assets free for swapping. Also, unused assets, both asset and counter asset, will be left idle instead of deposited into Dopex.
 
@@ -181,8 +183,8 @@ Use Uniswap current price or Chainlink Oracle to get the correct price of the as
 Using the current price from Uniswap pool for calculating the maximum amount out for the swap would work in this flow because the `rebalance()` won't be called in the same transaction. `checkLiquidizePooledAssets()` is used off-chain by Gelato.
 
 #### Developer Response
-This issue has been mitigated by implementing slippage control variable.
 
+This issue has been mitigated by implementing slippage control variable.
 
 ### 2. Medium - Dopex can be paused and lock user funds
 
@@ -247,9 +249,8 @@ if (c.shareRedeemable > 0) {
 ```
 
 #### Developer Response
+
 This issue has been confirmed and resolved with a recommended solution.
-
-
 
 ### 3. Medium - `totalAssets()` returned value is too large
 
@@ -274,10 +275,12 @@ Medium. The accounting of `totalAssets()` is inaccurate. If a user chooses to ca
 The existing logic to calculate `totalAssets()` is fine if the swap actions are removed. This primarily means replacing `_swapToRedeemAssets()` in `redeem()` with a transfer of `_payBase` counterAssets to msg.sender. Otherwise, the logic in `OracleLibrary.getQuoteAtTick()` is not designed to handle the realities of the on-chain state of the pool. The value returned by the [Quoter](https://docs.uniswap.org/contracts/v3/reference/periphery/lens/QuoterV2) contract's `quoteExactInputSingle()` or `quoteExactOutputSingle()` is more precise, but is [not designed](https://docs.uniswap.org/sdk/v3/guides/swaps/quoting) to be called on-chain.
 
 #### Developer Response
-This issue has not been addressed. This issue persists as long as automator takes single asset deposit/withdraw and when converting value of the both assets in one side since calling exactInputSingle() onchain is not feasible. The fact that user gets lower amount of assets when triggering redeem() compare to convertToAssets() is caused by the token swap from the counter asset to the asset to stick to single asset deposit/withdraw. Allowing redeem to return both assets without swapping will cause an attack vector and leaving from original concept of single asset deposit/withdraw, so we decided not to address this issue. 
+
+This issue has not been addressed. This issue persists as long as automator takes single asset deposit/withdraw and when converting value of the both assets in one side since calling exactInputSingle() onchain is not feasible. The fact that user gets lower amount of assets when triggering redeem() compare to convertToAssets() is caused by the token swap from the counter asset to the asset to stick to single asset deposit/withdraw. Allowing redeem to return both assets without swapping will cause an attack vector and leaving from original concept of single asset deposit/withdraw, so we decided not to address this issue.
 
 However, we have decided to do the following two things in response to the issue.
-- Add a function that returns the Automator's positions. This allows StrategyHelper to add a function to calculate an accurate totalAsset() using exactInputSingle(). (assuming offchain calls) 
+
+- Add a function that returns the Automator's positions. This allows StrategyHelper to add a function to calculate an accurate totalAsset() using exactInputSingle(). (assuming offchain calls)
 - Change in vault design for fundamental solution of this issue in next version.
 
 ### 4. Medium - Uniswap dependencies don't use solidity 0.8.X release
@@ -297,8 +300,8 @@ Medium. Math in solidity 0.8.X will revert in the case of overflow or underflow,
 Remove the Uniswap v3 npm dependencies in package.json. Instead, install the latest Uniswap v3 core and periphery solidity 0.8.X releases. This is the approach used by dopex CLAMM, as seen in the project's [.gitmodules](https://github.com/dopex-io/dopex-v2-clamm/blob/master/.gitmodules) file. Replace the files in the contracts/vendor/uniswapv3 directory with library versions from the 0.8 release of uniswap v3.
 
 #### Developer Response
-This issue has been confirmed and resolved with a recommended solution.
 
+This issue has been confirmed and resolved with a recommended solution.
 
 ### 5. Medium - Deposit limit should be applied to total asset value
 
@@ -322,8 +325,8 @@ Compare the deposit cap with the total asset value in the contract, not just the
 ```
 
 #### Developer Response
-This issue has been confirmed and resolved with a recommended solution.
 
+This issue has been confirmed and resolved with a recommended solution.
 
 ## Low Findings
 
@@ -350,9 +353,9 @@ Implement additional routes for swapping assets. WooFiV2 will provide better quo
 Using other exchanges for swapping will remove the problem of `rebalance()` swap changing the current tick and causing the revert when adding liquidity to the new current tick.
 
 #### Developer Response
+
 This issue has not been addressed.
 We will consider implementing offchain swap routing calculation for rebalance function from next version.
-
 
 ### 2. Low - Using tick to calculate price is less precise
 
@@ -371,8 +374,8 @@ Low. Slight inaccuracy will occur in asset conversion calculation.
 Consider replacing `OracleLibrary.getQuoteAtTick()` with a more accurate method of calculation that uses sqrtPriceX96. A separate finding explains other inaccuracies that occur from `OracleLibrary.getQuoteAtTick()`.
 
 #### Developer Response
-This issue has been confirmed and resolved with a recommended solution.
 
+This issue has been confirmed and resolved with a recommended solution.
 
 ### 3. Low - Choose `LIQUIDITY_UNIT` value for greater precision
 
@@ -396,8 +399,8 @@ Low. Lack of precision in calculating target liquidity can lead to suboptimal as
 Use a value of `LIQUIDITY_UNIT` that is customized to the specific asset pair (WETH-USDC will differ from WBTC-USDC) such that `getAssetsPerLiquidityUnit()` returns a value that has greater precision, ideally a value of 1e10 or greater.
 
 #### Developer Response
-This issue has been confirmed and resolved by setting bigger number of unit (1e18) for presision.
 
+This issue has been confirmed and resolved by setting bigger number of unit (1e18) for presision.
 
 ### 4. Low - `rebalance()` function will revert when adding liquidity to the current tick
 
@@ -420,8 +423,8 @@ Low. If the current pool tick is changed it will cause the `rebalance()` to reve
 Check the current pool tick inside [`rebalance()`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/OrangeDopexV2LPAutomator.sol#L531) function and remove it from the mint list. Skip removing the current tick in [StrategyHelper](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/StrategyHelper.sol#L340).
 
 #### Developer Response
-This issue has been confirmed and resolved with a recommended solution.
 
+This issue has been confirmed and resolved with a recommended solution.
 
 ### 5. Low - Mint validity check doesn't cover all cases
 
@@ -429,7 +432,7 @@ OrangeDopexV2LPAutomator has the function to [check mint validity](https://githu
 
 #### Technical Details
 
-In StrategyHelper, check validity is done inside function [`validateMintTicks()`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/StrategyHelper.sol#L316). Mint ticks are validated only [when determining all rebalance ticks](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/StrategyHelper.sol#L201). All rebalance ticks (mint, burn and stay) [are combined into two new arrays](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/StrategyHelper.sol#L129), mint and burn info ticks. [`classifyStayTicks()`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/StrategyHelper.sol#L491) function is combining these arrays. 
+In StrategyHelper, check validity is done inside function [`validateMintTicks()`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/StrategyHelper.sol#L316). Mint ticks are validated only [when determining all rebalance ticks](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/StrategyHelper.sol#L201). All rebalance ticks (mint, burn and stay) [are combined into two new arrays](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/StrategyHelper.sol#L129), mint and burn info ticks. [`classifyStayTicks()`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/StrategyHelper.sol#L491) function is combining these arrays.
 
 The scenario that is not covered by the current implementation is when the `_stayTicksInfo` array contains the ticks that need more asset allocation. Allocating more assets is the same as minting, in Dopex it is [`mintPositionHandler()`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/vendor/dopexV2/IHandler.sol#L11). This means that all ticks in [`_newMintTicksInfo`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/StrategyHelper.sol#L545) must be validated, not just mint ticks.
 
@@ -456,8 +459,8 @@ Also, while adding ticks to [`newMintTicksInfo`](https://github.com/orange-finan
 ```
 
 #### Developer Response
-This issue has been confirmed and resolved with a recommended solution.
 
+This issue has been confirmed and resolved with a recommended solution.
 
 ### 6. Low - Minting zero shares
 
@@ -483,8 +486,8 @@ _mint(msg.sender, shares);
 ```
 
 #### Developer Response
-This issue has been confirmed and resolved with a recommended solution.
 
+This issue has been confirmed and resolved with a recommended solution.
 
 ### 7. Low - Avoid reentrancy in `deposit()` and `redeem()`
 
@@ -509,8 +512,8 @@ Follow the [“Checks Effects Interactions”](https://fravoll.github.io/solidit
 Alternatively, use a reentrancy guard to protect the functions from being called again (see [OpenZeppelin ReentrancyGuard.sol](https://docs.openzeppelin.com/contracts/4.x/api/security#ReentrancyGuard)).
 
 #### Developer Response
-This issue has been confirmed and resolved with a former recommended solution.
 
+This issue has been confirmed and resolved with a former recommended solution.
 
 ### 8. Low - No check when setting `minDepositAssets`
 
@@ -519,6 +522,7 @@ The value of `minDepositAssets` is set by the admin, but there are no checks aro
 #### Technical Details
 
 There are some assumptions around the value of `minDepositAssets` that would be best checked directly in the smart contract logic.
+
 1. If `minDepositAssets` is less than or equal to the number of dead shares that are minted on the first deposit, then the first depositor could receive zero shares for their deposit. There is no check in `deposit()` to prevent minting zero shares to the depositor (unlike [`redeem()`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/OrangeDopexV2LPAutomator.sol#L421), which explicitly checks for a shares value of zero), most likely because it is assumed that `minDepositAssets` is set properly. Even if `minDepositAssets` is equal to the number of minted dead shares, the current check of reverting if `assets < minDepositAssets` would still allow `assets = minDepositAssets` which would still mint zero shares.
 2. There is no check to prevent a `_fee` of zero in [`deposit()`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/OrangeDopexV2LPAutomator.sol#L395). If there is a concern that a user could deposit many small amounts to bypass the fee, then in order to prevent `shares.mulDivDown(depositFeePips, 1e6)` from rounding down to zero, `shares * depositFeePips >= 1e6` must be true. If shares are assumed to be minted in a 1-to-1 ratio with assets, and if it is assumed that depositFeePips can be as low as 1 without allowing the user to pay no fees, then this simplifies to `assets >= 1e6`. So `minDepositAssets` should not be less than 1e6, otherwise it may be possible (depending on the value of `depositFeePips`) for a user to pay zero fees on their deposit.
 
@@ -536,8 +540,8 @@ if (minDepositAssets_ < 1e6) revert;
 ```
 
 #### Developer Response
-This issue has been confirmed and resolved with a recommended solution.
 
+This issue has been confirmed and resolved with a recommended solution.
 
 ### 9. Low - First depositor loses some value from dead shares
 
@@ -545,7 +549,7 @@ The first depositor loses a small amount of value due to the logic in `deposit()
 
 #### Technical Details
 
-The first depositor will lose 10 ** (decimals - 3) of value compared to later depositors. For an asset of USDC, this equals only $0.001 worth of value, but the penalty is unevenly applied only to the first depositor. The cause is the [line](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/OrangeDopexV2LPAutomator.sol#L389) `shares = assets - _dead`, which reduces the shares received by the first depositor, in contrast to later deposits where shares are minted at a 1-to-1 ratio to deposited assets.
+The first depositor will lose 10 \*\* (decimals - 3) of value compared to later depositors. For an asset of USDC, this equals only $0.001 worth of value, but the penalty is unevenly applied only to the first depositor. The cause is the [line](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/OrangeDopexV2LPAutomator.sol#L389) `shares = assets - _dead`, which reduces the shares received by the first depositor, in contrast to later deposits where shares are minted at a 1-to-1 ratio to deposited assets.
 
 Consider a first depositor who deposits 1e7 of USDC tokens ($10) and then wants to immediately withdraw. Ignoring any fees, the user will deposit 1e7 of tokens and receive 1e7 - 1e3 = 9999000 shares out of a total of 1e7 shares (because 1e3 shares are dead). When the user immediately redeems their shares, they will only receive 1e7 - 1e3 USDC, so 1e3 USDC got locked in the contract. This may be a small amount of value for USDC, but if WBTC was the asset in another automator contract, the dead shares would be 1e5 worth of WBTC, or $42 at the current $42,000 price of WBTC. This amount of value loss could be more significant for the first depositor.
 
@@ -560,8 +564,8 @@ To prevent greater loss of value in other asset pairs, always choose the lower v
 Additionally, the protocol team should consider depositing the first liquidity into a newly created contract so that the small value loss is accepted by the protocol, rather than by normal users.
 
 #### Developer Response
-Dev team will deposit first, so this issue isn't addressed.
 
+Dev team will deposit first, so this issue isn't addressed.
 
 ### 10. Low - Incorrect decimals used for max fee constant
 
@@ -585,8 +589,8 @@ Change the value of `MAX_PERF_FEE_PIPS`.
 ```
 
 #### Developer Response
-This issue has been confirmed and resolved with a recommended solution.
 
+This issue has been confirmed and resolved with a recommended solution.
 
 ### 11. Low - Limit the size of active ticks set
 
@@ -594,7 +598,7 @@ A set of active is used to iterate in a for loop to track assets. If the size of
 
 #### Technical Details
 
-Strategist can change the set size by calling [`rebalance()`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/OrangeDopexV2LPAutomator.sol#L551) function. If the size of the active ticks set grow too big, it could unable the user from calling [`redeem`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/OrangeDopexV2LPAutomator.sol#L433) function and locking their funds. 
+Strategist can change the set size by calling [`rebalance()`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/OrangeDopexV2LPAutomator.sol#L551) function. If the size of the active ticks set grow too big, it could unable the user from calling [`redeem`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/OrangeDopexV2LPAutomator.sol#L433) function and locking their funds.
 
 #### Impact
 
@@ -605,8 +609,8 @@ Low. Only guarded calls can grow the size of the set.
 Calculate the maximum set size that will enable the user to call the `redeem()` function without experiencing out of gas problems.
 
 #### Developer Response
-This issue has been confirmed and resolved with a recommended solution.
 
+This issue has been confirmed and resolved with a recommended solution.
 
 ### 12. Low - Utilization of stay ticks not considered in `classifyStayTicks()`
 
@@ -625,14 +629,15 @@ Low. If the stay tick is added to the burn array but has utilization in Dopex, i
 A simple approach to avoid a revert in `rebalance()` would be to add a check in `classifyStayTicks()` to avoid adding a stay tick to the burn array if the utilization is above 0.
 
 More complicated solutions are possible to provide more optimal capital efficiency. In short, the assets that can be reallocated should be moved to active ticks that are in the 2.5% range of the current tick. Assets that can be reallocated includes ticks with liquidity outside of the active ticks and ticks that are inside the active ticks but with too many assets, and in these two cases, only the liquidity in Dopex that is unutilized can be burned. This is easy to do for liquidity outside of the active ticks range, where all unutilized liquidity can be burned to retrieve the underlying assets. To calculate how to allocate the liquidity of the stay ticks, consider an approach such as:
+
 1. calculate what the average liquidity would be by combining the burned liquidity from outside the active ticks and the assets in the active ticks.
 2. for any active ticks that have too many assets, leave it as is (it is still earning the same 2.5% rewards as long as it is in the active range), but subtract the amount of assets over the target amount from the liquidAssets (a new variable that acts like totalAssets, but it only counts assets that can be reallocated).
 3. Recalculate the average liquidity using the new liquidAssets.
 4. Mint more liquidity in the active ticks appropriately so that every active tick reaches the average liquidity amount.
 
 #### Developer Response
-This issue has been confirmed and resolved with another way after discussion with auditor.
 
+This issue has been confirmed and resolved with another way after discussion with auditor.
 
 ## Gas Saving Findings
 
@@ -662,6 +667,7 @@ Consider removing the duplicate logic in `convertToShares()` for a small gas sav
 ```
 
 #### Developer Response
+
 This issue has been confirmed and resolved with a recommended solution.
 
 ### 2. Gas - Store immutable pool fee value
@@ -707,8 +713,8 @@ Overall gas change: -1010859 (-0.616%)
 ```
 
 #### Developer Response
-This issue has not been addressed. We will implement this change in next version.
 
+This issue has not been addressed. We will implement this change in next version.
 
 ### 3. Gas - Remove AccessControlEnumerable if only one role is used
 
@@ -727,8 +733,8 @@ Gas savings.
 Consider removing the AccessControlEnumerable import from OrangeDopexV2LPAutomatorV1Factory. Replace it with an immutable variable `ADMIN` which is set in the constructor and used to restrict the access to function [`createOrangeDopexV2LPAutomator()`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/OrangeDopexV2LPAutomatorV1Factory.sol#L50). If there is a need to change the admin address later and an immutable address will not work, consider using the OZ [Ownable](https://github.com/OpenZeppelin/openzeppelin-contracts/blob/a72c9561b9c200bac87f14ffd43a8c719fd6fa5a/contracts/access/Ownable.sol) import instead of AccessControlEnumerable.
 
 #### Developer Response
-This issue has not been addressed. We will implement this change in next version.
 
+This issue has not been addressed. We will implement this change in next version.
 
 ### 4. Gas - Use unchecked for gas savings
 
@@ -737,6 +743,7 @@ Unchecked math can be used when there is no risk of overflow or underflow due to
 #### Technical Details
 
 Unchecked math can be used in a few places, including:
+
 - subtraction in [`deposit()`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/OrangeDopexV2LPAutomator.sol#L399)
 - subtraction for counterAssets in [`redeem()`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/OrangeDopexV2LPAutomator.sol#L472)
 - subtraction and addition for assets in [`redeem()`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/OrangeDopexV2LPAutomator.sol#L476)
@@ -750,11 +757,10 @@ Gas savings.
 Use unchecked when no risk of underflow exists.
 
 #### Developer Response
+
 This issue has not been addressed. We will implement this change in next version.
 
 ### 5. Gas - Cache `pool_.token0()` in OrangeDopexV2LPAutomator constructor
-
-
 
 #### Technical Details
 
@@ -767,6 +773,7 @@ Gas savings.
 #### Recommendation
 
 Make the following changes to the constructor of OrangeDopexV2LPAutomator.sol.
+
 ```diff
 + address token0 = pool_.token0();
 + address token1 = pool_.token1();
@@ -801,22 +808,22 @@ Overall gas change: -133696 (-0.081%)
 The gas savings from `forge snapshot --diff` with `token0` and `token1` cached:
 
 ```diff
-test_deposit_firstTime() (gas: -1454 (-0.026%)) 
-test_calculateRebalanceSwapParamsInRebalance_reversedPair() (gas: -1454 (-0.027%)) 
-test_freeAssets_reversedPair() (gas: -1454 (-0.027%)) 
-test_totalAssets_reversedPair() (gas: -1454 (-0.027%)) 
-test_deposit_revertWhenDepositCapExceeded() (gas: -1454 (-0.027%)) 
-test_getActiveTicks() (gas: -1454 (-0.027%)) 
-test_deposit_revertWhenDepositTooSmall() (gas: -1454 (-0.028%)) 
-test_createOrangeDopexV2LPAutomator_onlyInit() (gas: -60844 (-0.506%)) 
-test_createOrangeDopexV2LPAutomator_revertNotAdmin() (gas: -59390 (-0.869%)) 
-test_createOrangeDopexV2LPAutomator_roleGranted() (gas: -59390 (-0.885%)) 
+test_deposit_firstTime() (gas: -1454 (-0.026%))
+test_calculateRebalanceSwapParamsInRebalance_reversedPair() (gas: -1454 (-0.027%))
+test_freeAssets_reversedPair() (gas: -1454 (-0.027%))
+test_totalAssets_reversedPair() (gas: -1454 (-0.027%))
+test_deposit_revertWhenDepositCapExceeded() (gas: -1454 (-0.027%))
+test_getActiveTicks() (gas: -1454 (-0.027%))
+test_deposit_revertWhenDepositTooSmall() (gas: -1454 (-0.028%))
+test_createOrangeDopexV2LPAutomator_onlyInit() (gas: -60844 (-0.506%))
+test_createOrangeDopexV2LPAutomator_revertNotAdmin() (gas: -59390 (-0.869%))
+test_createOrangeDopexV2LPAutomator_roleGranted() (gas: -59390 (-0.885%))
 Overall gas change: -189802 (-0.116%)
 ```
 
 #### Developer Response
-This issue has not been addressed. We will implement this change in next version.
 
+This issue has not been addressed. We will implement this change in next version.
 
 ### 6. Gas - Remove unused code
 
@@ -825,6 +832,7 @@ Some code is never used and can be removed to save gas during deployment.
 #### Technical Details
 
 Functions that are declared but never used include:
+
 - [`mulDivRoundingUp()`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/vendor/uniswapV3/FullMath.sol#L114) in FullMath.sol
 - [`consult()`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/vendor/uniswapV3/OracleLibrary.sol#L16) in OracleLibrary.sol
 - [`getChainedPrice()`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/vendor/uniswapV3/OracleLibrary.sol#L77) in OracleLibrary.sol
@@ -839,8 +847,8 @@ Gas savings.
 Remove or comment out the unused functions.
 
 #### Developer Response
-The contract import is changed from local to library, so cannot address this issue.
 
+The contract import is changed from local to library, so cannot address this issue.
 
 ### 7. Gas - Use minimal number of external calls
 
@@ -848,7 +856,7 @@ In function [`totalAsset()`](https://github.com/orange-finance/dopex-v2-automato
 
 #### Technical Details
 
-Uniswap pool `slot0` is fetched first time at [L192](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/OrangeDopexV2LPAutomator.sol#L192) and second time at [L229 `pool.currentTick()`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/OrangeDopexV2LPAutomator.sol#L229).  It is a view function, the value of the pool tick cannot change so it will be more gas-efficient to remove the second call to pool and get the tick value in the first call.
+Uniswap pool `slot0` is fetched first time at [L192](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/OrangeDopexV2LPAutomator.sol#L192) and second time at [L229 `pool.currentTick()`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/OrangeDopexV2LPAutomator.sol#L229). It is a view function, the value of the pool tick cannot change so it will be more gas-efficient to remove the second call to pool and get the tick value in the first call.
 
 #### Impact
 
@@ -929,8 +937,8 @@ test_convertToAssets_noDopexPosition() (gas: -9789 (-1.365%))
 ```
 
 #### Developer Response
-This issue has not been addressed. We will implement this change in next version.
 
+This issue has not been addressed. We will implement this change in next version.
 
 ### 8. Gas - Always add new ticks to EnumerableSet
 
@@ -952,7 +960,7 @@ Remove unneeded check at[ L551](https://github.com/orange-finance/dopex-v2-autom
 ```diff
 - _posId = uint256(keccak256(abi.encode(handler, pool, _lt, _ut)));
 - if (handler.balanceOf(address(this), _posId) == 0) activeTicks.add(uint256(uint24(_lt)));
-+ activeTicks.add(uint256(uint24(_lt))); 
++ activeTicks.add(uint256(uint24(_lt)));
 ```
 
 Gas savings data from provided tests. Savings will be higher with more active ticks to iterate inside for loop.
@@ -988,6 +996,7 @@ Overall gas change: -597429 (-0.364%)
 ```
 
 #### Developer Response
+
 This issue has not been addressed. We will implement this change in next version.
 
 ### 9. Gas - Fetch multiple liquidities from Dopex in one call
@@ -1055,8 +1064,8 @@ test_redeem_burnDopexPositions() (gas: -15185 (-0.902%))
 ```
 
 #### Developer Response
-This issue has not been addressed. We will implement this change in next version.
 
+This issue has not been addressed. We will implement this change in next version.
 
 ## Informational Findings
 
@@ -1076,7 +1085,7 @@ Informational.
 
 #### Recommendation
 
-It is recommended to make additional checks in [`checkLiquidizePooledAssets()`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/StrategyHelper.sol#L97) before returning `true` and triggering `rebalance()` call. 
+It is recommended to make additional checks in [`checkLiquidizePooledAssets()`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/StrategyHelper.sol#L97) before returning `true` and triggering `rebalance()` call.
 
 A simple check if [`_distributableAssets`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/StrategyHelper.sol#L110) is below the configurable variable `minDepositAssets` would make the protocol more profitable with minimal effort:
 
@@ -1094,8 +1103,8 @@ These are just the simple checks, the protocol should explore how `rebalance()` 
 [Yearn V3](https://github.com/yearn/tokenized-strategy-periphery/blob/master/src/ReportTrigger/CommonReportTrigger.sol) uses multiple checks and triggers for strategies, check it out for more improvements.
 
 #### Developer Response
-This issue has been addressed as recommended solution after StrategyHelper revamping.
 
+This issue has been addressed as recommended solution after StrategyHelper revamping.
 
 ### 2. Informational - Skip calculating swap data when it is not needed
 
@@ -1120,9 +1129,9 @@ Simplify code by removing [calculating rebalance swap data](https://github.com/o
 ```
 
 #### Developer Response
+
 We call this function only offchain.
 This issue has not been addressed.
-
 
 ### 3. Informational - Withdrawing tokens
 
@@ -1149,6 +1158,7 @@ function withdraw(IERC20 token) external onlyRole(DEFAULT_ADMIN_ROLE) {
 ```
 
 #### Developer Response
+
 This issue has been resolved with a recommended solution.
 
 ### 4. Informational - NatSpec typos
@@ -1168,13 +1178,15 @@ Informational.
 #### Recommendation
 
 Fix the typos. Modify the first [comment](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/StrategyHelper.sol#L88) as follows:
+
 ```diff
 -     * @notice Three type of rebalance() strategy.
 +     * @notice There are two types of rebalance() strategies.
 ```
-#### Developer Response
-Confirmed, and resolved.
 
+#### Developer Response
+
+Confirmed, and resolved.
 
 ### 5. Informational - `tickRange` should be immutable
 
@@ -1185,6 +1197,7 @@ The `tickRange` variable is a function of the pool tick spacing. `poolTickSpacin
 The three existing Dopex CLAMM markets have a tick spacing of 10, but if StrategyHelper.sol wishes to support a dopex CLAMM market that does not have a tick spacing of 10, the hard-coded constant value of 25 for `tickRange` will be incorrect. There is a [comment](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/StrategyHelper.sol#L57) for `tickRange` stating that the value is only correct `when tickSpacing is 10`, so this value should not be hard-coded.
 
 The tick spacing of the existing markets can be checked on-chain:
+
 - Dopex [WETH-USDC](https://arbiscan.io/address/0x764fa09d0b3de61eed242099bd9352c1c61d3d27#code) market -> [10 tickSpacing](https://arbiscan.io/address/0xC31E54c7a869B9FcBEcc14363CF510d1c41fa443#readContract#F14)
 - Dopex [WBTC-USDC](https://arbiscan.io/address/0x3808e8c983023a125ffe2714e2a703a3bf02be0d#code) market -> [10 tickSpacing](https://arbiscan.io/address/0xac70bD92F89e6739B3a08Db9B6081a923912f73D#readContract#F14)
 - Dopex [ARB-USDC](https://arbiscan.io/address/0x77b6f45a3dcf0493f1b9ac9874e5982ab526aa9e#code) market -> [10 tickSpacing](https://arbiscan.io/address/0xcDa53B1F66614552F834cEeF361A8D12a0B8DaD8#readContract#F14)
@@ -1198,8 +1211,8 @@ Informational.
 Consider changing [`tickRange`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/StrategyHelper.sol#L57) to an immutable variable that is set in the constructor, even though the development team has clarified that the dopex contracts that will be supported are the 3 markets mentioned above that all have 10 tickSpacing.
 
 #### Developer Response
-We implemented a setter function for tickRange for future update of strategy.
 
+We implemented a setter function for tickRange for future update of strategy.
 
 ### 6. Informational - Unnecessary import can be removed
 
@@ -1218,6 +1231,7 @@ Informational.
 Remove the solmate ERC20 import in IOrangeDopexV2LPAutomator.sol and StrategyHelper.sol.
 
 #### Developer Response
+
 This issue has been resolved.
 
 ### 7. Informational - No dead shares for tokens with 2 decimals
@@ -1237,9 +1251,8 @@ Informational.
 It is unlikely for Dopex CLAMM to add support for a token with 2 decimals, but it might be worth adding a check in the constructor similar to `require(address(asset_)).decimals() > 2)` to verify that this protective measure will always be enabled. If the assumption is made that no tokens with less than 3 decimals will be supported as an asset, then [this](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/OrangeDopexV2LPAutomator.sol#L385) line can be unchecked for gas savings.
 
 #### Developer Response
+
 This issue has been resolved.
-
-
 
 ### 8. Informational - Minor NatSpec improvements
 
@@ -1248,6 +1261,7 @@ Some NatSpec comments can be improved.
 #### Technical Details
 
 The NatSpec can be improved in some minor ways.
+
 - [`rebalanceSwapParams`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/interfaces/IOrangeDopexV2LPAutomator.sol#L156) has no named return variable in `calculateRebalanceSwapParamsInRebalance()` and the struct type is spelled with a capital 'R' as [`RebalanceSwapParams`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/interfaces/IOrangeDopexV2LPAutomator.sol#L37)
 - [`checkMintValidity()`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/interfaces/IOrangeDopexV2LPAutomator.sol#L193) doesn't have any NatSpec for the `lowerTick` argument
 - There is no NatSpec describing the function arguments for [`analyzeTickChanges()`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/StrategyHelper.sol#L258) in StrategyHelper.sol
@@ -1261,6 +1275,7 @@ Informational.
 Consider improving NatSpec as suggested.
 
 #### Developer Response
+
 This issue has been resolved.
 
 ### 9. Informational - `_setupRole()` and `safeApprove()` are deprecated
@@ -1282,8 +1297,8 @@ Informational.
 Avoid using deprecated functions when possible. Replace `_setupRole()` with `_grantRole()`. Replace `safeApprove()` with `safeIncreaseAllowance()`.
 
 #### Developer Response
-This issue has been resolved.
 
+This issue has been resolved.
 
 ### 10. Informational - Missing event emits
 
@@ -1292,6 +1307,7 @@ Some functions that transfer values or modify state variables do not have events
 #### Technical Details
 
 OrangeDopexV2LPAutomator updates the storage variable but doesn’t emit events. Functions that could have events added include:
+
 - [`setDepositCap()`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/OrangeDopexV2LPAutomator.sol#L157)
 - [`setDepositFeePips()`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/OrangeDopexV2LPAutomator.sol#L170)
 - [`deposit()`](https://github.com/orange-finance/dopex-v2-automator/blob/eee5932015036fa44593edf611a30bb99a52c883/contracts/OrangeDopexV2LPAutomator.sol#L377)
@@ -1307,6 +1323,7 @@ Informational.
 Add events to the functions listed above.
 
 #### Developer Response
+
 This issue has been resolved.
 
 ## Final remarks

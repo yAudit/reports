@@ -8,8 +8,6 @@ image: assets/images/logo.png
 
 # yAudit YearnBoostedStaker Recheck Review
 
-{: .no_toc }
-
 **Review Resources:**
 
 None beyond the code repositories.
@@ -21,8 +19,6 @@ None beyond the code repositories.
 - adriro
 
 ## Table of Contents
-
-{: .no_toc }
 
 1. TOC
    {:toc}

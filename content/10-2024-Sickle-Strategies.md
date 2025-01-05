@@ -7,7 +7,6 @@ image: assets/images/logo.png
 ---
 
 # yAudit Sickle Strategies Review <!-- omit in toc -->
-{: .no_toc }
 
 **Review Resources:**
 
@@ -22,7 +21,7 @@ image: assets/images/logo.png
 
 **Sickle**
 
-This review of Sickle protocol focused on the introduction of several new strategies to be used by the Sickles, including FarmStrategy, NftFarmStrategy, and MultiFarmStrategy, with supporting contracts and automation. 
+This review of Sickle protocol focused on the introduction of several new strategies to be used by the Sickles, including FarmStrategy, NftFarmStrategy, and MultiFarmStrategy, with supporting contracts and automation.
 
 The contracts of the [Sickle Protocol repo](https://github.com/vfat-io/sickle-contracts/tree/96262fdfa694775b97a4e9407168df5b34a00429) were reviewed over 15 days. Two auditors performed the code review between September 23rd, 2024, and October 11th, 2024.
 The repository was not under active development during the review, and the review was limited to the latest commit [96262fdfa694775b97a4e9407168df5b34a00429](https://github.com/vfat-io/sickle-contracts/tree/96262fdfa694775b97a4e9407168df5b34a00429) for the Sickle repo.
@@ -30,14 +29,13 @@ The repository was not under active development during the review, and the revie
 In addition, commit [14cd3781a4e2aa3552e9d8a6d0230af57610409c](https://github.com/vfat-io/sickle-contracts/commit/14cd3781a4e2aa3552e9d8a6d0230af57610409c) was added to the review's scope. This commit reduced code complexity in FarmStrategy and NftFarmStrategy by streamlining deposit and withdrawal flows and moving reusable modifiers to transferLib.
 
 All these changes are reflected in commit [899e7aaff58320f01f4aa5a9f906d0e41599a085](https://github.com/vfat-io/sickle-public/commit/899e7aaff58320f01f4aa5a9f906d0e41599a085) of Sickle's public repo.
-  
+
 <div style="page-break-after: always;"></div>
 
 ## Table of Contents <!-- omit in toc -->
-{: .no_toc }
 
 1. TOC
-{:toc}
+   {:toc}
 
 <div style="page-break-after: always;"></div>
 
@@ -64,7 +62,6 @@ The scope of the review consisted of the following contracts at the specific com
 │   │   ├── NftFarmStrategy.sol
 ```
 
-
 After the findings were presented to the Sickle team, fixes were made and included in several PRs.
 
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
@@ -75,17 +72,17 @@ yAudit and the auditors make no warranties regarding the security of the code an
 
 ## Code Evaluation Matrix
 
-| Category                 | Mark    | Description |
-| ------------------------ | ------- | ----------- |
-| Access Control           | Good | Automation and registries implement sufficient access control to ensure that actors are either administrators, approved contracts, or a user-specific sickle |
-| Mathematics              | Good | The contracts utilize mathematical operations effectively, especially in liquidity and token management functions. They handle edge cases well, such as ensuring valid ranges for ticks. |
-| Complexity               | Average | The contracts are moderately complex due to the interactions between multiple components, including connectors with external contracts. While the structure is logical, parts are challenging to reason about without knowledge of the integrations.|
-| Libraries                | Good | Good use of industry-standard libraries such as OZ and Solmate. Additionally, the team has created library-like contracts, like FeesLib, NftSettingsLib, etc., for constructing calls. This enhances modularity and code reuse. This is a strong point, as it promotes cleaner code and reduces redundancy.|
-| Decentralization         | Average | The contracts allow for some level of decentralization through admin roles and potential multisig implementations. However, the functionality of many of the strategies and the sickle's interaction with them depends on complex off-chain calculations and components; it would be difficult for a user to interact with them without assistance. Vfat provides open-source tooling for users to interact with the contracts through a simplified interface to mitigate this. Approved automators are also controlled by the protocol admins, adding a layer of centralization to the automation.|
-| Code stability           | Good    | The contracts are well-structured and follow best practices, contributing to their stability. |
-| Documentation            | Low |  While there are comments and natspec for some contracts, the documentation could be improved to provide clearer guidance on the purpose and usage of each function and contract. |
-| Monitoring               | Average | While there generally was good event coverage, there were functions that were missing relevant events |
-| Testing and verification | Good | The contracts have an extensive testing framework in place, and the team is working on expanding their test coverage. |
+| Category                 | Mark    | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ------------------------ | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Access Control           | Good    | Automation and registries implement sufficient access control to ensure that actors are either administrators, approved contracts, or a user-specific sickle                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| Mathematics              | Good    | The contracts utilize mathematical operations effectively, especially in liquidity and token management functions. They handle edge cases well, such as ensuring valid ranges for ticks.                                                                                                                                                                                                                                                                                                                                                                                                            |
+| Complexity               | Average | The contracts are moderately complex due to the interactions between multiple components, including connectors with external contracts. While the structure is logical, parts are challenging to reason about without knowledge of the integrations.                                                                                                                                                                                                                                                                                                                                                |
+| Libraries                | Good    | Good use of industry-standard libraries such as OZ and Solmate. Additionally, the team has created library-like contracts, like FeesLib, NftSettingsLib, etc., for constructing calls. This enhances modularity and code reuse. This is a strong point, as it promotes cleaner code and reduces redundancy.                                                                                                                                                                                                                                                                                         |
+| Decentralization         | Average | The contracts allow for some level of decentralization through admin roles and potential multisig implementations. However, the functionality of many of the strategies and the sickle's interaction with them depends on complex off-chain calculations and components; it would be difficult for a user to interact with them without assistance. Vfat provides open-source tooling for users to interact with the contracts through a simplified interface to mitigate this. Approved automators are also controlled by the protocol admins, adding a layer of centralization to the automation. |
+| Code stability           | Good    | The contracts are well-structured and follow best practices, contributing to their stability.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| Documentation            | Low     | While there are comments and natspec for some contracts, the documentation could be improved to provide clearer guidance on the purpose and usage of each function and contract.                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| Monitoring               | Average | While there generally was good event coverage, there were functions that were missing relevant events                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| Testing and verification | Good    | The contracts have an extensive testing framework in place, and the team is working on expanding their test coverage.                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 
 ## Findings Explanation
 
@@ -112,6 +109,7 @@ And the [setPositionSettings](https://github.com/vfat-io/sickle-contracts/blob/9
 The function does not contain the [checkConfigValues](https://github.com/vfat-io/sickle-contracts/blob/96262fdfa694775b97a4e9407168df5b34a00429/contracts/PositionSettingsRegistry.sol#L167-L205) modifier like the related [setPositionSettings](https://github.com/vfat-io/sickle-contracts/blob/96262fdfa694775b97a4e9407168df5b34a00429/contracts/PositionSettingsRegistry.sol#L70-L82) owner function does.
 
 This modifier checks the new settings values for misconfigurations as well as limits on slippage and price impact.
+
 ```solidity
     modifier checkConfigValues(
         PositionSettings memory settings
@@ -173,7 +171,7 @@ Acknowledged - Fixed in [#282](https://github.com/vfat-io/sickle-contracts/pull/
 
 ### 2. Low - FarmStrategy functions lack enforcement of sweep tokens
 
-The FarmStrategy functions do not check if the `sweepTokens` array argument is empty. 
+The FarmStrategy functions do not check if the `sweepTokens` array argument is empty.
 
 #### Technical Details
 
@@ -194,7 +192,8 @@ The following functions do not contain the `sweepTokensRequired` modifier that t
 
 Without the check, tokens may be leftover in the Sickle.
 
-The project team has stated: 
+The project team has stated:
+
 > The sweepTokens array should always be used in order to ensure there are no leftover tokens in the Sickle at the end of each action.
 
 #### Recommendation
@@ -202,6 +201,7 @@ The project team has stated:
 Add the missing modifier to the functions above.
 
 #### Developer Response
+
 Acknowledged - Fixed in [#290](https://github.com/vfat-io/sickle-contracts/pull/290)
 
 <div style="page-break-after: always;"></div>
@@ -241,7 +241,7 @@ Acknowledged - Fixed here [vfat-io/sickle-contracts#286](https://github.com/vfat
 
 ### 2. Gas - Remove redundant operations
 
-Redundant operations can be refactored to save gas in [_check_rebalance_config](https://github.com/vfat-io/sickle-contracts/blob/96262fdfa694775b97a4e9407168df5b34a00429/contracts/NftSettingsRegistry.sol#L348-L360):
+Redundant operations can be refactored to save gas in [\_check_rebalance_config](https://github.com/vfat-io/sickle-contracts/blob/96262fdfa694775b97a4e9407168df5b34a00429/contracts/NftSettingsRegistry.sol#L348-L360):
 
 ```solidity
         if (config.cutoffTickLow < MIN_TICK || config.cutoffTickLow > MAX_TICK)
@@ -272,9 +272,10 @@ if (config.cutoffTickLow < MIN_TICK) revert...
 if (config.cutoffTickLow >= config.cutoffTickHigh) revert...
 if (config.cutoffTickHigh > MAX_TICK) revert...
 ```
+
 #### Developer Response
 
-Acknowledged - Fixed in [#282](https://github.com/vfat-io/sickle-contracts/pull/282) 
+Acknowledged - Fixed in [#282](https://github.com/vfat-io/sickle-contracts/pull/282)
 
 ### 3. Gas - Initialize memory variables outside of loops
 
@@ -329,6 +330,7 @@ One of the zero approvals could safely be removed without causing any issues els
 #### Technical Details
 
 Example from `SwapLib.sol`
+
 ```
     function _swap(
         SwapParams memory swapParams
@@ -350,7 +352,7 @@ Example from `SwapLib.sol`
 
 The comment mentions potential lingering approvals causing issues, but it's unclear from the codebase where these would originate.
 
-*edit*
+_edit_
 
 The issue occurred with old strategies that didn't reset the approvals to 0.
 
@@ -372,16 +374,17 @@ Acknowledged - Won't fix. The double reset is necessary if the user's Sickle has
 
 ### 1. Informational - Missing events in PositionSettingsRegistry
 
-Events are not emitted when setting connector registry in `constructor` and ` setConnectorRegistry`.  
+Events are not emitted when setting connector registry in `constructor` and ` setConnectorRegistry`.
 
-Events are not emitted when setting position settings in `setPositionSettings`.  
+Events are not emitted when setting position settings in `setPositionSettings`.
 
 #### Recommendation
 
 Emit `PositionSettingsSet` and `ConnectionRegistrySet` events.
 
 #### Developer Response
-Acknowledged - Fixed in [#282](https://github.com/vfat-io/sickle-contracts/pull/282) 
+
+Acknowledged - Fixed in [#282](https://github.com/vfat-io/sickle-contracts/pull/282)
 
 ### 2. Informational - Incorrect event definition in Automation
 

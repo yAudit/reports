@@ -8,8 +8,6 @@ image: assets/images/logo.png
 
 # yAudit Goldilocks Review <!-- omit in toc -->
 
-{: .no_toc }
-
 **Review Resources:**
 
 - [GoldiDOCS](https://goldilocks.gitbook.io/docs)
@@ -21,8 +19,6 @@ image: assets/images/logo.png
 - Spalen
 
 ## Table of Contents <!-- omit in toc -->
-
-{: .no_toc }
 
 1. TOC
    {:toc}

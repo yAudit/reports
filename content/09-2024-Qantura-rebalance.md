@@ -7,7 +7,6 @@ image: assets/images/logo.png
 ---
 
 # yAudit Qantura Rebalance Review <!-- omit in toc -->
-{: .no_toc }
 
 **Review Resources:**
 
@@ -19,10 +18,9 @@ image: assets/images/logo.png
 - HHK
 
 ## Table of Contents <!-- omit in toc -->
-{: .no_toc }
 
 1. TOC
-{:toc}
+   {:toc}
 
 ## Review Summary
 
@@ -55,7 +53,6 @@ This review is a code review to identify potential vulnerabilities in the code. 
 
 yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Qantura Rebalance and users of the contracts agree to use the code at their own risk.
 
-
 ## Code Evaluation Matrix
 
 | Category                 | Mark    | Description                                                                                                                                                      |
@@ -82,6 +79,7 @@ Findings are broken down into sections by their respective impact:
   - Findings including recommendations and best practices.
 
 ---
+
 ## Critical Findings
 
 None.
@@ -103,9 +101,10 @@ The deployment of a coordinator is using a deterministic address derived from th
 ```
 File: CoordinatorFactory.sol
 27:         bytes32 salt = keccak256(abi.encode(owner));
-28: 
+28:
 29:         address proxy = address(_deployContract(COORDINATOR, salt));
 ```
+
 CoordinatorFactory.sol#L27-L29
 
 The deployment logic relies on a fixed salt derived from the owner's address. Once a coordinator is deployed and ownership is transferred, subsequent attempts by the same owner to deploy a new coordinator will result in a conflict because the existing coordinator already uses the address derived from the salt.
@@ -118,12 +117,10 @@ Medium
 
 Consider disabling ownership transfer if possible.
 
-
 #### Developer Response
 
 After discussing this issue, we decided to kill the transferability of ownership.
 Fixed in commit 0b0fa8c93dcddc040c59219f1ae0ccb560bc89ef.
-
 
 ## Low Findings
 
@@ -150,6 +147,7 @@ File: src/Account.sol
 
 86: IERC20(investmentToken).approve(IAccountFactory(factory).vaultRelayer(), type(uint256).max);
 ```
+
 src/Account.sol#L86
 
 #### Impact
@@ -164,7 +162,6 @@ Use the `forceApprove()` function from the SafeERC20 library.
 
 Fixed in commit 4184dbe454232d262f3dbc1285306bd39ad0bf88.
 
-
 ### 2. Low - Missing `feeAmount == 0` check
 
 The account doesn't ensure that the order fee is set to 0. While COW protocol does not allow orders with non-zero fees to be posted in the orderbook, a whitelisted solver could still submit orders with nonzero fees at the users' expense.
@@ -175,7 +172,7 @@ The function `isValidSignature()` is in charge of ensuring the order executed is
 
 Inside this function, it checks the amount of the order, the receiver, and other sensitive parameters of the order, but it doesn't check the `order.feeAmount`, which is expected to be 0.
 
-Because the API rules can be subject to changes and because there are some exceptions (Just-In-Time - JIT - orders), there could be a possibility of a malicious bot submitting orders with non zero fees at the expense of the users. 
+Because the API rules can be subject to changes and because there are some exceptions (Just-In-Time - JIT - orders), there could be a possibility of a malicious bot submitting orders with non zero fees at the expense of the users.
 
 Additionally, adding a check wouldn't cost a lot of gas as it would be a simple `if` condition on a `memory` variable.
 
@@ -200,7 +197,7 @@ The function `removeAccount()` can be called to remove a previously created acco
 However, multiple elements in this function are useless or may lead to unexpected results:
 
 - The function loops over the `accounts.length` and not `accountCount`, which means it will keep looping even if the accounts left to loop through are `address(0)`. One result is that if the function is called with `address(0)`, it will think there was indeed an account removed and will lower the `accountCount` by one even though no account was removed.
-On line 323, if we find the account to be removed but it's the last one in the array (`i = 7`), then it will try to read an unallocated index of the array, which will result in an `out of bound` revert.
+  On line 323, if we find the account to be removed but it's the last one in the array (`i = 7`), then it will try to read an unallocated index of the array, which will result in an `out of bound` revert.
 - The check on line 329 will never be reached since `j < _accounts.length` and `_accounts.length == MAX_ACCOUNTS`, so `j` can never be equal to `MAX_ACCOUNTS`.
 - When the account is found inside its `status` is set to `false` but after the loop the function calls `_setAccountStatus()` on line 343 which will set the account `status` to `false` again.
 
@@ -241,7 +238,6 @@ File: Account.sol
 Account.sol#L65
 Account.sol#L110
 
-
 #### Impact
 
 Gas savings.
@@ -254,7 +250,6 @@ Inline the modifier.
 
 Fixed in commit a107352ad1051569b5a0de3286ce4651559115d3.
 
-
 ### 2. Gas - Useless `recipientToken == address(0)` check in `rebalanceTrigger()`
 
 #### Technical Details
@@ -263,7 +258,7 @@ The function `rebalanceTrigger()` checks that the `recipient` and `recipientToke
 
 But it is impossible that the `recipientToken` is set to 0 if the `recipient` is different than `address(0)`. This is because the only two functions where they can be set are `setRecipient()` and `_initialize()` and both have a check that makes sure that if the `recipient` is set then the `recipientToken` has to be set.
 
-Even though this function is usually called off-chain, consider simplifying the check for better readability and gas efficiency. 
+Even though this function is usually called off-chain, consider simplifying the check for better readability and gas efficiency.
 
 #### Impact
 
@@ -292,7 +287,6 @@ File: src/IntermediaryDeployer.sol
 ```
 
 IntermediaryDeployer.sol#L43, IntermediaryDeployer.sol#L44
-
 
 #### Impact
 
@@ -334,8 +328,8 @@ Throughout the code, storage variables are accessed multiple times. While the co
 
 - In `initialize()` the `investmentToken` and `factory` are read from storage instead of using the function parameters.
 - In `getAccounts()`, `getAccountInfo()`, `getAccountTokens()` and `getAccountAssets()` the storage variable `accountCount` is read twice.
-- In `amountToRebalance()`  the storage variables `threshold`, `recipientToken` and `recipient` are read twice.
-- In `rebalanceTrigger()` the storage variables `recipient` and `recipientToken`  are read twice.
+- In `amountToRebalance()` the storage variables `threshold`, `recipientToken` and `recipient` are read twice.
+- In `rebalanceTrigger()` the storage variables `recipient` and `recipientToken` are read twice.
 - In `removeAccount()` the storage array `accounts` is read multiple time in a loop and `accountCount` is read twice.
 - In `sweep()` the storage variable `owner` will be read multiple times throughout the loop.
 
@@ -358,25 +352,26 @@ Partially fixed in commit 8cfb864e42ce10bf61af044c8ddb252c6b76fe42.
 #### Technical Details
 
 The `withdraw()` and `sweep()` functions in the `Coordinator` contract currently accept specific amounts to be transferred:
+
 ```solidity
 File: Coordinator.sol
 372:     function withdraw(address[] memory _accounts, uint256[] memory _amounts) external onlyOwner {
 373:         if (_accounts.length != _amounts.length) {
 374:             revert CoordinatorErrors.InvalidWithdrawArguments();
 375:         }
-376: 
+376:
 377:         _checkAccounts(_accounts);
 378:         for (uint256 i = 0; i < _accounts.length; i++) {
 379:             IAccount(_accounts[i]).withdrawInvestment(_amounts[i]);
 380:         }
 381:     }
-382: 
+382:
 383:     /// @inheritdoc ICoordinator
 384:     function sweep(address[] calldata _tokens, uint256[] calldata _amounts) external onlyOwner {
 385:         if (_tokens.length != _amounts.length) {
 386:             revert CoordinatorErrors.InvalidWithdrawArguments();
 387:         }
-388: 
+388:
 389:         for (uint256 i = 0; i < _tokens.length; i++) {
 390:             if (_tokens[i] == address(0)) {
 391:                 SafeTransfer._safeTransferETH(owner(), _amounts[i]);
@@ -386,6 +381,7 @@ File: Coordinator.sol
 395:         }
 396:     }
 ```
+
 Coordinator.sol#L372-L396
 
 #### Impact
@@ -394,7 +390,7 @@ Informational
 
 #### Recommendation
 
-Use a uint256 max value to transfer a token's entire `balanceOf()`. 
+Use a uint256 max value to transfer a token's entire `balanceOf()`.
 
 #### Developer Response
 
@@ -429,7 +425,6 @@ Fixed in commit fb699ec000c606bb867847c6462bef473dc80d3a.
 ### 3. Informational - Unused import
 
 The identifier is imported but never used within the file.
-
 
 #### Technical Details
 
@@ -505,7 +500,7 @@ While the `Account` and `Coordinator` contracts have a sweep function, adding an
 
 #### Technical Details
 
-Add an execute function to both Account and Coordinator contracts to allow the owner to perform more complex actions beyond sweeping tokens. 
+Add an execute function to both Account and Coordinator contracts to allow the owner to perform more complex actions beyond sweeping tokens.
 
 ```solidity
     function execute(

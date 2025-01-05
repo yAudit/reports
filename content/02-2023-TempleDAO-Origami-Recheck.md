@@ -8,8 +8,6 @@ image: assets/images/logo.png
 
 # yAudit Temple DAO Origami Recheck Review
 
-{: .no_toc }
-
 **Review Resources:**
 
 - Some internal docs and visuals were provided
@@ -20,8 +18,6 @@ image: assets/images/logo.png
 - spalen
 
 ## Table of Contents
-
-{: .no_toc }
 
 1. TOC
    {:toc}

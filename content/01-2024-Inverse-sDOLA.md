@@ -8,8 +8,6 @@ image: assets/images/logo.png
 
 # yAudit Inverse Finance DOLA Savings Review
 
-{: .no_toc }
-
 **Review Resources:**
 
 Code repositories and documentation were used during this audit.
@@ -20,8 +18,6 @@ Code repositories and documentation were used during this audit.
 - pandadefi
 
 ## Table of Contents
-
-{: .no_toc }
 
 1. TOC
    {:toc}

@@ -8,8 +8,6 @@ image: assets/images/logo.png
 
 # yAudit Incubator DAO Review
 
-{: .no_toc }
-
 **Review Resources:**
 
 - [Governance proposal with background information](https://forum.rook.fi/t/kipx-draft-implement-the-rage-quit-process-at-incubator-dao/534)
@@ -21,8 +19,6 @@ image: assets/images/logo.png
 - spalen
 
 ## Table of Contents
-
-{: .no_toc }
 
 1. TOC
    {:toc}

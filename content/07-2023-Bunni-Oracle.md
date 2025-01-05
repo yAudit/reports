@@ -8,8 +8,6 @@ image: assets/images/logo.png
 
 # yAudit Timeless Bunni Oracle Review
 
-{: .no_toc }
-
 **Review Resources:**
 
 - None beyond the code.
@@ -20,8 +18,6 @@ image: assets/images/logo.png
 - pandadefi
 
 ## Table of Contents
-
-{: .no_toc }
 
 1. TOC
    {:toc}

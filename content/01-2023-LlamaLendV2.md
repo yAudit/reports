@@ -8,8 +8,6 @@ image: assets/images/logo.png
 
 # yAudit LlamaLend V2 Review
 
-{: .no_toc }
-
 **Review Resources:**
 
 - No docs beyond the code
@@ -24,8 +22,6 @@ image: assets/images/logo.png
 - prady
 
 ## Table of Contents
-
-{: .no_toc }
 
 1. TOC
    {:toc}

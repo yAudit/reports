@@ -8,8 +8,6 @@ image: assets/images/logo.png
 
 # yAudit Llamapay V2 Review
 
-{: .no_toc }
-
 **Review Resources:**
 
 - [LlamaPay V1 Docs](https://docs.llamapay.io/)
@@ -28,8 +26,6 @@ image: assets/images/logo.png
 - PraneshASP
 
 ## Table of Contents
-
-{: .no_toc }
 
 1. TOC
    {:toc}

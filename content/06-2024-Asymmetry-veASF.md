@@ -18,10 +18,9 @@ image: assets/images/logo.png
 - Panda
 
 ## Table of Contents <!-- omit in toc -->
-{: .no_toc }
 
 1. TOC
-{:toc}
+   {:toc}
 
 ## Review Summary
 
@@ -53,7 +52,6 @@ This review is a code review to identify potential vulnerabilities in the code. 
 
 yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, asymmetry veASF and users of the contracts agree to use the code at their own risk.
 
-
 ## Code Evaluation Matrix
 
 | Category                 | Mark    | Description                                                                                                                           |
@@ -80,6 +78,7 @@ Findings are broken down into sections by their respective impact:
   - Findings including recommendations and best practices.
 
 ---
+
 ## Gas Saving Findings
 
 ### 1. Gas - Use unsafe math
@@ -97,7 +96,6 @@ File: src/TokenLocker.sol
 
 822 | accountData.unlocked = uint32((unlocked - amountToWithdraw) / lockToTokenRatio);
 ```
-
 
 [src/TokenLocker.sol#L517](https://github.com/asymmetryfinance/veASF/tree/969dd707ac096737e69061fda84951c8518d2601/src/TokenLocker.sol#L517), [src/TokenLocker.sol#L655](https://github.com/asymmetryfinance/veASF/tree/969dd707ac096737e69061fda84951c8518d2601/src/TokenLocker.sol#L655), [src/TokenLocker.sol#L822](https://github.com/asymmetryfinance/veASF/tree/969dd707ac096737e69061fda84951c8518d2601/src/TokenLocker.sol#L822)
 
@@ -119,7 +117,7 @@ Gas savings.
 
 #### Recommendation
 
-Use  `unchecked {}` for subtraction and divisions.
+Use `unchecked {}` for subtraction and divisions.
 
 #### Developer Response
 
@@ -131,7 +129,7 @@ Will not implement.
 
 #### Technical Details
 
-There are a lot of divisions by 265 in the codebase. 256 is equal to 2**8; the following change could, for example, be made:
+There are a lot of divisions by 265 in the codebase. 256 is equal to 2\*\*8; the following change could, for example, be made:
 
 ```diff
 File: src/TokenLocker.sol
@@ -169,12 +167,14 @@ Gas.
 Save roughly 100 gas by caching `getWeek()` instead of calling it twice.
 
 [L833](https://github.com/asymmetryfinance/veASF/blob/969dd707ac096737e69061fda84951c8518d2601/src/TokenLocker.sol#L833-L833):
+
 ```solidity
 uint256 currentWeek = getWeek();
 uint256 systemWeek = currentWeek;
 ```
 
 [L890](https://github.com/asymmetryfinance/veASF/blob/969dd707ac096737e69061fda84951c8518d2601/src/TokenLocker.sol#L890-L890):
+
 ```solidity
 accountWeeklyWeights[msg.sender][currentWeek] = uint40(weight - decreasedWeight);
 totalWeeklyWeights[currentWeek] = uint40(getTotalWeightWrite() - decreasedWeight);
@@ -268,14 +268,13 @@ File: src/TokenLocker.sol
 
 [src/TokenLocker.sol#L194](https://github.com/asymmetryfinance/veASF/tree/969dd707ac096737e69061fda84951c8518d2601/src/TokenLocker.sol#L194), [src/TokenLocker.sol#L286](https://github.com/asymmetryfinance/veASF/tree/969dd707ac096737e69061fda84951c8518d2601/src/TokenLocker.sol#L286), [src/TokenLocker.sol#L361](https://github.com/asymmetryfinance/veASF/tree/969dd707ac096737e69061fda84951c8518d2601/src/TokenLocker.sol#L361), [src/TokenLocker.sol#L958](https://github.com/asymmetryfinance/veASF/tree/969dd707ac096737e69061fda84951c8518d2601/src/TokenLocker.sol#L958)
 
-
 #### Impact
+
 Informational
 
 #### Recommendation
 
 Implemented some at https://github.com/asymmetryfinance/veASF/pull/3/commits/b257342ba2067929cf3cf6138a4f4b3c429fd52b
-
 
 ### 3. Informational - Missing check for address(0x0) when adding a new token to FeeDistributor
 
@@ -303,13 +302,13 @@ Make sure the token is not the zero address.
 
 Implemented at https://github.com/asymmetryfinance/veASF/pull/3/commits/cc1a98dfadb73051b3d004b01379fd5e57ed91e6
 
-
 ### 4. Informational - Make sure `feeReceiver` can't be set to zero
 
 The ASF token implementation will revert if a token transfer is made to the zero address.
 The constructor and setFeeReceiver function are not preventing the `feeReceiver` from being set to the zero address. Setting it to the zero address will break `withdrawWithPenalty()`.
 
 #### Technical Details
+
 ```solidity
 153 |    function setFeeReceiver(address _receiver) external onlyOwner returns (bool) {
 154 |        feeReceiver = _receiver;
@@ -330,7 +329,6 @@ Add a check to ensure the admin isn't setting `feeReceiver` to the zero address.
 #### Developer Response
 
 Implemented at https://github.com/asymmetryfinance/veASF/pull/3/commits/89dc09dce62cacc8b9d74bb380892947926457e4
-
 
 ### 5. Informational - Enforce `startTime * 1 weeks == 0` in `SystemStart`
 
@@ -354,7 +352,6 @@ Add a check `startTime * 1 weeks == 0` in the constructor and revert if `false`.
 
 Implemented at https://github.com/asymmetryfinance/veASF/pull/3/commits/832aba854a15287ef3459944acf8c3a807976d06
 
-
 ### 6. Informational - Users may be locked longer than expected
 
 #### Technical Details
@@ -377,7 +374,4 @@ Will not implement
 
 ## Final remarks
 
-In conclusion, the audit of the asymmetry veASF contracts identified several areas for improvement. The changes made to the original codebase from which the project was forked didn't result in any important vulnerabilities. The recommendations primarily focused on enhancing gas efficiency, improving code readability, and adding additional safeguards to prevent potential issues. 
-
-
-
+In conclusion, the audit of the asymmetry veASF contracts identified several areas for improvement. The changes made to the original codebase from which the project was forked didn't result in any important vulnerabilities. The recommendations primarily focused on enhancing gas efficiency, improving code readability, and adding additional safeguards to prevent potential issues.
