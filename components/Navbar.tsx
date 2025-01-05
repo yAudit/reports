@@ -18,9 +18,9 @@ const Navbar = () => {
 
   return (
     <>
-      <nav className="w-full bg-white flex h-18 items-center justify-between top-0 p-6">
+      <nav className="w-full bg-white flex h-18 items-center justify-between top-0 py-6">
         {/* Logo section */}
-        <div className="flex flex-row gap-4 text-emeraldlight items-center text-xl lg:ml-36">
+        <div className="flex flex-row gap-4 text-emeraldlight items-center text-xl lg:ml-64">
           <Link href="https://electisec.tech/">
             <img alt="Logo" src="/logo.svg" className="h-10" />
           </Link>
@@ -35,10 +35,7 @@ const Navbar = () => {
         </button>
 
         {/* Desktop menu */}
-        <div className="hidden lg:flex flex-row items-center gap-1 lg:mr-[8vw]">
-          <Link href="https://electisec.tech/members">
-            <Button text="Members" />
-          </Link>
+        <div className="hidden lg:flex flex-row items-center gap-1 lg:mr-[15vw]">
           <Link href="https://reports.electisec.tech/">
             <button className="px-6 py-3 rounded-xl text-sm hover:text-darkgreen text-bold text-emeraldlight duration-700">
               Reports
@@ -53,9 +50,12 @@ const Navbar = () => {
           <Link href="https://electisec.tech/services">
             <Button text="Services" />
           </Link>
+          <Link href="https://electisec.tech/team">
+            <Button text="Team" />
+          </Link>
           <Link href="https://electisec.tech/contact-us">
             <button className="px-8 py-3 rounded-xl text-md text-darkgreen text-bold bg-emeraldlight bg-opacity-25 hover:bg-opacity-5 hover:text-emeraldlight duration-700">
-              Contact Us
+              Contact
             </button>
           </Link>
         </div>
@@ -71,14 +71,7 @@ const Navbar = () => {
             >
               <CloseCircleOutlined style={{ fontSize: "2rem" }} />
             </button>
-            <Link href="https://electisec.tech/members">
-              <button
-                onClick={() => setMenuOpen(false)}
-                className="p-6 rounded-xl w-full text-xl text-zinc-400 hover:text-emeraldlight hover:bg-white hover:bg-opacity-5 duration-700"
-              >
-                Members
-              </button>
-            </Link>
+
             <Link href="https://reports.electisec.tech/">
               <button className="p-6 rounded-xl w-full text-xl text-zinc-400 hover:text-emeraldlight hover:bg-darkgreen hover:bg-opacity-5 duration-700">
                 Reports
@@ -105,12 +98,20 @@ const Navbar = () => {
                 Services
               </button>
             </Link>
+            <Link href="https://electisec.tech/team">
+              <button
+                onClick={() => setMenuOpen(false)}
+                className="p-6 rounded-xl w-full text-xl text-zinc-400 hover:text-emeraldlight hover:bg-white hover:bg-opacity-5 duration-700"
+              >
+                Team
+              </button>
+            </Link>
             <Link href="https://electisec.tech/contact-us">
               <button
                 onClick={() => setMenuOpen(false)}
                 className="p-6 rounded-xl w-full text-xl text-emeraldlight text-bold hover:bg-darkgreen hover:bg-opacity-5 duration-700"
               >
-                Contact Us
+                Contact
               </button>
             </Link>
           </div>

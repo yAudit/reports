@@ -10,6 +10,12 @@
   },
   "dependencies": {
     "@ant-design/icons": "^4.7.0",
+    "@radix-ui/react-separator": "^1.1.1",
+    "@radix-ui/react-slot": "^1.1.1",
+    "@radix-ui/react-tooltip": "^1.1.6",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "framer-motion": "^11.15.0",
     "gray-matter": "^4.0.3",
     "lucide-react": "^0.469.0",
     "meilisearch": "^0.47.0",
@@ -22,6 +28,8 @@
     "remark-gfm": "^4.0.0",
     "remark-html": "^16.0.1",
     "remark-parse": "^11.0.0",
+    "tailwind-merge": "^2.6.0",
+    "tailwindcss-animate": "^1.0.7",
     "unified": "^11.0.5",
     "unist-util-visit": "^5.0.0"
   },
