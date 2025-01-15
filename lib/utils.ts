@@ -33,7 +33,7 @@ function generateTableOfContents(content: string) {
       .map((child: any) => {
         if (child.type === 'text') return child.value;
         if (child.type === 'inlineCode') {
-          return `<code class="inline-code" style="background-color: #f3f4f6; padding: 2px 4px; border-radius: 4px;">${child.value}</code>`;
+          return `<code class="inline-code">${child.value}</code>`;
         }
         return '';
       })

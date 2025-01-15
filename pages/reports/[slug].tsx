@@ -19,41 +19,39 @@ export default function ReportPage({
   tags,
 }: ReportPageProps) {
   return (
-    <main className="bg-gray-50 flex flex-col min-h-screen">
-      <div className=" bg-gray-50 mt-10 mx-auto">
+    <main className="min-h-screen bg-gray-50">
+      <article className="max-w-6xl mx-auto px-4 py-10">
         <Link href="/">
           <h2 className="text-xl mb-4 text-black">← Back to Reports</h2>
         </Link>
 
-        <div className="max-w-6xl bg-white shadow py-6 sm:px-6 flex flex-row justify-between ">
-          <h1
-            className="text-3xl font-bold text-black"
-            id={title.toLocaleLowerCase()}
-          >
-            {title}
-          </h1>
-          <div className="mt-2 flex items-center text-sm text-gray-500">
-            {/* <span>By {author}</span>
-            <span className="mx-2">•</span> */}
-            <span>
-              {new Date(date).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "long",
-              })}
-            </span>
-          </div>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {tags.map((tag, index) => (
-              <span
-                key={index}
-                className="inline-flex items-center px-3 py-1.5 rounded-full text-md font-medium bg-emeraldlight bg-opacity-25 text-darkgreen"
-              >
-                {tag}
+        <div className="bg-white shadow p-6 sm:px-6">
+          <div className="flex lg:flex-row md:flex-row flex-col justify-between lg:items-center md:items-center gap-1 items-left mb-6 text-black">
+            <h1
+              className="lg:text-3xl md:text-xl sm:text-md font-bold text-black"
+              id={title.toLocaleLowerCase()}
+            >
+              {title}
+            </h1>
+            <div className="mt-2 flex items-center text-sm text-gray-500">
+              <span>
+                {new Date(date).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                })}
               </span>
-            ))}
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {tags.map((tag, index) => (
+                <span
+                  key={index}
+                  className="inline-flex items-center px-3 py-1.5 rounded-full text-md font-medium bg-emeraldlight bg-opacity-25 text-darkgreen"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
-        <div className="max-w-6xl bg-white shadow py-6 mt-4 sm:px-6">
           <div
             className="prose prose-lg max-w-none prose-table:shadow-lg prose-table:border prose-td:p-2 prose-th:p-2 prose-th:bg-gray-100"
             dangerouslySetInnerHTML={{ __html: content }}
@@ -64,7 +62,7 @@ export default function ReportPage({
             <h2 className="text-xl mb-4 text-black">↑ Back to Top</h2>
           </Link>
         </div>
-      </div>
+      </article>
     </main>
   );
 }

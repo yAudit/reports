@@ -123,7 +123,7 @@ const DATA = {
       },
       email: {
         name: "Send Email",
-        url: "mailto:hello@electisec.tech",
+        url: "mailto:hello@yacademy.dev",
         icon: Icons.email,
       },
     },
