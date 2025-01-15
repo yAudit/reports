@@ -53,7 +53,7 @@ The scope of the review consisted of the following contracts at [the specific co
 
 A key piece to understanding the design of the GET Locked Revenue Distribution Token is understanding the inheritance structure of the contracts, visualized here. The RevenueDistributionToken contract, [borrowed from Maple](https://github.com/maple-labs/revenue-distribution-token), provides the ERC20 and ERC4626 structure with a vesting schedule. The contracts inherited by RevenueDistributionToken were also considered in scope. The LockedRevenueDistributionToken contract builds on top of the RevenueDistributionToken contract and adds the withdrawal request and instant withdrawal mechanisms with fees to incentivize stakes to remain staked in the vault. Finally, the GovernanceLockedRevenueDistributionToken contract adds voting and governance controls on top of the other contracts. The vault yield will come from a percentage of ticket fees sold by GET.
 
-![Inheritance structure](../../assets/images/GET/dotfile.svg)
+![Inheritance structure](../public/assets/GET/dotfile.svg)
 
 Any code not included in these contracts, such as voting and proposal functions, contracts related to yield generation, or the ticket purchasing/selling process, was not in scope for this review. After the findings were presented to the GET Protocol team, fixes were made and included in several PRs.
 

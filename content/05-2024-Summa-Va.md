@@ -92,7 +92,7 @@ Summa’s two-sided mechanism that overall provides a proof of solvency of an en
 
 The more users verify their proof of inclusion in (b) the more trust the public at large can put in the proof of grand sums in (a). A custodian may incentivise wide verification of inclusion by users through the use of lottery where in each round of verification, say weekly or monthly, certain users are selected randomly to win a monetary reward.
 
-![summa workflow](https://raw.githubusercontent.com/electisec/summa-audit-report/refs/heads/main/assets/summa-workflow.png)
+![summa workflow](../public/assets/summa/summa-workflow.png)
 
 Figure 1: General flow of the Summa protocol in both variants, _credit: [Enrico - Summa tech lead](https://docs.google.com/presentation/d/1xUcH8geMz6I1iD9Jx0kWsIZvUcVlii5Us3mM4Mb3HNg/edit#slide=id.p3)_
 
@@ -107,7 +107,7 @@ The core of Summa protocol has been implemented in two variants that use differe
 
 The core object in this version of the protocol is a Merkle sum tree (MST). Nodes in the tree all have two elements: a `hash`, and an array of `balances[b0, b1, .., bN]` where `N` is a global constant hardcoded to each instantiation of the protocol. In leaf nodes, the hash is `H(user_id_transposed_into_a_field_element, [balances])`, while in middle nodes and the root, the hash is `H([balances], left_child_hash, right_child_hash)`. A balance b_i in a leaf node represents a user’s balance of the `i-th` currency, while in a non-leaf node in the tree it represents the aggregated sum of the `i-th` currency in all leaves that are descendants of said inner (or root) node. The ZK-friendly Poseidon hash function is used.
 
-![mst in summa version a](https://raw.githubusercontent.com/electisec/summa-audit-report/refs/heads/main/assets/mst.png)
+![mst in summa version a](../public/assets/summa/mst.png)
 
 Figure 1: Merkle sum tree in [Summa Version A](https://summa.gitbook.io/summa/v/1/cryptographic-primitives/merkle-sum-tree)
 
@@ -559,7 +559,7 @@ Upon fuzzing the `utils` in [PR#6](https://github.com/electisec/summa-solvency-d
 
 We used [cargo-llvm-cov](https://github.com/taiki-e/cargo-llvm-cov) to generate LLVM source-based code coverage. Click [here](https://clang.llvm.org/docs/SourceBasedCodeCoverage.html#interpreting-reports) for information about interpreting this report.
 
-![alt text](https://raw.githubusercontent.com/electisec/summa-audit-report/refs/heads/main/assets/v1.png)
+![alt text](../public/assets/summa/v1.png)
 
 We raised the following pull requests to increase code coverage & emphasize testing.
 

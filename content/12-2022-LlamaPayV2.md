@@ -48,7 +48,7 @@ The scope of the review consisted of the following contracts at the specific com
 
 The stream is time-sensitive in the sense that specific actions are intended to happen at specific times in the proper sequence of operations. Below is a visualization of the intended call sequence of stream functions and a list of functions that cannot be called at certain points during the stream's duration.
 
-![Typical stream lifecycle](../../assets/images/llamapay/stream-lifecycle.png)
+![Typical stream lifecycle](../public/assets/llamapay/stream-lifecycle.png)
 
 1. Before start of stream (lastPaid == block.timestamp && stream.starts > block.timestamp)
 
@@ -75,9 +75,9 @@ The stream is time-sensitive in the sense that specific actions are intended to 
 
 At a lower level, `_updateStream()` plays an important role in updating the stream parameters when a stream is stopped, modified, or withdrawals happen. Diagrams visualizing the logic flow of `_updateStream()` in different scenarios is shown below.
 
-![_updateStream() with token balance](../../assets/images/llamapay/updateStream.png)
+![_updateStream() with token balance](../public/assets/llamapay/updateStream.png)
 
-![_updateStream() with redeemable balance](../../assets/images/llamapay/updateStream2.png)
+![_updateStream() with redeemable balance](../public/assets/llamapay/updateStream2.png)
 
 After the findings were presented to the LlamaPay development team, fixes were made and included in several PRs.
 

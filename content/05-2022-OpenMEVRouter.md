@@ -806,7 +806,7 @@ There are three steps in the swap and arb process. The steps are: 1. Perform the
 #### Proof of concept
 
 Consider the constant product diagram
-![Constant Product Swaps](../../assets/images/openmev/constant_product_swaps.jpg)
+![Constant Product Swaps](../public/assets/openmev/constant_product_swaps.jpg)
 
 Point 1 shows the liquidity pool amounts before OpenMevRouter interaction, point 2 shows the amounts after the OpenMevRouter user swap, and point 3 shows the amounts after the first backrun of the arb process. These two steps can be combined to arrive from point 1 to point 3, skipping to need to swap to arrive at point 2. The math in OpenMevRouter.sol would need changing, but gas savings from removing one swap may be enough to reduce overall gas consumption.
 

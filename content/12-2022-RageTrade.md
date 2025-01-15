@@ -111,23 +111,23 @@ Rage Trade relies on providing liquidity to the GMX protocol for long exposure t
 
 To demonstrate the issue, data was taken from the Arbitrum blockchain to plot the exposure that Rage Trade has had to the underlying assets WETH and WBTC since around the time that the delta neutral strategy began receiving funds. The short exposure takes the form of WETH or WBTC borrowed from Aave. To calculate this percentage, the amount of WETH or WBTC borrowed was multiplied by the price of the asset and then divided by the total value of GLP held by the Rage trade strategy. The short exposure does a good job of targeting the 35% and 15% marks for WETH and WBTC respectively. The 35% and 15% marks are the target allocations for the GMX vault to hold of WETH and WBTC. The long exposure takes the form of GLP, which holds roughly 50% stablecoins and 50% WETH and WBTC. The data for the exposure to WETH and WBTC was taken from at [stats.gmx.io](https://stats.gmx.io/) during the same period as the short position exposure chart. The comparison of the short and long exposure to WETH and WBTC is shown below.
 
-![Short Position Exposure](../../assets/images/ragetrade/short-exposure.png)
+![Short Position Exposure](../public/assets/ragetrade/short-exposure.png)
 
-![Long Position Exposure](../../assets/images/ragetrade/long-exposure.png)
+![Long Position Exposure](../public/assets/ragetrade/long-exposure.png)
 
 As the charts demonstrate, since the deployment of Rage Trade in December 2022, the GMX vault, and therefore GLP, has consistently held more WBTC and less WETH than the GMX vault target weights. But the Rage Trade short positions do not reflect this, and instead use the target weights to determine the ideal short exposure to these assets. In its current form, Rage Trade has held a position of long WBTC and short WETH since it was deployed.
 
 Examining the asset exposure in the GMX Vault over the entire duration of GMX's history, it is more apparent how far the asset allocations can stray from the target. The second figure below focuses on the less volatile period of GMX asset allocation in 2022 to provide a closer look at how different the asset allocation is from the 35% WETH and 15% WBTC targets. Since June 2022, the GMX vault has mostly been overweight in WBTC and underweight in WETH, but sometimes it is overweight in both assets.
 
-![GMX asset exposure over entire GMX lifespan](../../assets/images/ragetrade/gmx-weth-wbtc-ratios.png)
+![GMX asset exposure over entire GMX lifespan](../public/assets/ragetrade/gmx-weth-wbtc-ratios.png)
 
-![GMX asset exposure over 2022](../../assets/images/ragetrade/gmx-weth-wbtc-ratios-zoomed.png)
+![GMX asset exposure over 2022](../public/assets/ragetrade/gmx-weth-wbtc-ratios-zoomed.png)
 
 Focusing on more "extreme" changes in the asset allocations of the vault, the vault held a total of 39.4% in WETH and WBTC combined on May 26 2022, but that rose to 54% on July 24 2022, less than 2 months later. If this strategy was active at this time, it would have had too large of a short position and too small of a long position. It is true that during this time the value of WETH and WBTC dropped by around 22%, so in actuality these months would have been profitable for this strategy, but a reverse scenario where the assets increased by 22% in value would have left the strategy at a loss.
 
 Even if the above scenario where the strategy is weighted in the wrong direction of market movements does not occur, another risk is if the correlation between WETH and WBTC prices change significantly. It's possible there is an implied assumption that WETH and WBTC prices are correlated, so as long as the sum of allocations WETH and WBTC in the GMX vault is roughly 50% of the GMX vault, then the long position should neutralize the short position. But if the WETH/WBTC price correlation changes while they GMX vault allocations are not near the targets, this could be problematic. The chart from CoinGecko shows this ratio over the last two years and demonstrates that it can easily change by 10% or more in a short timespan.
 
-![ETH/BTC price ratio](../../assets/images/ragetrade/WETH-WBTC-price-ratio.png)
+![ETH/BTC price ratio](../public/assets/ragetrade/WETH-WBTC-price-ratio.png)
 
 In summary, the risk this issue highlights includes:
 
@@ -287,15 +287,15 @@ The junior vault attempts to hold equal long and short positions to maintain a d
 
 1. The GLP vault does not hold exactly 50% WETH & WBTC with the remaining 50% in stablecoins. It targets a holding of 1% LINK and 1% UNI, so in reality the targeted exposure is 35% WETH, 15% WBTC, 1% UNI, 1% LINK, and 50% stablecoins. The delta neutral strategy has no short position to cover the long exposure held in UNI or LINK. Although the percentage of UNI and LINK holdings is small, this exposure can result in non-zero impermanent loss over the long run. If there is an assumption that UNI and LINK prices are correlated to WETH and WBTC, then the value of the short positions should be increased to roughly 52% of the GLP value, rather than the currently targeted 50%. LINK is an asset that can be borrowed and shorted on Aave like WETH and WBTC currently are, an approach which would maintain a more precise neutral position.
 
-![GMX dashboard with GLP holdings](../../assets/images/ragetrade/glp_holdings.png)
+![GMX dashboard with GLP holdings](../public/assets/ragetrade/glp_holdings.png)
 
 2. The second bias is that the process that rebalances the junior vault holdings consistently has more long exposure than short. This can be seen on the long timescale where the ratio is targeting 2 (the reason the target ratio is 2 and not 1 is because only 50% of the holdings in the GMX vault are WETH and WBTC) but the actual value is consistently above 2.
 
-![Plot of delta neutral ratio over time](../../assets/images/ragetrade/long-duration.png)
+![Plot of delta neutral ratio over time](../public/assets/ragetrade/long-duration.png)
 
 Zooming in on the shorter timescale, observe the point in time when a rebalance happens in the middle of this plot. While the rebalance brings the ratio closer to 2, it could do better, and this inaccuracy may be due to an inaccuracy in the implementation's math.
 
-![Plot of asset rebalancing](../../assets/images/ragetrade/short-duration.png)
+![Plot of asset rebalancing](../public/assets/ragetrade/short-duration.png)
 
 #### Impact
 

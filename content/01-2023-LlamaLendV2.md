@@ -52,7 +52,7 @@ Some of the unique features of LlamaLend are:
 
 One key variable in the LlamaLend design is the limitation on the amount that can be borrowed per day, or `maxDailyBorrows`. Each time a borrow happens, this increases the `currentDailyBorrows` value, and time that elapses without borrowing acts as a "cooldown" to reduce the effective `currentDailyBorrows` value. A visualization of how the math works in `addDailyBorrows()` is below.
 
-![currentDailyBorrows mechanics visualization](../../assets/images/llamalend/daily-borrowed.png)
+![currentDailyBorrows mechanics visualization](../public/assets/llamalend/daily-borrowed.png)
 
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability. The review was a pro bono effort and is not guaranteed to follow the same process or to have been reviewed for the same amount of time as a typical yAudit audit.
 

@@ -42,11 +42,11 @@ The contracts of the Yearn Finance Stargate Strategy [Repo](https://github.com/n
 
 The scope of the review consisted of the entire Yearn Finance Stargate Strategy repo at the specific commit, but the core logic was located in the Strategy.sol contract. This strategy was already deployed to mainnet in the form of [a USDC strategy](https://etherscan.io/address/0x336600990ae039b4acece630667871aedea46e5e) and [a USDT strategy](https://etherscan.io/address/0xe7a8cbc43a0506d3a328393c1c30548835256d7d) with millions of dollars of TVL. The strategy follows the standard format of a Yearn strategy, where the underlying token is deposited into the Yearn vault, and the vault distributes the token to strategies that invest the token in different ways to earn yield.
 
-![Yearn Strategy Flow Diagram](../../assets/images/stargate-strat/strategy-flow.png)
+![Yearn Strategy Flow Diagram](../public/assets/stargate-strat/strategy-flow.png)
 
 This specific strategy earns yield with Stargate, a bridge that describes itself as solving [the bridging trilemma](https://medium.com/stargate-official/the-bridging-trilemma-d80788cce4ef). The features the Stargate bridge offers include: instant guaranteed finality, unified liquidity in a single pool to improve capital efficiency and avoid fractured liquidity, and the ability to use native assets without wrapping the assets. The yield is earned from bridge fees and from LP staking rewards.
 
-![Yearn Strategy Flow Diagram](../../assets/images/stargate-strat/stargate-flow.png)
+![Yearn Strategy Flow Diagram](../public/assets/stargate-strat/stargate-flow.png)
 
 The Yearn Stargate strategy is only deployed on Ethereum mainnet for USDC and USDT at present, but the strategy may be deployed to Optimism and/or Arbitrum in the future. After the findings were presented to the Yearn strategists team, fixes were made and included in several PRs.
 

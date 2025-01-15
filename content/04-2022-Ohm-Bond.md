@@ -165,15 +165,15 @@ The bond price is determined by `price = BCV * totalDebt`. If either BCV or tota
 
 First, let's illustrate the issue with some pictures taken from the simulator. The totalDebt is seen to change linearly, with straight lines, because its increase is limited by maxPayout. The slopes for totalDebt are relatively smooth and regular, which means totalDebt should not suddenly decrease faster than the linear slope it normally has.
 
-![Linear totalDebt graph](../../assets/images/ohm-bond/linear-totaldebt.jpeg)
+![Linear totalDebt graph](../public/assets/ohm-bond/linear-totaldebt.jpeg)
 
 However, BCV does not change in a similar linear fashion. When there has been no purchase in some time period, BCV can drop suddenly by, say, 10%. This means that BCV is more of a factor in determining sudden price changes. Observe the sudden changes in BCV from the simulator and how the BCV slope during these changes can be steeper than the totalDebt slope.
 
-![Non-linear BCV graph](../../assets/images/ohm-bond/non-linear.jpeg)
+![Non-linear BCV graph](../public/assets/ohm-bond/non-linear.jpeg)
 
 The simulator shows evidence that the sudden BCV drop can correlate with a high ROI for the bond buyer, as the blue line peaking over 30% around time interval 215 shows. This is the same time interval that the BCV value plummets by around 10%.
 
-![High ROI](../../assets/images/ohm-bond/high-roi.jpeg)
+![High ROI](../public/assets/ohm-bond/high-roi.jpeg)
 
 The important question is whether this price plummet is an artifact of the simulator or a problem with the Olympus price mechanics, and the answer requires close examination of the code of BondBaseCDA.sol.
 
@@ -201,7 +201,7 @@ To summarize the steps so far, we know that
 
 The key problem we see in the simulator graphs stems from extreme cases of the last point: the ratio `secondsSince / adjustments[id_].timeToAdjusted` determines how quickly `adjustments[id_].change` changes, and therefore how quickly BCV and price changes. Take the scenario where a period of time has passed since the last bond purchase, which is where the simulator shows the ROI increasing rapidly. When the next bond purchase occurs, the totalDebt will increase at some rate, but the BCV will start decreasing at a rate proportional to the time since the last purchase, which can be greater than the rate of totalDebt increase (as we described earlier, BCV can have more "weight" in dropping the price). If the rate of BCV decline is significantly greater than the rate of increase of totalDebt, then bond price can drop _and keep dropping_ while purchases of the bonds are happening. This can happen because once `adjustments[id_].active` [is triggered](https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/bases/BondBaseCDA.sol#L435) and the BCV starts decreasing, BCV will only stop decreasing when `secondsSince >= info.timeToAdjusted` which will cause `adjustment[id_].change = 0` in [line 446](https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/bases/BondBaseCDA.sol#L446). Ideally BCV should stop decreasing prior to this point if there is sufficient buying pressure. Otherwise the bond market does not properly react to market demand and the final quote tokens received by the market owner may be lower than the target. The screenshot below of the individual simulator data points using the default values in the simulator spreadsheet show how the BCV adjustment value is constant (light blue) while the BCV is decreasing (orange) despite the buying pressure at bond prices with a high ROI (green). This allows the buyer to get a good deal at the market owner's expense. Although the selected screenshot below is the "extreme" case of the market before closing, the same behavior exists elsewhere when there are period of time without any bond purchases. The BCV will only increase again when adjustment > 0.
 
-![simulator data](../../assets/images/ohm-bond/simulator-data.png)
+![simulator data](../public/assets/ohm-bond/simulator-data.png)
 
 #### Impact
 
@@ -819,7 +819,7 @@ The price mechanics for the Olympus Bond system are quite complex - it takes a [
 
 To add to this, the simulator demonstrates instances of high ROI for buyers when the BCV View drops suddenly. It was not clear whether this was an artifact in the simulator or whether this behavior would carry over to the on-chain implementation.
 
-![ROI spiking](../../assets/images/ohm-bond/high-roi.jpeg)
+![ROI spiking](../public/assets/ohm-bond/high-roi.jpeg)
 
 #### Proof of Concept
 

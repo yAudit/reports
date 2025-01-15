@@ -577,4 +577,4 @@ We used Foundry to generate fuzz tests for the smart contracts as specified in t
 
 We used [cargo-llvm-cov](https://github.com/taiki-e/cargo-llvm-cov) to generate LLVM source-based code coverage. Click [here](https://clang.llvm.org/docs/SourceBasedCodeCoverage.html#interpreting-reports) for information about interpreting this report.
 
-![alt text](https://raw.githubusercontent.com/electisec/summa-audit-report/refs/heads/main/assets/v2.png)
+![alt text](../public/assets/summa/v2.png)

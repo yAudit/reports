@@ -349,7 +349,7 @@ The first number in this equation is inaccurate and is off by about 5 ROOK. The 
 
 The second number in this equation is also inaccurate. Based on the [top ROOK holders etherscan chart](https://etherscan.io/token/tokenholderchart/0xfa5047c9c78b8877af97bdcb85db743fd7313d4a), the 2nd largest ROOK holder, which we will assume is the DAO owned ROOK tokens, holds 162,780 ROOK. This is a difference of roughly 27 ROOK from the value in the governance proposal.
 
-![ROOK holders chart](../../assets/images/Incubator-DAO/ROOK_chart.png)
+![ROOK holders chart](../public/assets/Incubator-DAO/ROOK_chart.png)
 
 The governance proposal does use the correct value for the Strategic Reserve owner ROOK of 452,137.53. The DAO contributors owned ROOK value is not easily checked at the time of the audit because the tokens are held by different addresses but will be combined into a multisig.
 

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import matter from "gray-matter";
-import { remark } from "remark";
+// import { remark } from "remark";
 import html from "remark-html";
 import remarkGfm from "remark-gfm";
 // import { Node } from 'unist';
@@ -11,38 +11,51 @@ import remarkParse from "remark-parse";
 
 function generateTableOfContents(content: string) {
   const headings: { depth: number; text: string; id: string; section: string }[] = [];
-  let startCounting = false;  // Flag to start counting from Review Summary
-  
-  // Parse the markdown content
+  let startCounting = false;
+
   const ast = unified()
     .use(remarkParse)
     .parse(content);
 
-  // Collect all headings and organize them hierarchically
   let currentSection = '';
   visit(ast, 'heading', (node: any) => {
-    const text = node.children
-      .filter((child: any) => child.type === 'text')
-      .map((child: any) => child.value)
+    // Generate text and HTML separately
+    const plainText = node.children
+      .map((child: any) => {
+        if (child.type === 'text') return child.value;
+        if (child.type === 'inlineCode') return child.value;
+        return '';
+      })
+      .join('');
+
+    // Generate HTML with styled code blocks
+    const htmlText = node.children
+      .map((child: any) => {
+        if (child.type === 'text') return child.value;
+        if (child.type === 'inlineCode') {
+          return `<code class="inline-code" style="background-color: #f3f4f6; padding: 2px 4px; border-radius: 4px;">${child.value}</code>`;
+        }
+        return '';
+      })
       .join('');
 
     // Skip "Table of Contents" heading
-    if (text.toLowerCase().includes('table of contents')) {
+    if (plainText.toLowerCase().includes('table of contents')) {
       return;
     }
 
-    const id = text
+    const id = plainText
       .toLowerCase()
       .replace(/[^a-z0-9\s-]/g, '')
       .replace(/\s+/g, '-');
 
     if (node.depth === 2) {
-      currentSection = text;
+      currentSection = plainText;
     }
 
     headings.push({
       depth: node.depth,
-      text,
+      text: htmlText, // Store the HTML version with styling
       id,
       section: currentSection
     });
@@ -51,17 +64,14 @@ function generateTableOfContents(content: string) {
   // Generate TOC markdown
   const tocLines: string[] = [];
   let sectionCount = 0;
-  // Removed subsection letters
 
   headings
     .filter(h => {
-      // Skip h1 headings and "Table of Contents" at any level
       return h.depth > 1 && !h.text.toLowerCase().includes('table of contents');
     })
     .forEach((h) => {
       let currentLetterIndex = 0;
       if (h.depth === 2) {
-        // Start counting from Review Summary
         if (h.text.toLowerCase().includes('review summary')) {
           startCounting = true;
         }
@@ -71,27 +81,28 @@ function generateTableOfContents(content: string) {
           tocLines.push(`${sectionCount}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#${h.id}">${h.text}</a>`);
         }
       } else if (h.depth === 3 && startCounting) {
-        // Add URL for nested items and indent
         tocLines.push(`&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#${h.id}">${h.text}</a>`);
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         currentLetterIndex++;
       }
     });
 
-  // Convert lines to HTML format with proper breaks
   const tocHtml = tocLines
     .map(line => `<div style="margin-bottom: 0.5rem;">${line}</div>`)
     .join('');
   return tocHtml;
 }
 
-// Plugin to add IDs to headings
+// Don't forget to also update the heading IDs plugin to handle code blocks
 function remarkHeadingIds() {
   return (tree: any) => {
     visit(tree, 'heading', (node) => {
       const text = node.children
-        .filter((child: any) => child.type === 'text')
-        .map((child: any) => child.value)
+        .map((child: any) => {
+          if (child.type === 'text') return child.value;
+          if (child.type === 'inlineCode') return child.value;
+          return '';
+        })
         .join('');
       
       const id = text
@@ -99,7 +110,6 @@ function remarkHeadingIds() {
         .replace(/[^a-z0-9\s-]/g, '')
         .replace(/\s+/g, '-');
 
-      // Add HTML attributes to the heading
       node.data = node.data || {};
       node.data.hProperties = node.data.hProperties || {};
       node.data.hProperties.id = id;
@@ -117,11 +127,13 @@ export async function processMarkdown(content: string) {
     () => generateTableOfContents(markdownContent)
   );
 
-  // Process markdown and replace image URLs
-  const processedContent = await remark()
+  // Process markdown with all plugins including image URL replacement
+  const processedContent = await unified()
+    .use(remarkParse)
     .use(remarkGfm)
+    .use(remarkReplaceImageUrls)  // Add the image URL replacement plugin
     .use(remarkHeadingIds)
-    .use(html, { 
+    .use(html, {
       sanitize: false,
       allowDangerousHtml: true
     })
@@ -148,33 +160,34 @@ export function extractDate(filename: string): string | null {
   return null;
 }
 
-// interface ImageNode extends Node {
-//   type: 'image';
-//   url: string;
-//   title: string | null;
-//   alt: string | null;
-// }
+// Interface for image nodes in the AST
+interface ImageNode {
+  type: 'image';
+  url: string;
+  title: string | null;
+  alt: string | null;
+}
 
-// function replaceImageUrls() {
-//   const REPO_OWNER = 'abdul-majeed-khan'; // Replace with your GitHub username
-//   const REPO_NAME = 'reports-website';
-//   const BRANCH = 'main';
-
-//   return (tree: Node) => {
-//     visit(tree, 'image', (node: ImageNode) => {
-//       const url = node.url;
-//       if (url.startsWith('./') || url.startsWith('/')) {
-//         // Remove leading slash and 'content/reports' from path
-//         const cleanPath = url
-//           .replace(/^\//, '')
-//           .replace(/^\.\//, '')
-//           .replace(/^content\/reports\//, '');
-
-//         node.url = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${BRANCH}/content/reports/${cleanPath}`;
-//       }
-//     });
-//   };
-// }
+// Plugin to replace image URLs
+function remarkReplaceImageUrls() {
+  return (tree: any) => {
+    visit(tree, 'image', (node: ImageNode) => {
+      const url = node.url;
+      
+      // Handle paths that start with ../public/assets/
+      if (url.startsWith('../public/assets/')) {
+        // Remove ../public/assets/ prefix and convert to /assets/
+        node.url = url.replace('../public/assets/', '/assets/');
+      }
+      
+      // Handle paths that might already start with /assets/
+      else if (url.startsWith('/assets/')) {
+        // Keep as is
+        node.url = url;
+      }
+    });
+  };
+}
 
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"

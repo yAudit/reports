@@ -40,7 +40,7 @@ The scope of the review consisted of all the contracts in the repo, excluding th
 
 In the future, the goal is to allow different ERC4626 tokens to be deposited into the Gro Tranche system, but for this review only one specific ERC4626 token corresponding to a single GVault and strategy was examined. Similarly, while Gro Protocol could expand to other EVM-compatible chains in the future, only the Ethereum mainnet deployment was considered during this review. The end-to-end flow of value between the user holding stablecoins and the way that Gro provides this yield and protection involves many steps, so it is visualized below for easier understanding.
 
-![Gro protocol asset flow](../../assets/images/Gro/Gro-asset-flow.png)
+![Gro protocol asset flow](../public/assets/Gro/Gro-asset-flow.png)
 
 After the findings were presented to the Gro Protocol team, fixes were made and included in several PRs.
 
@@ -542,9 +542,9 @@ The value `(PERCENTAGE_DECIMAL_FACTOR - baseSlippage) / PERCENTAGE_DECIMAL_FACTO
 
 The default value of `PERCENTAGE_DECIMAL_FACTOR` if 1E4 while `baseSlippage` is 50. This means the default tolerance is (10000 - 50) / 10000 = 9950 / 10000 = 99.5%, allowing for 0.5% slippage, in [`invest()`](https://github.com/groLabs/GSquared-foundry/blob/f1831bdb353d4a0b3a8937087e1663f73b75e905/src/strategy/ConvexStrategy.sol#L895) and [`divest()`](https://github.com/groLabs/GSquared-foundry/blob/f1831bdb353d4a0b3a8937087e1663f73b75e905/src/strategy/ConvexStrategy.sol#L825). When the Frax metapool was examined at the time of this review, the Curve Finance frontend estimated a 0.03% slippage if withdrawing 1E8 LP tokens, which was over 20% of the total supply of the metapool. Similarly, when estimating the slippage for a deposit of 1E8 CRV tokens, which would increase the existing balance of CRV in the metapool by over 50%, the frontend estimated a 0.06% slippage.
 
-![Curve metapool frontend withdrawal slippage estimate](../../assets/images/Gro/Gro-slippage-withdrawal.png)
+![Curve metapool frontend withdrawal slippage estimate](../public/assets/Gro/Gro-slippage-withdrawal.png)
 
-![Curve metapool frontend deposit slippage estimate](../../assets/images/Gro/Gro-slippage-deposit.png)
+![Curve metapool frontend deposit slippage estimate](../public/assets/Gro/Gro-slippage-deposit.png)
 
 Given the size of the slippage with such large deposits or withdrawals, and considering that the default slippage tolerance on the Curve frontend for this Frax metapool is 0.1%, the existing combination of `PERCENTAGE_DECIMAL_FACTOR` and `baseSlippage` provides too large of a slippage tolerance.
 
