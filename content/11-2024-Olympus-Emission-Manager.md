@@ -5,8 +5,8 @@ description: Olympus Emission Manager yAudit report
 nav_order: 72
 image: assets/images/logo.png
 ---
+
 # yAudit Olympus Emission Manager Review <!-- omit in toc -->
-{: .no_toc }
 
 **Review Resources:**
 
@@ -19,18 +19,17 @@ image: assets/images/logo.png
 - Invader-tak
 
 ## Table of Contents <!-- omit in toc -->
-{: .no_toc }
 
 1. TOC
-{:toc}
+   {:toc}
 
 ## Review Summary
 
 **Olympus Emission Manager**
 
-The Olympus Emission Manager is intended to issue new Ohm in exchange for a reserve token at a given minimum price premium, emission rate, and price.  These variables are set by Ohm controlled addresses, however a mechanism exists to issue more Ohm if a Chainlink oracle price of the reserve asset is sufficiently above the governance set minimum price premium.
+The Olympus Emission Manager is intended to issue new Ohm in exchange for a reserve token at a given minimum price premium, emission rate, and price. These variables are set by Ohm controlled addresses, however a mechanism exists to issue more Ohm if a Chainlink oracle price of the reserve asset is sufficiently above the governance set minimum price premium.
 
-A Reserve Migrator contract as also included in the review.  The intent of this contract is to migrate DAI from DAI to USDS using a Maker provided conversion contract.
+A Reserve Migrator contract as also included in the review. The intent of this contract is to migrate DAI from DAI to USDS using a Maker provided conversion contract.
 
 The contracts of the Olympus Emission Manager [pull request](https://github.com/OlympusDAO/bophades/pull/424) were reviewed over 5 days. The code review was performed by 2 auditors between November 4, 2024 and November 9, 2024. The repository was under active development during the review, but the review was limited to the latest commit at the start of the review. This was commit [e367e7977ea58a2fd365296d9c9f620c7cd0512d](https://github.com/OlympusDAO/bophades/pull/424/commits/e367e7977ea58a2fd365296d9c9f620c7cd0512d) for the OlympusDAO/bophades repo.
 
@@ -50,20 +49,19 @@ This review is a code review to identify potential vulnerabilities in the code. 
 
 yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Olympus and users of the contracts agree to use the code at their own risk.
 
-
 ## Code Evaluation Matrix
 
-| Category                 | Mark    | Description |
-| ------------------------ | ------- | ----------- |
-| Access Control           | Good | All sensitive functions have appropriate access controls |
-| Mathematics              | Medium | There is frequent decimal conversion mathematics in the Emission Manager contract making the logic sometimes difficult to reason about. |
-| Complexity               | Medium | There are quite a few moving parts in the contract between the heart beats, optional rate changes, and variable updates depending on market conditions. |
-| Libraries                | Good | The contracts make use of Olympus tooling and standard libraries like Solmate. |
-| Decentralization         | Medium | The market is open, however keepers control the cadence of the system and protected users have the ability to set sensitive variables. |
-| Code stability           | Good    | No changes were made to the PR after the audit began. |
-| Documentation            | Medium | No additional documentation was provided.  However much of the code contains natspec and more complex functions contain useful comments, providing context. |
-| Monitoring               | Good | Nearly all functions emit events at the end of their execution. |
-| Testing and verification | Good | Tests were extensive and thorough and include fuzz testing as well as unit testing.  |
+| Category                 | Mark   | Description                                                                                                                                                |
+| ------------------------ | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Access Control           | Good   | All sensitive functions have appropriate access controls                                                                                                   |
+| Mathematics              | Medium | There is frequent decimal conversion mathematics in the Emission Manager contract making the logic sometimes difficult to reason about.                    |
+| Complexity               | Medium | There are quite a few moving parts in the contract between the heart beats, optional rate changes, and variable updates depending on market conditions.    |
+| Libraries                | Good   | The contracts make use of Olympus tooling and standard libraries like Solmate.                                                                             |
+| Decentralization         | Medium | The market is open, however keepers control the cadence of the system and protected users have the ability to set sensitive variables.                     |
+| Code stability           | Good   | No changes were made to the PR after the audit began.                                                                                                      |
+| Documentation            | Medium | No additional documentation was provided. However much of the code contains natspec and more complex functions contain useful comments, providing context. |
+| Monitoring               | Good   | Nearly all functions emit events at the end of their execution.                                                                                            |
+| Testing and verification | Good   | Tests were extensive and thorough and include fuzz testing as well as unit testing.                                                                        |
 
 ## Findings Explanation
 
@@ -98,7 +96,6 @@ Divide `gohm.totalSupply() * gohm.index()` by `10 ** _gohmDecimals` rather than 
 
 [Fixed in commit `a2f6602a2913d683902a524b3e7e845509a277ad`](https://github.com/OlympusDAO/bophades/pull/438/commits/a2f6602a2913d683902a524b3e7e845509a277ad)
 
-
 ## High Findings
 
 None.
@@ -123,14 +120,13 @@ Close the currently active market when `shutdown()` is called.
 
 [Fixed in commit `3ace544f24adfd3d218ae625b9d1449321f9e184`](https://github.com/OlympusDAO/bophades/pull/438/commits/3ace544f24adfd3d218ae625b9d1449321f9e184)
 
-
 ## Low Findings
 
 ### 1. Low - `backing` can inadvertently be set to 0
 
 #### Technical Details
 
-In `setBacking()` there is a check that `newBacking < (backing * 9) / 10`.  However, there is no check that `newBacking != 0`.  `backing` is used in division in various places in `EmissionManager`, so this value must never be 0.
+In `setBacking()` there is a check that `newBacking < (backing * 9) / 10`. However, there is no check that `newBacking != 0`. `backing` is used in division in various places in `EmissionManager`, so this value must never be 0.
 
 #### Impact
 
@@ -148,7 +144,7 @@ Check that `newBacking != 0` as is done in `initialize()`.
 
 #### Technical Details
 
-At the moment, the `ReserveMigrator` is intended to be used with DAI and USDS, so using `transfer()` and `approve()` will not revert or fail silently.  However, this may not always be the case.  `SafeTransfer()` and `SafeApprove()` should be used in place of `transfer()` and `approve()` to future-proof the contract for other assets.
+At the moment, the `ReserveMigrator` is intended to be used with DAI and USDS, so using `transfer()` and `approve()` will not revert or fail silently. However, this may not always be the case. `SafeTransfer()` and `SafeApprove()` should be used in place of `transfer()` and `approve()` to future-proof the contract for other assets.
 
 #### Impact
 
@@ -220,7 +216,6 @@ Removed the unused import
 
 [Fixed in commit `96f6a25d916ccae1510117c7a75cbc2c4f213838`](https://github.com/OlympusDAO/bophades/pull/438/commits/96f6a25d916ccae1510117c7a75cbc2c4f213838)
 
-
 ### 2. Informational - Incorrect variable name
 
 #### Technical Details
@@ -239,11 +234,10 @@ Update the variable name such that it reflects the true nature of the variable.
 
 [Fixed in commit `fb90f53d52356e78775bab6c7de032cd34cc821d`](https://github.com/OlympusDAO/bophades/pull/438/commits/fb90f53d52356e78775bab6c7de032cd34cc821d)
 
-
 ## Final Remarks
 
-Olympus uses the point-in-time price for the reserve asset, however, this is not susceptible to oracle manipulation due to the fact that the price is supplied by Chainlink and the keeper updates the price in the same transaction in which the price is used. 
+Olympus uses the point-in-time price for the reserve asset, however, this is not susceptible to oracle manipulation due to the fact that the price is supplied by Chainlink and the keeper updates the price in the same transaction in which the price is used.
 
-A gOHM flashloan attack to increase the supply and therefore the OHM emitted by the Emission Manager was discussed with the team.  This was left out of the report because it was reported in a prior yAudit report and had already been acknowledged by the team.
+A gOHM flashloan attack to increase the supply and therefore the OHM emitted by the Emission Manager was discussed with the team. This was left out of the report because it was reported in a prior yAudit report and had already been acknowledged by the team.
 
-In general, the code is extensively unit and fuzz tested.  However, the auditors suggest that fork testing be done prior to deployment as it may have detected the sole critical finding in the report prior to the audit engagement.
+In general, the code is extensively unit and fuzz tested. However, the auditors suggest that fork testing be done prior to deployment as it may have detected the sole critical finding in the report prior to the audit engagement.

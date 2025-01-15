@@ -20,7 +20,7 @@ const Navbar = () => {
     <>
       <nav className="w-full bg-white flex h-18 items-center justify-between top-0 py-6">
         {/* Logo section */}
-        <div className="flex flex-row gap-4 text-emeraldlight items-center text-xl lg:ml-80">
+        <div className="flex flex-row gap-4 text-emeraldlight items-center text-xl lg:ml-[20vw]">
           <Link href="https://electisec.tech/">
             <img alt="Logo" src="/logo.svg" className="h-10" />
           </Link>
@@ -35,7 +35,7 @@ const Navbar = () => {
         </button>
 
         {/* Desktop menu */}
-        <div className="hidden lg:flex flex-row items-center gap-1 lg:mr-[15vw]">
+        <div className="hidden lg:flex flex-row items-center gap-1 lg:mr-[20vw]">
           <Link href="https://reports.electisec.tech/">
             <button className="px-6 py-3 rounded-xl text-sm hover:text-darkgreen text-bold text-emeraldlight duration-700">
               Reports

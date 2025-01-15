@@ -1,5 +1,5 @@
 ---
-layout: default
+tags: ["solidity"]
 title: 12-2024-OpenState
 description: OpenState
 nav_order: 74
@@ -7,7 +7,6 @@ image: assets/images/logo.png
 ---
 
 # yAudit OpenState Review <!-- omit in toc -->
-{: .no_toc }
 
 **Review Resources:**
 
@@ -20,10 +19,9 @@ image: assets/images/logo.png
 - Jackson
 
 ## Table of Contents <!-- omit in toc -->
-{: .no_toc }
 
 1. TOC
-{:toc}
+   {:toc}
 
 ## Review Summary
 
