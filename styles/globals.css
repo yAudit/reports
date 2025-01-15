@@ -80,3 +80,21 @@ html {
 .table-of-contents > p[data-letter] {
   margin-left: 1.5rem; /* equivalent to ml-6 */
 }
+
+a {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-all;
+  hyphens: auto;
+  max-width: 100%;
+  display: inline-block;
+}
+
+code {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-all;
+  hyphens: auto;
+  max-width: 100%;
+  display: inline-block;
+}
