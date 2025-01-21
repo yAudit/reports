@@ -33,7 +33,6 @@ a, code, p {
   word-break: normal;         /* Use normal word breaking rules */
   hyphens: none;             /* Remove hyphenation */
   max-width: 100%;
-  display: inline-block;
 }
 
 .prose a {
