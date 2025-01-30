@@ -134,11 +134,9 @@ function remarkTrimBackticks() {
         value.endsWith("`") &&
         value.startsWith("```") === false
       ) {
-        console.log(value);
 
         node.value = value.slice(1, -1);
       }
-      console.log(node.value);
 
       // Add classes for styling
       node.data = node.data || {};
