@@ -17,7 +17,7 @@ import { Dock, DockIcon } from "@/components/ui/dock";
 
 export default function Footer() {
   return (
-    <div className="h-full flex flex-col bg-gray-100 justify-center p-16 items-center relative">
+    <div className="h-full flex flex-col bg-gray-100 justify-center p-16 items-center relative no-print">
       <img alt="" src="/logo.svg" className="h-[5rem]" />
       <DockDemo />
       <p className="text-sm text-zinc-500 mt-10 text-center">

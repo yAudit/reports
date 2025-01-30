@@ -19,14 +19,14 @@ export default function ReportPage({
   tags,
 }: ReportPageProps) {
   return (
-    <main className="min-h-screen bg-gray-50">
-      <article className="max-w-6xl mx-auto px-4 py-10">
-        <Link href="/">
+    <main className="min-h-screen bg-gray-50 main-content">
+      <article className="max-w-6xl mx-auto px-4 py-10 main-content">
+        <Link href="/" className="no-print">
           <h2 className="text-xl mb-4 text-black">← Back to Reports</h2>
         </Link>
 
-        <div className="bg-white shadow p-6 sm:px-6">
-          <div className="flex lg:flex-row md:flex-row flex-col justify-between lg:items-center md:items-center gap-1 items-left mb-6 text-black">
+        <div className="bg-white shadow p-6 sm:px-6 main-content">
+          <div className="flex lg:flex-row md:flex-row flex-col justify-between lg:items-center md:items-center gap-1 items-left mb-6 text-black no-print">
             <h1
               className="lg:text-3xl md:text-xl sm:text-md font-bold text-black"
               id={title.toLocaleLowerCase()}
@@ -52,12 +52,13 @@ export default function ReportPage({
               ))}
             </div>
           </div>
+          <img alt="logo" src="/logo.svg" className="h-[5rem] mx-auto mb-12 lg:hidden md:hidden sm:hidden" />
           <div
-            className="prose prose-lg max-w-none prose-table:shadow-lg prose-table:border prose-td:p-2 prose-th:p-2 prose-th:bg-gray-100"
+            className="prose prose-md max-w-none prose-table:shadow-lg prose-table:border prose-td:p-2 prose-th:p-2 prose-th:bg-gray-100 report-content"
             dangerouslySetInnerHTML={{ __html: content }}
           />
         </div>
-        <div className="py-8">
+        <div className="py-8 no-print">
           <Link href={"#" + title.toLocaleLowerCase()}>
             <h2 className="text-xl mb-4 text-black">↑ Back to Top</h2>
           </Link>

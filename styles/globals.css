@@ -7,13 +7,6 @@
   --foreground: #171717;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   color: var(--foreground);
   background: var(--background);
@@ -27,23 +20,24 @@ pre code {
   color: black !important;
 }
 
-a, code, p {
-  white-space: pre-wrap;      /* Preserves spaces and allows wraps */
-  overflow-wrap: break-word;  /* Breaks words only if absolutely necessary */
-  word-break: normal;         /* Use normal word breaking rules */
-  hyphens: none;             /* Remove hyphenation */
+a,
+code,
+p {
+  white-space: pre-wrap; /* Preserves spaces and allows wraps */
+  overflow-wrap: break-word; /* Breaks words only if absolutely necessary */
+  word-break: normal; /* Use normal word breaking rules */
+  hyphens: none; /* Remove hyphenation */
   max-width: 100%;
 }
 
 .prose a {
-  text-decoration: none;
+  color: #15803d;
 }
 
 .prose a:hover {
   text-decoration: underline;
 }
 .prose table {
-
   table-layout: auto;
   font-size: 0.875rem; /* text-sm */
 }
@@ -58,17 +52,30 @@ a, code, p {
   border-top: 1px solid #e5e7eb; /* border-gray-200 */
 }
 
+code.inline-code-block::before,
+code.inline-code-block::after {
+  content: "" !important;
+}
+
+code.inline-code-block {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  background-color: rgba(175, 184, 193, 0.2);
+  padding: 0.2em 0.4em;
+  border-radius: 4px;
+  font-size: 0.875em;
+}
+
 /* For very small screens */
- @media (max-width: 450px) {
+@media (max-width: 450px) {
   .prose table {
     font-size: 0.75rem; /* text-xs */
   }
 
   .prose h1 {
-    font-size: 2rem !important; 
+    font-size: 2rem !important;
     line-height: normal !important;
   }
-  
+
   .prose table td,
   .prose table th {
     padding-left: 0.5rem; /* px-2 */
@@ -76,4 +83,86 @@ a, code, p {
     padding-top: 0.25rem; /* py-1 */
     padding-bottom: 0.25rem; /* py-1 */
   }
-} 
+}
+
+/* Hide elements not needed in print */
+@media print {
+  /* Hide navigation, header, footer, ads, etc */
+  nav,
+  header,
+  footer,
+  .sidebar,
+  .ads,
+  .navigation,
+  .header,
+  .footer,
+  .no-print {
+    display: none !important;
+  }
+
+  pre {
+    background: #f5f5f5 !important;
+  }
+
+  pre code {
+    color: black !important;
+  }
+
+  code.inline-code-block::before,
+  code.inline-code-block::after {
+    content: "" !important;
+  }
+
+  code.inline-code-block {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+      monospace;
+    background-color: rgba(175, 184, 193, 0.2);
+    padding: 0.2em 0.4em;
+    border-radius: 4px;
+    font-size: 0.875em;
+  }
+
+  /* Ensure the main content takes full width */
+  main,
+  .main-content,
+  .report-content {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    float: none !important;
+  }
+
+  /* Break inside avoidance */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  table,
+  figure,
+  img {
+    break-inside: avoid;
+  }
+
+  /* Ensure tables remain readable */
+  table {
+    border-collapse: collapse !important;
+  }
+
+  td,
+  th {
+    border: 1px solid #ddd !important;
+  }
+
+  /* Force page breaks where needed */
+  .page-break {
+    page-break-before: always;
+  }
+
+  /* Remove box shadows and backgrounds */
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+}
