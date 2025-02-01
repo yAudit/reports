@@ -5,7 +5,6 @@ description: Sofa Protocol yAudit Report
 ---
 
 # yAudit SOFA Review <!-- omit in toc -->
-{: .no_toc }
 
 **Review Resources:**
 
@@ -17,7 +16,6 @@ description: Sofa Protocol yAudit Report
 - adriro
 
 ## Table of Contents <!-- omit in toc -->
-{: .no_toc }
 
 1. TOC
 {:toc}
