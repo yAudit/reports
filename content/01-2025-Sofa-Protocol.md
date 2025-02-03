@@ -1,10 +1,10 @@
 ---
 tags: ["solidity"]
 title: 01-2025-Sofa-Protocol
-description: Sofa Protocol yAudit Report
+description: Sofa Protocol Report
 ---
 
-# yAudit SOFA Review <!-- omit in toc -->
+# Sofa Review <!-- omit in toc -->
 
 **Review Resources:**
 
