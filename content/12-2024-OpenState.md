@@ -2,7 +2,7 @@
 tags: ["solidity"]
 title: 12-2024-OpenState
 description: OpenState
-nav_order: 74
+nav_order: 76
 image: assets/images/logo.png
 ---
 
