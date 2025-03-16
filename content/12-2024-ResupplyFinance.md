@@ -5,7 +5,6 @@ description: Resupply Finance Report
 ---
 
 # yAudit Resupply Finance Review <!-- omit in toc -->
-{: .no_toc }
 
 **Review Resources:**
 
