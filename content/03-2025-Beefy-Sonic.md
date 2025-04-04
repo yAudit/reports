@@ -1,5 +1,5 @@
 ---
-tags: ["solidity"]
+tags: ["solidity", "lst"]
 title: 03-2025-Beefy-Sonic
 description: Beefy Sonic Report
 ---
