@@ -39,6 +39,8 @@ contracts
 └── sOOGA.sol
 ```
 
+> During the review, the Ooga Booga team opted to rename the `sOOGA.sol` contract to `bOOGA.sol`. This change was executed on the 2nd of April at commit [`8890ea5614e1ed8b57861036026b3d6432d2dfc7`](https://github.com/0xoogabooga/oogabooga-token-contracts/commit/8890ea5614e1ed8b57861036026b3d6432d2dfc7). The team plans to use `bOOGA.sol` for the foreseeable future.
+
 After the findings were presented to the Ooga Booga team, fixes were made and included in several PRs.
 
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
