@@ -1,12 +1,12 @@
 ---
 tags: ["solidity"]
 title: 08-2023-TempleDAO-Lending
-description: TempleDAO Lending yAudit Report
+description: TempleDAO Lending Electisec Report
 nav_order: 32
 image: assets/images/logo.png
 ---
 
-# yAudit TempleDAO Lending Recheck Review
+# Electisec TempleDAO Lending Recheck Review
 
 **Review Resources:**
 
@@ -37,9 +37,9 @@ TempleDAO provides investors with a protocol that aims to provide a stable form 
 1. The strategy architecture, which allows the Treasury Reserves Vault (TRV) to invest assets to generate yield that accrues to the treasury.
 2. The RAMOS AMO, which provides price stabilization by managing the TEMPLE-DAI Balancer pool.
 
-The contracts of the TempleDAO [Repo](https://github.com/TempleDAO/temple) were reviewed over 2 days. The code review was performed by 2 auditors between August 24 and August 25, 2023. The repository was under active development during the review, but the review was limited to the latest commit at the start of the review. This was commit [7ed36cb8a1f42145ba66f70e31c51a3f774d6bed](https://github.com/TempleDAO/temple/tree/7ed36cb8a1f42145ba66f70e31c51a3f774d6bed) for the TempleDAO repo. Because this was the second time that yAudit was reviewing this code, the primary focus of this audit was a review of the mitigation changes addressing issues from the original full audit by yAudit. These changes are found in [PR #842](https://github.com/TempleDAO/temple/pull/842).
+The contracts of the TempleDAO [Repo](https://github.com/TempleDAO/temple) were reviewed over 2 days. The code review was performed by 2 auditors between August 24 and August 25, 2023. The repository was under active development during the review, but the review was limited to the latest commit at the start of the review. This was commit [7ed36cb8a1f42145ba66f70e31c51a3f774d6bed](https://github.com/TempleDAO/temple/tree/7ed36cb8a1f42145ba66f70e31c51a3f774d6bed) for the TempleDAO repo. Because this was the second time that Electisec was reviewing this code, the primary focus of this audit was a review of the mitigation changes addressing issues from the original full audit by Electisec. These changes are found in [PR #842](https://github.com/TempleDAO/temple/pull/842).
 
-TempleDAO fixed the issues from the first report in [pull request #842](https://github.com/TempleDAO/temple/pull/842) and yAudit did a review of these mitigations by comparing changes made from commit b015cd5d1df122ad5fbe0f94fb5bd070db27e335, which was the commit of the first review, to commit 7ed36cb8a1f42145ba66f70e31c51a3f774d6bed, which was the commit that included the mitigations.
+TempleDAO fixed the issues from the first report in [pull request #842](https://github.com/TempleDAO/temple/pull/842) and Electisec did a review of these mitigations by comparing changes made from commit b015cd5d1df122ad5fbe0f94fb5bd070db27e335, which was the commit of the first review, to commit 7ed36cb8a1f42145ba66f70e31c51a3f774d6bed, which was the commit that included the mitigations.
 
 ## Scope
 
@@ -52,7 +52,7 @@ Note that the deployment scripts were not in a finalized state at the commit has
 
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
-yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, TempleDAO and users of the contracts agree to use the code at their own risk.
+Electisec and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, TempleDAO and users of the contracts agree to use the code at their own risk.
 
 ## Code Evaluation Matrix
 
@@ -490,6 +490,6 @@ Instead, this is intentionally left to the strategy to decide if it needs to do 
 
 The issues raised in the first audit report were successfully mitigated, as evidence by the lack of any findings above the low risk categorization. There were some very minor improvements that could be made, but no substantial risks were observed during the audit.
 
-The changeset also included an important refactor to the TempleDebtToken.sol contract to introduce the "cache struct" pattern, already employed in the TempleLineOfCredit.sol contract. This set of modifications were not a suggestion from the previous yAudit report, but were grouped in with the other changes during the audit. With the intention of lowering gas costs, this pattern initializes a shared structure that pre-fetches storage variables that are frequently accessed in the course of different functions to have them cached in a structure stored in memory. While this approach effectively reduces gas consumption, it is important to note that it adds complexity while reasoning about the contract's functionality, and could be more error prone compared to direct storage access. It is also fair to mention that, in some cases, code complexity was reduced due to having certain calculations already available in the cache structure. Such an example is the `_burn()` function, which is now simpler and easier to read.
+The changeset also included an important refactor to the TempleDebtToken.sol contract to introduce the "cache struct" pattern, already employed in the TempleLineOfCredit.sol contract. This set of modifications were not a suggestion from the previous Electisec report, but were grouped in with the other changes during the audit. With the intention of lowering gas costs, this pattern initializes a shared structure that pre-fetches storage variables that are frequently accessed in the course of different functions to have them cached in a structure stored in memory. While this approach effectively reduces gas consumption, it is important to note that it adds complexity while reasoning about the contract's functionality, and could be more error prone compared to direct storage access. It is also fair to mention that, in some cases, code complexity was reduced due to having certain calculations already available in the cache structure. Such an example is the `_burn()` function, which is now simpler and easier to read.
 
 One suggestion to streamline a similar future audit that is focused on mitigations is to better correlate specific commit hashes or smaller PRs to every issue in the original audit report. The approach used prior to this audit was to group all changes into a single PR, which is also useful, but improving the developer response comments under each issue in the original report to point directly at the changes made only to address that specific issue could have reduced the effort needed to validate the mitigations.

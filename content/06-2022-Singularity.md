@@ -1,12 +1,12 @@
 ---
 tags: ["solidity"]
 title: 06-2022-Singularity
-description: Singularity yAcademy Report
+description: Singularity Electisec Report
 nav_order: 6
 image: assets/images/logo.png
 ---
 
-# yAudit Singularity v2 Review
+# Electisec Singularity v2 Review
 
 **Review Resources:**
 
@@ -42,7 +42,7 @@ image: assets/images/logo.png
 
 The Singularity v2 protocol is an AMM providing single-sided ERC20 token pools. These pools allow users to perform single-sided deposits, without a token pair counterpart as required in AMMs like Uniswap or Sushiswap. Singularity v2 uses a collateralization ratio with a custom curve to calculate the fees for deposit, withdraw, and swap operations. Singularity v2 is not permissionless and relies on an admin to create new pools, pause pools, and set deposit/withdraw caps. The design of Singularity v2 is similar to Uniswap in that users interact with a router and a factory creates new pools for new tokens.
 
-The main branch of the Singularity v2 [Repo](https://github.com/revenant-finance/singularity-v2) was reviewed over 15 days. The code review was performed by 2 auditors between June 12 and June 27, 2022. A number of yAcademy Fellows also reviewed the contracts and contributed over 50 man hours. The repository was under active development during the review, but the review was limited to [one specific commit](https://github.com/revenant-finance/singularity-v2/commit/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361).
+The main branch of the Singularity v2 [Repo](https://github.com/revenant-finance/singularity-v2) was reviewed over 15 days. The code review was performed by 2 auditors between June 12 and June 27, 2022. A number of Electisec Fellows also reviewed the contracts and contributed over 50 man hours. The repository was under active development during the review, but the review was limited to [one specific commit](https://github.com/revenant-finance/singularity-v2/commit/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361).
 
 ## Scope
 
@@ -59,7 +59,7 @@ After the findings were presented to the Singularity v2 team, fixes were made an
 
 The review was a time-limited review to provide rapid feedback on potential vulnerabilities. The review was not a full audit. The review did not explore all potential attack vectors or areas of vulnerability and may not have identified all potential issues.
 
-yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. Singularity and third parties should use the code at their own risk.
+Electisec and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. Singularity and third parties should use the code at their own risk.
 
 ## Code Evaluation Matrix
 
@@ -70,7 +70,7 @@ yAudit and the auditors make no warranties regarding the security of the code an
 | Complexity               | Average | The Factory and Router contracts have relatively low complexity because they are mostly forked from Uniswap, but the Pool contract has substantial complexity. The complexity arises from the collateralization ratio's impact on fees and slippage and the interactions between different Singularity pools during swap operations. More extensive modeling of this complexity should be performed in order to prevent unexpected edge cases from resulting in loss of user value. |
 | Libraries                | Average | Singularity v2 relies on some solmate contracts (for ERC20, ReentrancyGuard, FixedPointMathLib) and Chainlink integration. This is an average number of dependencies compared to similar protocols. Because the solmate libraries are copied into the Singularity project manually, they should be checked for vulnerabilities or updated versions before production release.                                                                                                       |
 | Decentralization         | Average | The protocol relies on an admin to create new pools, pause/unpause pools, and perform other actions. While this is a less decentralized design than a DEX like Uniswap, if the admin role is assigned to a trusted multisig, the centralization level would be comparable to other similar protocols. Additional checks on certain admin-controlled values would increase user trust that the admin would have more limited abilities to modify fees.                               |
-| Code stability           | Average | The lack of updated documentation and recent changes demonstrate the protocol is still under development. A dev branch was created while the yAudit review was ongoing with some changes applied to this branch.                                                                                                                                                                                                                                                                    |
+| Code stability           | Average | The lack of updated documentation and recent changes demonstrate the protocol is still under development. A dev branch was created while the Electisec review was ongoing with some changes applied to this branch.                                                                                                                                                                                                                                                                    |
 | Documentation            | Low     | There is a significant lack of NatSpec comments around the functions in all contracts. NatSpec documentation should be added for all functions. Beyond comments in the contracts, some of [the online documentation](https://docs.revenantlabs.io/singularity/) was outdated compared to the implementation in the code.                                                                                                                                                            |
 | Monitoring               | Good    | Events are emitted consistently from all functions that control value transfers.                                                                                                                                                                                                                                                                                                                                                                                                    |
 | Testing and verification | Average | The test coverage [is over 90%](https://github.com/revenant-finance/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/coverage/contracts/index.html) for the entire protocol. Despite the high amount of coverage, the findings in this report demonstrate that the tests should cover more edge cases than they currently do.                                                                                                                                           |
@@ -258,7 +258,7 @@ Acknowledged
 
 ### 1. High - allPrices gas grieving causes complete loss of on-chain oracle (devtooligan)
 
-The use of an unbound array to store price data for the on-chain oracle in SingularityOracle.sol for the `allPrices` mapping state variable is problematic as it increases the gas cost of calling `getLatestRound()` every time a new price is added. This problem stems from the fact that the array of `PriceData` structs from `allPrices` is [copied to memory](https://github.com/Yacademy-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityOracle.sol#L40) in `getLatestRound()`
+The use of an unbound array to store price data for the on-chain oracle in SingularityOracle.sol for the `allPrices` mapping state variable is problematic as it increases the gas cost of calling `getLatestRound()` every time a new price is added. This problem stems from the fact that the array of `PriceData` structs from `allPrices` is [copied to memory](https://github.com/Electisec-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityOracle.sol#L40) in `getLatestRound()`
 
 #### Proof of concept
 
@@ -276,19 +276,19 @@ At some point, the `getLatestRound()` function will no longer be callable as the
 
 #### Recommendation
 
-An immediate fix would be to [change line 40 in SingularityOracle.sol](https://github.com/Yacademy-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityOracle.sol#L40) to use _storage_ instead of _memory_. This would then use a pointer to the storage location instead and eliminate the need to copy it to memory.
+An immediate fix would be to [change line 40 in SingularityOracle.sol](https://github.com/Electisec-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityOracle.sol#L40) to use _storage_ instead of _memory_. This would then use a pointer to the storage location instead and eliminate the need to copy it to memory.
 
 ```solidity
     PriceData[] storage prices = allPrices[token]; // proposed change
 ```
 
-However, we also noted that in the two places in the code where an `allPrices` array is accessed, only the last element is used. As such, we propose changing the `allPrices` mapping value to be a single `PriceData` instead of an array `PriceData[]` as [it is currently declared on line 24](https://github.com/Yacademy-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityOracle.sol#L24).
+However, we also noted that in the two places in the code where an `allPrices` array is accessed, only the last element is used. As such, we propose changing the `allPrices` mapping value to be a single `PriceData` instead of an array `PriceData[]` as [it is currently declared on line 24](https://github.com/Electisec-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityOracle.sol#L24).
 
 ```solidity
     mapping(address => PriceData) public allPrices; // proposed change
 ```
 
-If the mapping gets updated, the [getLatestRound()](https://github.com/Yacademy-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityOracle.sol#L40) and [pushPrice()](https://github.com/Yacademy-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityOracle.sol#L70) logic would have to be updated to reference a single `PriceData` and not the last element of a `PriceData[]` array.
+If the mapping gets updated, the [getLatestRound()](https://github.com/Electisec-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityOracle.sol#L40) and [pushPrice()](https://github.com/Electisec-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityOracle.sol#L70) logic would have to be updated to reference a single `PriceData` and not the last element of a `PriceData[]` array.
 
 ##### Developer response
 
@@ -387,13 +387,13 @@ Acknowledged, will fix via off-chain oracle
 
 ### 3. High - Incorrect tolerance for price reported by Chainlink Oracle (blockdev)
 
-When the latest price is fetched from Chainlink Oracle, it is verified that it does not deviate beyond a certain tolerance threshold from the price reported before. [SingularityOracle.sol#L21](https://github.com/Yacademy-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityOracle.sol#L21) defines this tolerance as 1.5% &mdash;
+When the latest price is fetched from Chainlink Oracle, it is verified that it does not deviate beyond a certain tolerance threshold from the price reported before. [SingularityOracle.sol#L21](https://github.com/Electisec-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityOracle.sol#L21) defines this tolerance as 1.5% &mdash;
 
 ```solidity
 uint256 public maxPriceTolerance = 0.015 ether; // 1.5%
 ```
 
-However, the way it's applied to calculate the deviation at [SingularityOracle.sol#L43](https://github.com/Yacademy-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityOracle.sol#L43) is incorrect &mdash;
+However, the way it's applied to calculate the deviation at [SingularityOracle.sol#L43](https://github.com/Electisec-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityOracle.sol#L43) is incorrect &mdash;
 
 ```solidity
 uint256 percentDiff = (priceDiff * 1 ether) / (price * 100);
@@ -414,7 +414,7 @@ uint256 priceDiff = price > chainlinkPrice ? price - chainlinkPrice : chainlinkP
 uint256 percentDiff = (priceDiff * 1 ether) / (price * 100);
 ```
 
-Here `chainlinkPrice` deviates by 10% from `price`. Following the way [SingularityOracle.sol](https://github.com/Yacademy-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityOracle.sol) calculates the deviation, `percentDiff` turns out be less than `maxPriceToTolerance` which is not the intended result.
+Here `chainlinkPrice` deviates by 10% from `price`. Following the way [SingularityOracle.sol](https://github.com/Electisec-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityOracle.sol) calculates the deviation, `percentDiff` turns out be less than `maxPriceToTolerance` which is not the intended result.
 
 A full PoC can be found here: https://github.com/0xbok/singularity-v2/blob/21793993f634a385fb3ef18198a2761d732d91b5/foundry-test/Contract.t.sol#L305-L317
 
@@ -424,7 +424,7 @@ High. In situations where an asset price is too volatile, or chainlink oracle mi
 
 #### Recommendation
 
-Change the way `priceDiff` is calculated at [SingularityOracle.sol#L43](https://github.com/Yacademy-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityOracle.sol#L43) to
+Change the way `priceDiff` is calculated at [SingularityOracle.sol#L43](https://github.com/Electisec-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityOracle.sol#L43) to
 
 ```solidity
 uint256 percentDiff = (priceDiff * 1 ether) / price;
@@ -440,7 +440,7 @@ A transaction containing a potentially unbounded loop can cause it to run out of
 
 #### Proof of concept
 
-[SingularityFactory.sol#L111-L119](https://github.com/Yacademy-block-2/singularity-v2/blob/main/contracts/SingularityFactory.sol#L111-L119) has a `collectFees()` function which collects the protocol fee from all the pools in a single transaction.
+[SingularityFactory.sol#L111-L119](https://github.com/Electisec-block-2/singularity-v2/blob/main/contracts/SingularityFactory.sol#L111-L119) has a `collectFees()` function which collects the protocol fee from all the pools in a single transaction.
 
 ```solidity
 function collectFees() external override onlyAdmin {
@@ -1029,11 +1029,11 @@ Fixed in commit ff71a174560ff12077b1ad48bfd964a97b9d097c
 
 ### 1. Low - Missing two-step transfer ownership pattern (blockdev, SaharAP)
 
-[SingularityFactory.sol](https://github.com/Yacademy-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityFactory.sol) and [SingularityOracle.sol](https://github.com/Yacademy-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityOracle.sol) has several functions which can only be called by its `admin`. The `admin` is first set via its contructor. The current admin can set another address as `admin` by calling `setAdmin()` function. If an inaccessible address is passed to this function, all the privileged functionality will be permanently lost.
+[SingularityFactory.sol](https://github.com/Electisec-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityFactory.sol) and [SingularityOracle.sol](https://github.com/Electisec-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityOracle.sol) has several functions which can only be called by its `admin`. The `admin` is first set via its contructor. The current admin can set another address as `admin` by calling `setAdmin()` function. If an inaccessible address is passed to this function, all the privileged functionality will be permanently lost.
 
 #### Proof of concept
 
-[SingularityFactory.sol#L81](https://github.com/Yacademy-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityFactory.sol#L81) and [SingularityOracle.sol](https://github.com/Yacademy-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityOracle.sol) use `setAdmin()` to set `admin` to a new address &mdash;
+[SingularityFactory.sol#L81](https://github.com/Electisec-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityFactory.sol#L81) and [SingularityOracle.sol](https://github.com/Electisec-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityOracle.sol) use `setAdmin()` to set `admin` to a new address &mdash;
 
 ```solidity
 function setAdmin(address _admin) external override onlyAdmin {
@@ -1058,7 +1058,7 @@ Performing multiplication before division is generally better to avoid loss of p
 
 #### Proof of concept
 
-In the following code in [`getSlippageIn`](https://github.com/Yacademy-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityPool.sol#L357) function there is a division before multiplication for computing `slippageIn`
+In the following code in [`getSlippageIn`](https://github.com/Electisec-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityPool.sol#L357) function there is a division before multiplication for computing `slippageIn`
 
 ```solidity
 // Calculate G'
@@ -1069,7 +1069,7 @@ slippageIn = amount.mulWadDown(gPrime);
 ```
 
 ّFirst, `amount` should be multiplied by gDiff and then divided by `(afterCollateralizationRatio - currentCollateralizationRatio)`.
-[`getSlippageOut`](https://github.com/Yacademy-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityPool.sol#L379) function also has this problem for computing `slippageOut`.
+[`getSlippageOut`](https://github.com/Electisec-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityPool.sol#L379) function also has this problem for computing `slippageOut`.
 
 #### Impact
 
@@ -1597,13 +1597,13 @@ Since Solidity v0.8, arithmetic operations revert on underflow and overflow. If 
 
 Instances where `unchecked` can be used &mdash;
 
-- [SingularityPool.sol#L185](https://github.com/Yacademy-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityPool.sol#L185)
+- [SingularityPool.sol#L185](https://github.com/Electisec-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityPool.sol#L185)
 
   ```solidity
   uint256 amountPostSlippage = amount - slippage;
   ```
 
-- [SingularyPool.sol#L252-L256](https://github.com/Yacademy-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityPool.sol#L252-L256)
+- [SingularyPool.sol#L252-L256](https://github.com/Electisec-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityPool.sol#L252-L256)
 
   ```solidity
   if (decimals <= 18) {
@@ -1614,7 +1614,7 @@ Instances where `unchecked` can be used &mdash;
 
   ```
 
-- [SingularityPool.sol#L300](https://github.com/Yacademy-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityPool.sol#L300) and [SingularityPool.sol#L335](https://github.com/Yacademy-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityPool.sol#L335)
+- [SingularityPool.sol#L300](https://github.com/Electisec-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityPool.sol#L300) and [SingularityPool.sol#L335](https://github.com/Electisec-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityPool.sol#L335)
 
   ```solidity
   fee = feeA - feeB;
@@ -1638,7 +1638,7 @@ Reading calldata is cheaper than reading from memory. So, to iterate on a callda
 
 #### Proof of concept
 
-- [SingularityFactory.sol#L123-L124](https://github.com/Yacademy-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityFactory.sol#L123-L124), [SingularityFactory.sol#L136-L137](https://github.com/Yacademy-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityFactory.sol#L136-L137), [SingularityFactory.sol#L150-L151](https://github.com/Yacademy-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityFactory.sol#L150-L151)
+- [SingularityFactory.sol#L123-L124](https://github.com/Electisec-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityFactory.sol#L123-L124), [SingularityFactory.sol#L136-L137](https://github.com/Electisec-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityFactory.sol#L136-L137), [SingularityFactory.sol#L150-L151](https://github.com/Electisec-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityFactory.sol#L150-L151)
 
   ```solidity
   uint256 length = tokens.length;
@@ -1663,7 +1663,7 @@ Fixed in commit 5d91208a816f8229b4389b4d48048465816f2356
 
 #### Proof of concept
 
-SingularityPool.sol has [`getDepositFee()`](https://github.com/Yacademy-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityPool.sol#L302-L304) and [`getWithdrawalFee()`](https://github.com/Yacademy-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityPool.sol#L337-L339) have named return variable `fee` which is assigned as follows:
+SingularityPool.sol has [`getDepositFee()`](https://github.com/Electisec-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityPool.sol#L302-L304) and [`getWithdrawalFee()`](https://github.com/Electisec-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityPool.sol#L337-L339) have named return variable `fee` which is assigned as follows:
 
 ```solidity
 if (feeA > feeB) {
@@ -1723,7 +1723,7 @@ To save gas, it's better to give infinite token approval to a contract when comp
 
 #### Proof of concept
 
-For every swap and deposit, `SingularityRouter.sol` increases its token allowance to the related pools at [SingularityRouter.sol#L101](https://github.com/Yacademy-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityRouter.sol#L101) and [SingularityRouter.sol#L134](https://github.com/Yacademy-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityRouter.sol#L134).
+For every swap and deposit, `SingularityRouter.sol` increases its token allowance to the related pools at [SingularityRouter.sol#L101](https://github.com/Electisec-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityRouter.sol#L101) and [SingularityRouter.sol#L134](https://github.com/Electisec-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityRouter.sol#L134).
 
 This costs extra gas when compared to the case where the router gives infinite approval only once.
 
@@ -1733,7 +1733,7 @@ Gas Savings
 
 #### Recommendation
 
-Remove lines [SingularityRouter.sol#L101](https://github.com/Yacademy-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityRouter.sol#L101) and [SingularityRouter.sol#L134](https://github.com/Yacademy-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityRouter.sol#L134).
+Remove lines [SingularityRouter.sol#L101](https://github.com/Electisec-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityRouter.sol#L101) and [SingularityRouter.sol#L134](https://github.com/Electisec-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityRouter.sol#L134).
 
 Add this function to `SingularityRouter.sol` &mdash;
 
@@ -1766,7 +1766,7 @@ Public state variable `tranche` has been assigned just once in the constructor o
 
 #### Proof of concept
 
-[`tranche`](https://github.com/Yacademy-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityFactory.sol#L41) has been assigned just once in the constructor and it is defined as public state variable.
+[`tranche`](https://github.com/Electisec-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityFactory.sol#L41) has been assigned just once in the constructor and it is defined as public state variable.
 
 #### Impact
 
@@ -1984,7 +1984,7 @@ Acknowledged
 
 ### 1. Informational - Incorrect balance accounting for fee-on-transfer and rebasing tokens (blockdev)
 
-[SingularityPool.sol](https://github.com/Yacademy-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityPool.sol) does not support creating pools for ERC20 tokens which take fee on transfer. To transfer tokens, the pool uses `safeTransfer()` function which internally calls ERC20's `transfer()` function. If the token takes a fee on transfer, this call still succeeds but the pool might receive fewer tokens than intended.
+[SingularityPool.sol](https://github.com/Electisec-block-2/singularity-v2/blob/a3cdbc5515374c9e1792b3cb94ff1b084a9a1361/contracts/SingularityPool.sol) does not support creating pools for ERC20 tokens which take fee on transfer. To transfer tokens, the pool uses `safeTransfer()` function which internally calls ERC20's `transfer()` function. If the token takes a fee on transfer, this call still succeeds but the pool might receive fewer tokens than intended.
 
 There is a safeguard since the protocol team decides which token will have a pool, but a fee can be turned on after a pool is created. This is also a risk with proxy and rebasing tokens.
 
@@ -2136,6 +2136,6 @@ The oracles should also be rigorously tested. The "on-chain oracle" is not in a 
 
 I really liked the design of the system, and the code was well written and easy to read. My main concerns are around the economics and system design. Singularity is designed around a very particular curve and the choices that led to this curve being used are not clear. The parameters seem to be changing from time to time and it is unclear if one set is superior to another. There has been care put into protecting LPs, with specific attention paid to the collateralization ratio. However, it is not obvious to me that optimizing purely on the cRatio is the best move. It seems like this can be done to users' detriment (incentivizes low liquidity, high cRatio pools). I would also encourage the authors to comment the code in depth, and keep the code and documentation in sync.
 
-## About yAcademy
+## About Electisec
 
-[yAcademy](https://yacademy.dev/) is an ecosystem initiative started by Yearn Finance and its ecosystem partners to bootstrap sustainable and collaborative blockchain security reviews and to nurture aspiring security talent. yAcademy includes [a fellowship program](https://yacademy.dev/fellowship-program/), a residents program, and [a guest auditor program](https://yacademy.dev/guest-auditor-program/). In the fellowship program, fellows perform a series of periodic security reviews and presentations during the program. Residents are past fellows who continue to gain experience by performing security reviews of contracts submitted to yAcademy for review (such as this contract). Guest auditors are experts with a track record in the security space who temporarily assist with the review efforts.
+[Electisec](https://electisec.tech/) is an ecosystem initiative started by Yearn Finance and its ecosystem partners to bootstrap sustainable and collaborative blockchain security reviews and to nurture aspiring security talent. Electisec includes [a fellowship program](https://electisec.tech/fellowship-program/), a residents program, and [a guest auditor program](https://electisec.tech/guest-auditor-program/). In the fellowship program, fellows perform a series of periodic security reviews and presentations during the program. Residents are past fellows who continue to gain experience by performing security reviews of contracts submitted to Electisec for review (such as this contract). Guest auditors are experts with a track record in the security space who temporarily assist with the review efforts.

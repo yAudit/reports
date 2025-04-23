@@ -1,12 +1,12 @@
 ---
 tags: ["solidity"]
 title: 01-2024-Peapods
-description: Peapods yAudit Report
+description: Peapods Electisec Report
 nav_order: 40
 image: assets/images/logo.png
 ---
 
-# yAudit Peapods Review
+# Electisec Peapods Review
 
 **Review Resources:**
 
@@ -77,7 +77,7 @@ After the findings were presented to the Peapods team, fixes were made and inclu
 
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
-yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Peapods and users of the contracts agree to use the code at their own risk.
+Electisec and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Peapods and users of the contracts agree to use the code at their own risk.
 
 ## Code Evaluation Matrix
 
@@ -189,7 +189,7 @@ function test_StealWithWeightShift() public {
 
     vm.prank(deployer);
     index = new WeightedIndex(
-        "yAudit",
+        "Electisec",
         "YAT",
         fees,
         tokens,
@@ -1538,7 +1538,7 @@ When deploying a pod, the deployer can decide what tokens the pod will hold. Add
         weights[1] = 70;
 
         index = new WeightedIndex(
-            "yAudit",
+            "Electisec",
             "YAT",
             fees,
             tokens,
@@ -1631,7 +1631,7 @@ Acknowledged but we are okay leaving as is for now.
 
 ## Final remarks
 
-The yAudit team conducted an extensive review of the protocol contracts focused around the weighted pods functionality, leading to multiple issues of different severity.
+The Electisec team conducted an extensive review of the protocol contracts focused around the weighted pods functionality, leading to multiple issues of different severity.
 
 It is refreshing to see a protocol that embraces decentralization and doesn't rely on upgradeable contracts or trusted entities. However, this approach brings its own challenges, as observed in the fee processing logic that feeds reward distribution. Lack of slippage, highlighted in M-6, is a consequence of the difficulties in executing fair on-chain swaps as part of an automated process during the protocol's lifecycle.
 

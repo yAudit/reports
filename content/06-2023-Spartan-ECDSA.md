@@ -1,12 +1,12 @@
 ---
 tags: ["zk", "circom", "solidity"]
 title: 06-2023-Spartan-ECDSA
-description: Spartan ECDSA yAcademy Report
+description: Spartan ECDSA Electisec Report
 nav_order: 16
 image: assets/images/logo.png
 ---
 
-# yAcademy Spartan-ecdsa Review
+# Electisec Spartan-ecdsa Review
 
 Review Resources:
 
@@ -78,7 +78,7 @@ After the findings were presented to the Spartan-ecdsa team, fixes were made and
 
 This review is for identifying potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
-yAcademy and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAcademy and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Spartan-ecdsa and users of the circuits agree to use the code at their own risk.
+Electisec and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Spartan-ecdsa and users of the circuits agree to use the code at their own risk.
 
 ## Code Evaluation Matrix
 

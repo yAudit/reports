@@ -1,12 +1,12 @@
 ---
 tags: ["zk", "halo2", "solidity"]
 title: 05-2024-Summa-Va
-description: Summa Va yAcademy Report
+description: Summa Va Electisec Report
 nav_order: 16
 image: assets/images/logo.png
 ---
 
-# yAcademy Summa Review - MST-based Protocol
+# Electisec Summa Review - MST-based Protocol
 
 Auditors:
 
@@ -171,7 +171,7 @@ After the findings were presented to the Summa team, fixes were made and include
 
 This code review is for identifying potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged parties could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
-yAcademy and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAcademy and the auditors do not represent or imply to third parties that the code has been audited or that the code is free from defects. By deploying or using the code, Summa Solvency and users of the contracts/circuits agree to use the code at their own risk.
+Electisec and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the auditors do not represent or imply to third parties that the code has been audited or that the code is free from defects. By deploying or using the code, Summa Solvency and users of the contracts/circuits agree to use the code at their own risk.
 
 ## Code Evaluation Matrix
 

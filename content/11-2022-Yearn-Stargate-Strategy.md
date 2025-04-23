@@ -1,12 +1,12 @@
 ---
 tags: ["solidity"]
 title: 11-2022-Yearn-Stargate-Strategy
-description: Yearn Stargate Strategy yAcademy Report
+description: Yearn Stargate Strategy Electisec Report
 nav_order: 11
 image: assets/images/logo.png
 ---
 
-# yAudit Yearn Stargate Strategy Review
+# Electisec Yearn Stargate Strategy Review
 
 **Review Resources:**
 
@@ -36,7 +36,7 @@ image: assets/images/logo.png
 
 The Yearn Finance Stargate Strategy generates yield from the Stargate protocol. The strategy is currently designed for USDC and USDT on Ethereum Mainnet but the strategy may be deployed to other chains, such as Optimism or Arbitrum, in the future. The yield is generated in two ways: from STG staking rewards (using a modified MasterChef contract) and from a portion of the 0.06% bridge fee collected by Stargate that is redistributed back to the liquidity pools.
 
-The contracts of the Yearn Finance Stargate Strategy [Repo](https://github.com/newmickymousse/yearn-stargate) were reviewed over 14 days. The code review was performed between November 20 and December 4, 2022. A number of yAcademy Fellows from Fellowship block 4 also reviewed the contracts and contributed over 40 man hours. The repository was under active development during the review, but the review was limited to the latest commit at the start of the review. This was [commit bcbc1ddbe8973b55a6178f5e07177332938f0cd2](https://github.com/newmickymousse/yearn-stargate/commit/bcbc1ddbe8973b55a6178f5e07177332938f0cd2) for the Yearn Finance Stargate Strategy repo.
+The contracts of the Yearn Finance Stargate Strategy [Repo](https://github.com/newmickymousse/yearn-stargate) were reviewed over 14 days. The code review was performed between November 20 and December 4, 2022. A number of Electisec Fellows from Fellowship block 4 also reviewed the contracts and contributed over 40 man hours. The repository was under active development during the review, but the review was limited to the latest commit at the start of the review. This was [commit bcbc1ddbe8973b55a6178f5e07177332938f0cd2](https://github.com/newmickymousse/yearn-stargate/commit/bcbc1ddbe8973b55a6178f5e07177332938f0cd2) for the Yearn Finance Stargate Strategy repo.
 
 ## Scope
 
@@ -52,7 +52,7 @@ The Yearn Stargate strategy is only deployed on Ethereum mainnet for USDC and US
 
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
-yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, the Yearn Stargate Strategy and users of the contracts agree to use the code at their own risk.
+Electisec and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, the Yearn Stargate Strategy and users of the contracts agree to use the code at their own risk.
 
 ## Code Evaluation Matrix
 
@@ -168,8 +168,8 @@ Acknowledged. The two (2) edge cases highlighted are valid. However, to our know
 
 ### 4. Low - Variables set to Ethereum addresses (spalen)
 
-At [L99 `healthCheck`](https://github.com/Yacademy-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L99)
-and [L100 `baseFeeOracle`](https://github.com/Yacademy-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L100)
+At [L99 `healthCheck`](https://github.com/Electisec-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L99)
+and [L100 `baseFeeOracle`](https://github.com/Electisec-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L100)
 variable are set to specific addresses that existing on Ethereum.
 
 #### Technical Details
@@ -191,11 +191,11 @@ Acknowledged. This is a good point and these addresses will be removed in effort
 
 ### 5. Low - Emergency unstake forgoes extra rewards even when they can be claimed (shung)
 
-[`_emergencyUnstakeLP`](https://github.com/Yacademy-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L468) function forgoes pending rewards even if the rewards can be harvested safely. This will result in migration to always lose pending rewards.
+[`_emergencyUnstakeLP`](https://github.com/Electisec-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L468) function forgoes pending rewards even if the rewards can be harvested safely. This will result in migration to always lose pending rewards.
 
 #### Technical Details
 
-`_emergencyUnstakeLP` is an internal function executed during [migration](https://github.com/yearn/yearn-vaults/blob/74364b2c33bd0ee009ece975c157f065b592eeaf/contracts/BaseStrategy.sol#L879), or during [admin-initiated emergency exits](https://github.com/Yacademy-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L306). In the former case, migration can be required even if the staker contract is still functional and is receiving rewards. In the latter case, admin can call emergency unstake by mistake when the rewards are still claimable. In both cases, pending rewards will be discarded and irrecoverably stuck in the Stargate LP staker contract.
+`_emergencyUnstakeLP` is an internal function executed during [migration](https://github.com/yearn/yearn-vaults/blob/74364b2c33bd0ee009ece975c157f065b592eeaf/contracts/BaseStrategy.sol#L879), or during [admin-initiated emergency exits](https://github.com/Electisec-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L306). In the former case, migration can be required even if the staker contract is still functional and is receiving rewards. In the latter case, admin can call emergency unstake by mistake when the rewards are still claimable. In both cases, pending rewards will be discarded and irrecoverably stuck in the Stargate LP staker contract.
 
 #### Impact
 
@@ -366,7 +366,7 @@ Use [unchecked block](https://docs.soliditylang.org/en/latest/control-structures
 
 1. [\_amountFreed is set in `prepareReturn()`](https://github.com/newmickymousse/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L210-L215) but is never used after that point. The variable and the lines setting it can be deleted to save gas.
 
-2. [In `withdrawSome()`](https://github.com/Yacademy-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L279-L287), `_liquidatedAmount` is used only to return the proper value, and in on branch of the if statement `_liquidatedAmount` is set to `_liquidAssets`. Instead of creating a new temporary variable `_liquidAssets`, use `_liquidatedAmount` instead and change the if statement logic to
+2. [In `withdrawSome()`](https://github.com/Electisec-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L279-L287), `_liquidatedAmount` is used only to return the proper value, and in on branch of the if statement `_liquidatedAmount` is set to `_liquidAssets`. Instead of creating a new temporary variable `_liquidAssets`, use `_liquidatedAmount` instead and change the if statement logic to
 
 ```diff
 - uint256 _liquidAssets = balanceOfWant() - _preWithdrawWant;
@@ -383,7 +383,7 @@ Use [unchecked block](https://docs.soliditylang.org/en/latest/control-structures
 }
 ```
 
-3. At [L218](https://github.com/Yacademy-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L218)
+3. At [L218](https://github.com/Electisec-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L218)
    there is no need define `_liquidWant` and call `balanceOfWant()`. Recalculate `_ wantBalance` after L213.
    Remove variable `_liquidWant` and use `_wantBalance` instead.
 
@@ -459,7 +459,7 @@ Gas savings.
 
 #### Recommendation
 
-Before [L265](https://github.com/Yacademy-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L265)
+Before [L265](https://github.com/Electisec-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L265)
 exit for 0 input value. After this check, if statement at L266 can be removed.
 
 ```solidity
@@ -667,7 +667,7 @@ Consider the differences between tokens and chains when deploying this strategy 
 
 ### 10. Informational - Rename variable (spalen)
 
-Rename variable `_liquidAssets` at [L279](https://github.com/Yacademy-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L279).
+Rename variable `_liquidAssets` at [L279](https://github.com/Electisec-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L279).
 
 #### Technical Details
 
@@ -683,7 +683,7 @@ Rename to `_liquidatedAssets`.
 
 ### 11. Informational - Use vault decimals (spalen)
 
-At [L98](https://github.com/Yacademy-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L98)
+At [L98](https://github.com/Electisec-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L98)
 `want` decimals is fetched by importing `IERC20Metadata` but this data is already stored in vault.
 
 #### Technical Details
@@ -696,7 +696,7 @@ Simpler code with less imports.
 
 #### Recommendation
 
-Replace [L98](https://github.com/Yacademy-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L98)
+Replace [L98](https://github.com/Electisec-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L98)
 and remove interface IERC20Metadata import as well as file.
 
 ```solidity
@@ -705,8 +705,8 @@ and remove interface IERC20Metadata import as well as file.
 
 ### 12. Informational - Use explicit uint type (spalen)
 
-At [L383](https://github.com/Yacademy-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L383)
-and [L387](https://github.com/Yacademy-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L387)
+At [L383](https://github.com/Electisec-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L383)
+and [L387](https://github.com/Electisec-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L387)
 uint alias is used for uint256. The rest of the contract uses explicit uint256.
 
 #### Technical Details
@@ -827,7 +827,7 @@ Governance could take the reward tokens earned by the strategy.
 #### Technical Details
 
 `BaseStrategy` contract [has a virtual function](https://github.com/yearn/yearn-vaults/blob/74364b2c33bd0ee009ece975c157f065b592eeaf/contracts/BaseStrategy.sol#L923) to define which tokens cannot be swept by the governance.
-The `Strategy` contract [does not honor this](https://github.com/Yacademy-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L372) by not setting the reward token as protected.
+The `Strategy` contract [does not honor this](https://github.com/Electisec-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L372) by not setting the reward token as protected.
 
 #### Impact
 
@@ -835,7 +835,7 @@ Informational.
 
 #### Recommendation
 
-Return the `reward` token address [in `protectedTokens` function](https://github.com/Yacademy-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L372).
+Return the `reward` token address [in `protectedTokens` function](https://github.com/Electisec-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L372).
 
 ### 17. Informational - Reverts are missing reason string (shung)
 
@@ -843,7 +843,7 @@ Most of the `require` statements in the contract are missing a reason string. La
 
 #### Technical Details
 
-There are five instances of this issue ([1](https://github.com/Yacademy-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L74), [2](https://github.com/Yacademy-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L119), [3](https://github.com/Yacademy-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L137), [4](https://github.com/Yacademy-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L388), [5](https://github.com/Yacademy-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L407)).
+There are five instances of this issue ([1](https://github.com/Electisec-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L74), [2](https://github.com/Electisec-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L119), [3](https://github.com/Electisec-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L137), [4](https://github.com/Electisec-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L388), [5](https://github.com/Electisec-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L407)).
 
 #### Impact
 
@@ -859,7 +859,7 @@ Add a second argument in `require` statements to return a reason string. Alterna
 
 #### Technical Details
 
-In assembly, `create` does not revert when a deployment fails. It instead [returns zero address](https://docs.soliditylang.org/en/latest/yul.html#evm-dialect). This is currently not an issue because there is an implicit check due to [the call made to the `newStrategy`](https://github.com/Yacademy-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L156). However, not having an explicit check might cause this to be overlooked in future refactorings of the code.
+In assembly, `create` does not revert when a deployment fails. It instead [returns zero address](https://docs.soliditylang.org/en/latest/yul.html#evm-dialect). This is currently not an issue because there is an implicit check due to [the call made to the `newStrategy`](https://github.com/Electisec-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L156). However, not having an explicit check might cause this to be overlooked in future refactorings of the code.
 
 #### Impact
 
@@ -867,7 +867,7 @@ Informational.
 
 #### Recommendation
 
-Add an explicit check [to ensure `newStrategy` address is non-zero](https://github.com/Yacademy-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L153). Alternatively, clarify with a comment that the external call to the `newStrategy` also acts a check for ensuring `create` did not fail.
+Add an explicit check [to ensure `newStrategy` address is non-zero](https://github.com/Electisec-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L153). Alternatively, clarify with a comment that the external call to the `newStrategy` also acts a check for ensuring `create` did not fail.
 
 ### 19. Informational - Missing Zero-Address Check (hasanza)
 
@@ -966,13 +966,13 @@ Informational.
 
 #### Recommendation
 
-Remove [the line with encoder pragma](https://github.com/Yacademy-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L4).
+Remove [the line with encoder pragma](https://github.com/Electisec-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L4).
 
 ### 24. Informational - Constant is not named in capital letters (shung)
 
 #### Technical Details
 
-The official Solidity style guide [recommends using all capital letters for contants](https://docs.soliditylang.org/en/v0.8.17/style-guide.html#constants). However, the constant [`max`](https://github.com/Yacademy-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L24) does not adhere to this guideline.
+The official Solidity style guide [recommends using all capital letters for contants](https://docs.soliditylang.org/en/v0.8.17/style-guide.html#constants). However, the constant [`max`](https://github.com/Electisec-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L24) does not adhere to this guideline.
 
 #### Impact
 
@@ -986,7 +986,7 @@ Rename the variable accordingly.
 
 #### Technical Details
 
-The [`receive()`](https://github.com/Yacademy-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L406) function allows the Strategy contract to receive ETH from the WETH contract when the want token is WETH. However, anyone can send ETH to the contract via the `receive()` function as the address that sends the ETH isn't checked.
+The [`receive()`](https://github.com/Electisec-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L406) function allows the Strategy contract to receive ETH from the WETH contract when the want token is WETH. However, anyone can send ETH to the contract via the `receive()` function as the address that sends the ETH isn't checked.
 
 #### Impact
 
@@ -1008,7 +1008,7 @@ receive() external payable {
 
 #### Technical Details
 
-In the [`_ldToLp`](https://github.com/Yacademy-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L387-L391) function the value returned is calculated by first dividing and then multiplying. This could lead to precision loss when `liquidityPool.convertRate() != 1`. If the `convertRate()` changes, the [`_ldToLp`](https://github.com/Yacademy-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L387-L391) function will return lower value than expected.
+In the [`_ldToLp`](https://github.com/Electisec-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L387-L391) function the value returned is calculated by first dividing and then multiplying. This could lead to precision loss when `liquidityPool.convertRate() != 1`. If the `convertRate()` changes, the [`_ldToLp`](https://github.com/Electisec-block-4/yearn-stargate/blob/bcbc1ddbe8973b55a6178f5e07177332938f0cd2/contracts/Strategy.sol#L387-L391) function will return lower value than expected.
 
 #### Impact
 
@@ -1043,6 +1043,6 @@ The meaning of Delta credit in Stargate is not clear and should be better explai
 Overall, the code is clean but there is room for multiple small gas optimizations and cleaning up unused stuff.
 Tests are well-written and cover all main cases.
 
-## About yAcademy
+## About Electisec
 
-[yAcademy](https://yacademy.dev/) is an ecosystem initiative started by Yearn Finance and its ecosystem partners to bootstrap sustainable and collaborative blockchain security reviews and to nurture aspiring security talent. yAcademy includes [a fellowship program](https://yacademy.dev/fellowship-program/), a residents program, and [a guest auditor program](https://yacademy.dev/guest-auditor-program/). In the fellowship program, fellows perform a series of periodic security reviews and presentations during the program. Residents are past fellows who continue to gain experience by performing security reviews of contracts submitted to yAcademy for review (such as this contract). Guest auditors are experts with a track record in the security space who temporarily assist with the review efforts.
+[Electisec](https://electisec.tech/) is an ecosystem initiative started by Yearn Finance and its ecosystem partners to bootstrap sustainable and collaborative blockchain security reviews and to nurture aspiring security talent. Electisec includes [a fellowship program](https://electisec.tech/fellowship-program/), a residents program, and [a guest auditor program](https://electisec.tech/guest-auditor-program/). In the fellowship program, fellows perform a series of periodic security reviews and presentations during the program. Residents are past fellows who continue to gain experience by performing security reviews of contracts submitted to Electisec for review (such as this contract). Guest auditors are experts with a track record in the security space who temporarily assist with the review efforts.

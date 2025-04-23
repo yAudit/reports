@@ -14,11 +14,10 @@ export default function App({ Component, pageProps }: AppProps) {
   return (
     <>
       <Head>
-        <title>Electisec Reports (previously yAcademy & yAudit)</title>
+        <title>Electisec Reports</title>
       </Head>
 
       <main className={spaceGrotesk.className}>
-        
         <Navbar />
         <Component {...pageProps} />
         <Footer />

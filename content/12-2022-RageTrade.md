@@ -1,12 +1,12 @@
 ---
 tags: ["solidity"]
 title: 12-2022-RageTrade
-description: Rage Trade yAudit Report
+description: Rage Trade Electisec Report
 nav_order: 15
 image: assets/images/logo.png
 ---
 
-# yAudit Rage Trade Review
+# Electisec Rage Trade Review
 
 **Review Resources:**
 
@@ -37,7 +37,7 @@ The scope of the review consisted of all the contracts in the repo at the specif
 
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
-yAudits and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Rage Trade and users of the contracts agree to use the code at their own risk.
+Electisecs and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Rage Trade and users of the contracts agree to use the code at their own risk.
 
 ## Code Evaluation Matrix
 

@@ -1,12 +1,12 @@
 ---
 tags: ["solidity"]
 title: 06-2022-Yearn-BalancerLPFactory
-description: Yearn BalancerLPFactory Strategy yAcademy Report
+description: Yearn BalancerLPFactory Strategy Electisec Report
 nav_order: 9
 image: assets/images/logo.png
 ---
 
-# yAudit Yearn BalancerLpFactory Review
+# Electisec Yearn BalancerLpFactory Review
 
 **Review Resources:**
 
@@ -42,7 +42,7 @@ After the findings were presented to the Yearn dev, fixes were made and included
 
 The review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
-yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third party users that the code has been audited nor that the code is free from defects. By deploying or using the code, yearn and users of the contracts agree to use the code at their own risk.
+Electisec and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the auditors do not represent nor imply to third party users that the code has been audited nor that the code is free from defects. By deploying or using the code, yearn and users of the contracts agree to use the code at their own risk.
 
 ## Code Evaluation Matrix
 
@@ -742,6 +742,6 @@ Now these functions consume same amount of gas irrespective of the array length.
 
 A well written contract with little critical issues. Good news being, some of the more concerning parts of code stability actually happens to be with regards to governance params on CRV / CVX, which is fine. On review, I'm happy that wavey (contract dev) was able to patch many things mentioned in the report. No code review was done on the patches, however.
 
-## About yAcademy
+## About Electisec
 
-[yAcademy](https://yacademy.dev/) is an ecosystem initiative started by Yearn Finance and its ecosystem partners to bootstrap sustainable and collaborative blockchain security reviews and to nurture aspiring security talent. yAcademy includes [a fellowship program](https://yacademy.dev/fellowship-program/), a residents program, and [a guest auditor program](https://yacademy.dev/guest-auditor-program/). In the fellowship program, fellows perform a series of periodic security reviews and presentations during the program. Residents are past fellows who continue to gain experience by performing security reviews of contracts submitted to yAcademy for review (such as this contract). Guest auditors are experts with a track record in the security space who temporarily assist with the review efforts.
+[Electisec](https://electisec.tech/) is an ecosystem initiative started by Yearn Finance and its ecosystem partners to bootstrap sustainable and collaborative blockchain security reviews and to nurture aspiring security talent. Electisec includes [a fellowship program](https://electisec.tech/fellowship-program/), a residents program, and [a guest auditor program](https://electisec.tech/guest-auditor-program/). In the fellowship program, fellows perform a series of periodic security reviews and presentations during the program. Residents are past fellows who continue to gain experience by performing security reviews of contracts submitted to Electisec for review (such as this contract). Guest auditors are experts with a track record in the security space who temporarily assist with the review efforts.

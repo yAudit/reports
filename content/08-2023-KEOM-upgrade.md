@@ -1,12 +1,12 @@
 ---
 tags: ["solidity"]
 title: 08-2023-KEOM-upgrade
-description: KEOM Upgrade yAudit Report
+description: KEOM Upgrade Electisec Report
 nav_order: 33
 image: assets/images/logo.png
 ---
 
-# yAudit KEOM Upgrade Review
+# Electisec KEOM Upgrade Review
 
 **Review Resources:**
 
@@ -42,7 +42,7 @@ After the findings were presented to the KEOM team, fixes were made and included
 
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
-yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, KEOM and users of the contracts agree to use the code at their own risk.
+Electisec and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, KEOM and users of the contracts agree to use the code at their own risk.
 
 ## Code Evaluation Matrix
 
@@ -442,7 +442,7 @@ If the protocol plans to support adding hundreds of markets in the future, add g
 
 #### Developer Response
 
-In case that we add hundreds of markets, we will probably change the implementation of this function and hire yAudit for another audit :)
+In case that we add hundreds of markets, we will probably change the implementation of this function and hire Electisec for another audit :)
 
 ### 8. Informational - Typos
 

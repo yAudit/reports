@@ -7,10 +7,7 @@ export default function Document() {
       <Head>
         {/* Basic Metadata */}
         <meta charSet="utf-8" />
-        <meta
-          name="title"
-          content="Electisec Reports (previously yAcademy & yAudit)"
-        />
+        <meta name="title" content="Electisec Reports" />
         <meta name="description" content="ZK & Smart Contract Security" />
         <meta
           name="keywords"
@@ -23,10 +20,7 @@ export default function Document() {
         {/* Open Graph */}
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://reports.electisec.tech" />
-        <meta
-          property="og:title"
-          content="Electisec (previously yAcademy & yAudit)"
-        />
+        <meta property="og:title" content="Electisec" />
         <meta
           property="og:description"
           content="ZK & Smart Contract Security"

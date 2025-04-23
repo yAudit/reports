@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/tooltip";
 import { Dock, DockIcon } from "@/components/ui/dock";
 
-
 export default function Footer() {
   return (
     <div className="h-full flex flex-col bg-gray-100 justify-center p-16 items-center relative no-print">
@@ -26,7 +25,6 @@ export default function Footer() {
     </div>
   );
 }
-
 
 export type IconProps = React.HTMLAttributes<SVGElement>;
 
@@ -123,7 +121,7 @@ const DATA = {
       },
       email: {
         name: "Send Email",
-        url: "mailto:hello@yacademy.dev",
+        url: "mailto:hello@electisec.tech",
         icon: Icons.email,
       },
     },

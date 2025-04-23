@@ -1,12 +1,12 @@
 ---
 tags: ["solidity"]
 title: 10-2023-Dopex-CLAMM
-description: Dopex V2 CLAMM yAudit Report
+description: Dopex V2 CLAMM Electisec Report
 nav_order: 36
 image: assets/images/logo.png
 ---
 
-# yAudit Dopex V2 CLAMM Review <!-- omit in toc -->
+# Electisec Dopex V2 CLAMM Review <!-- omit in toc -->
 
 **Review Resources:**
 
@@ -30,7 +30,7 @@ image: assets/images/logo.png
 
 Dopex V2 CLAMM provides a solution to solve the on-chain options liquidity issue, by using Uniswap V3 liquidity positions as collateral for writing options. With this approach, an option is purchased at a specific strike price against a Uniswap V3 LP previously deposited into CLAMM. The liquidity is borrowed from the corresponding tick and withdrawn from the AMM. The tokens are no longer participating in liquidity provision, and the CLAMM LPs are paid a fixed premium base which is converted into an LP position. When the current price surpasses the strike price, Traders can take a profit, in this case, the unwrapped liquidity is swapped into an asset, and the profit is sent to the trader, and the rest is LPed back to the AMM. The premium paid for this operation is far more than the fees the position might have earned while in the AMM. If the Uniswap V3 liquidity position are not used by any options, the liquidity position will still earn fees as it normally would in Uniswap V3.
 
-![clamm_arch](https://github.com/yAudit/dopex-v2-clamm-report/assets/116267321/5f5ba136-4a54-4f85-90eb-cccd5170a1af)
+![clamm_arch](https://github.com/Electisec/dopex-v2-clamm-report/assets/116267321/5f5ba136-4a54-4f85-90eb-cccd5170a1af)
 
 The contracts of the Dopex V2 CLAMM [Repo](https://github.com/dopex-io/dopex-v2-clamm) were reviewed over 21 days. The code review was performed by 3 auditors between October 20 and November 10, 2023. The repository was under active development during the review, but the review was limited to the latest commit at the start of the review. This was commit [ceb91c7d403da4a3b3eea831c195305e6a5362f9](https://github.com/dopex-io/dopex-v2-clamm/commit/ceb91c7d403da4a3b3eea831c195305e6a5362f9) for the Dopex V2 CLAMM repo.
 
@@ -48,7 +48,7 @@ After the findings were presented to the Dopex V2 CLAMM team, fixes were made an
 
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
-yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Dopex V2 CLAMM and users of the contracts agree to use the code at their own risk.
+Electisec and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Dopex V2 CLAMM and users of the contracts agree to use the code at their own risk.
 
 ## Code Evaluation Matrix
 
