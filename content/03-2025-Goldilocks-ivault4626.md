@@ -147,18 +147,18 @@ Fixed [here](https://github.com/0xgeeb/goldilocks-core/commit/5f6dd8ea9b367525b4
 
 The redemption process is inefficient because it doesn't first check if a user has sufficient unstaked `YT` tokens before attempting to unstake additional tokens. This design flaw wastes gas by potentially unstaking tokens unnecessarily and force the user to stake it again after redemption.
 
-## Technical Details
+#### Technical Details
 
 The current redemption flow in Goldivault4626's [`redeemOwnership()`](https://github.com/0xgeeb/goldilocks-core/blob/022263468c7d21afceb44d0ac9ba0ea8a1beedf8/src/core/goldivault/Goldivault4626.sol#L161) and [`_redeemOwnership()`](https://github.com/0xgeeb/goldilocks-core/blob/022263468c7d21afceb44d0ac9ba0ea8a1beedf8/src/core/goldivault/Goldivault4626.sol#L334) directly calculates and unstakes `YT` tokens through `_unstakeYT(unstakableAmount)` without first checking if the user already has enough unstaked `YT` tokens to satisfy the redemption request. This means:
 
 1. Gas is wasted on unnecessary unstaking operations when a user already has sufficient unstaked `YT`
 2. Users will have their `YT` tokens unexpectedly unstaked and are forced to stake them again
 
-## Impact
+#### Impact
 
 Low. The current implementation creates a poor user experience where users must manually manage their staked vs unstaked token balances.
 
-## Recommendation
+#### Recommendation
 
 Redesign the redemption flow to optimize user experience and improve readability:
 
@@ -207,7 +207,7 @@ function _redeemOwnership(uint256 amount, bool checkVaultConclusion) internal {
 }
 ```
 
-## Developer Response
+#### Developer Response
 
 Acknowledged, we decided to remove unstakableYT [here](https://github.com/0xgeeb/goldilocks-core/commit/b78ccf00f48040047622d8d585011c1cb3324b13) and will make it clear on the UI that YT should be staked before selling or redeeming. 
 
@@ -354,7 +354,7 @@ Fixed [here](https://github.com/0xgeeb/goldilocks-core/commit/6e4a144c866e9e13ef
 
 `Goldivault4626` can work only with up-only `depositVaults`.
 
-## Technical Details
+#### Technical Details
 
 The yield calculation in [`_claimableUnderlyingPerYT()`](https://github.com/0xgeeb/goldilocks-core/blob/022263468c7d21afceb44d0ac9ba0ea8a1beedf8/src/core/goldivault/Goldivault4626.sol#L374) assumes that the vault's ratio can only increase or stay the same.
 
@@ -366,11 +366,11 @@ If `newRatio` is less than `oldRatio`, the subtraction will revert due to underf
 
 As `_claimableUnderlyingPerYT()` is called by `stake()` and `unstake()`, this will lock users' funds and prevent new staking until the ratio difference becomes positive again. The issue is temporary and self-resolves when the vault's ratio returns to positive growth.
 
-## Impact
+#### Impact
 
 Informational.
 
-## Recommendation
+#### Recommendation
 
 Add this behaviour to the documentation and add a custom revert to handle this scenario:
 
@@ -380,7 +380,7 @@ if (newRatio < oldRatio) revert NegativeYield();
 
 If you plan to use negative yield vaults, additional changes are needed to handle it.
 
-## Developer Response
+#### Developer Response
 
 Fixed [here](https://github.com/0xgeeb/goldilocks-core/commit/ff5ac5d12badad9f397abb30d0fc4e21199294fc).
 
