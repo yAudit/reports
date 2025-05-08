@@ -19,7 +19,7 @@ export default function Document() {
 
         {/* Open Graph */}
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://reports.electisec.tech" />
+        <meta property="og:url" content="https://reports.electisec.com" />
         <meta property="og:title" content="Electisec" />
         <meta
           property="og:description"
@@ -28,14 +28,14 @@ export default function Document() {
         <meta property="og:site_name" content="Electisec" />
         <meta
           property="og:image"
-          content="https://reports.electisec.tech/logo.svg"
+          content="https://reports.electisec.com/logo.svg"
         />
 
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:site" content="@electisec" />
         <meta name="twitter:creator" content="@electisec" />
-        <meta name="twitter:image" content="https://electisec.tech/logo.svg" />
+        <meta name="twitter:image" content="https://electisec.com/logo.svg" />
 
         {/* Favicon */}
         <link rel="icon" href="/favicon.ico" />

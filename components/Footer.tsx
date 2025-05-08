@@ -91,11 +91,11 @@ export const Icons = {
 const DATA = {
   navbar: [
     {
-      href: "https://reports.electisec.tech",
+      href: "https://reports.electisec.com",
       icon: BookCopyIcon,
       label: "Reports",
     },
-    { href: "https://blog.electisec.tech", icon: PencilIcon, label: "Blog" },
+    { href: "https://blog.electisec.com", icon: PencilIcon, label: "Blog" },
   ],
   contact: {
     social: {
@@ -121,7 +121,7 @@ const DATA = {
       },
       email: {
         name: "Send Email",
-        url: "mailto:hello@electisec.tech",
+        url: "mailto:hello@electisec.com",
         icon: Icons.email,
       },
     },

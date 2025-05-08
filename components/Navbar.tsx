@@ -21,7 +21,7 @@ const Navbar = () => {
       <nav className="w-full bg-white flex h-18 items-center justify-between top-0 py-6">
         {/* Logo section */}
         <div className="flex flex-row gap-4 text-emeraldlight items-center text-xl lg:ml-[20vw] ml-4">
-          <Link href="https://electisec.tech/">
+          <Link href="https://electisec.com/">
             <img alt="Logo" src="/logo.svg" className="h-10" />
           </Link>
         </div>
@@ -36,24 +36,24 @@ const Navbar = () => {
 
         {/* Desktop menu */}
         <div className="hidden lg:flex flex-row items-center gap-1 lg:mr-[20vw]">
-          <Link href="https://reports.electisec.tech/">
+          <Link href="https://reports.electisec.com/">
             <button className="px-6 py-3 rounded-xl text-sm hover:text-darkgreen text-bold text-emeraldlight duration-700">
               Reports
             </button>
           </Link>
-          <Link href="https://blog.electisec.tech/">
+          <Link href="https://blog.electisec.com/">
             <Button text="Blog" />
           </Link>
-          <Link href="https://electisec.tech/fellowships">
+          <Link href="https://electisec.com/fellowships">
             <Button text="Fellowships" />
           </Link>
-          <Link href="https://electisec.tech/services">
+          <Link href="https://electisec.com/services">
             <Button text="Services" />
           </Link>
-          <Link href="https://electisec.tech/team">
+          <Link href="https://electisec.com/team">
             <Button text="Team" />
           </Link>
-          <Link href="https://electisec.tech/contact-us">
+          <Link href="https://electisec.com/contact-us">
             <button className="px-8 py-3 rounded-xl text-md text-darkgreen text-bold bg-emeraldlight bg-opacity-25 hover:bg-opacity-5 hover:text-emeraldlight duration-700">
               Contact
             </button>
@@ -72,17 +72,17 @@ const Navbar = () => {
               <CloseCircleOutlined style={{ fontSize: "2rem" }} />
             </button>
 
-            <Link href="https://reports.electisec.tech/">
+            <Link href="https://reports.electisec.com/">
               <button className="p-6 rounded-xl w-full text-xl text-zinc-400 hover:text-emeraldlight hover:bg-darkgreen hover:bg-opacity-5 duration-700">
                 Reports
               </button>
             </Link>
-            <Link href="https://blog.electisec.tech/">
+            <Link href="https://blog.electisec.com/">
               <button className="p-6 rounded-xl w-full text-xl text-emeraldlight hover:bg-darkgreen hover:bg-opacity-5 duration-700">
                 Blog
               </button>
             </Link>
-            <Link href="https://electisec.tech/fellowships">
+            <Link href="https://electisec.com/fellowships">
               <button
                 onClick={() => setMenuOpen(false)}
                 className="p-6 rounded-xl w-full text-xl text-zinc-400 hover:text-emeraldlight hover:bg-darkgreen hover:bg-opacity-5 duration-700"
@@ -90,7 +90,7 @@ const Navbar = () => {
                 Fellowships
               </button>
             </Link>
-            <Link href="https://electisec.tech/services">
+            <Link href="https://electisec.com/services">
               <button
                 onClick={() => setMenuOpen(false)}
                 className="p-6 rounded-xl w-full text-xl text-zinc-400 hover:text-emeraldlight hover:bg-white hover:bg-opacity-5 duration-700"
@@ -98,7 +98,7 @@ const Navbar = () => {
                 Services
               </button>
             </Link>
-            <Link href="https://electisec.tech/team">
+            <Link href="https://electisec.com/team">
               <button
                 onClick={() => setMenuOpen(false)}
                 className="p-6 rounded-xl w-full text-xl text-zinc-400 hover:text-emeraldlight hover:bg-white hover:bg-opacity-5 duration-700"
@@ -106,7 +106,7 @@ const Navbar = () => {
                 Team
               </button>
             </Link>
-            <Link href="https://electisec.tech/contact-us">
+            <Link href="https://electisec.com/contact-us">
               <button
                 onClick={() => setMenuOpen(false)}
                 className="p-6 rounded-xl w-full text-xl text-emeraldlight text-bold hover:bg-darkgreen hover:bg-opacity-5 duration-700"
