@@ -1,6 +1,6 @@
 ---
 tags: ["solidity", "sickle", "uniswap-v4", "uniswap-v3", "curve"]
-title: 04-2025-Sickle-Uniswap-Curve
+title: 04-2025-Sickle-Uniswap-&-Curve-Connectors
 description: Review of Sickle's UniswapV3, UniswapV4 and Curve connectors
 ---
 
