@@ -20,6 +20,16 @@ const nextConfig: NextConfig = {
     });
     return config;
   },
+  // Add redirects configuration
+  async redirects() {
+    return [
+      {
+        source: '/reports/:slug',
+        destination: '/:slug',
+        permanent: true, // This is a 308 status code (permanent redirect)
+      }
+    ];
+  },
 };
 
 export default nextConfig;

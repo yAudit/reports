@@ -30,6 +30,14 @@ p {
   max-width: 100%;
 }
 
+li {
+  white-space: normal; /* Use normal whitespace handling */
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: none;
+  max-width: 100%;
+}
+
 .prose a {
   color: #15803d;
 }
