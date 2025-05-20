@@ -1,10 +1,10 @@
 ---
-tags: ["solidity", "cozy"]
+tags: ["solidity"]
 title: Cozy-safety-module-reward-manager
 description: Cozy safety module reward manager report
 ---
 
-# Electisec Cozy safety module reward manager Review  Review <!-- omit in toc -->
+# Electisec Cozy safety module reward manager Review <!-- omit in toc -->
 
 **Review Resources:**
 
