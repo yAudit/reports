@@ -1,6 +1,6 @@
 ---
-tags: ["solidity", "cozy"]
-title: Cozy-safety-module
+tags: ["solidity"]
+title: 05-2025-Cozy-safety-module
 description: cozy safety module report
 ---
 
