@@ -1,6 +1,6 @@
 ---
 tags: ["solidity", "cozy"]
-title: cozy safety module
+title: Cozy-safety-module
 description: cozy safety module report
 ---
 
