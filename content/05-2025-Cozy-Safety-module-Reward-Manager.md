@@ -66,7 +66,7 @@ src/
 └── StkReceiptToken.sol
 ```
 
-After the findings were presented to the TODO_protocol_name team, fixes were made and included in several PRs.
+After the findings were presented to the Cozy team, fixes were made and included in several PRs.
 
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
