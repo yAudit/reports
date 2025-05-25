@@ -8,7 +8,7 @@ description: Security review of the USA.d / USDaf v1
 
 **Review Resources:**
 
-- [Liquitiy documentation](https://docs.liquity.org/)
+- [Liquity documentation](https://docs.liquity.org/)
 
 **Auditors:**
 
