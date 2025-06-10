@@ -1,6 +1,6 @@
 ---
 tags: ["solidity", "olympus"]
-title: Olympus OHM CCIP
+title: 05-2025-Olympus-CCIP
 description: Olympus OHM bridge using CCIP
 ---
 
