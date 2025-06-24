@@ -184,8 +184,8 @@ export function extractDate(filename: string): string | null {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [_, month, year] = match;
     // Create date object (using 1st of the month)
-    const date = new Date(parseInt(year), parseInt(month) - 1, 1);
-    return date.toISOString();
+    const date = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, 1));
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
   }
 
   return null;
