@@ -185,7 +185,7 @@ export function extractDate(filename: string): string | null {
     const [_, month, year] = match;
     // Create date object (using 1st of the month)
     const date = new Date(parseInt(year), parseInt(month) - 1, 1);
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', timeZone: 'UTC' });
   }
 
   return null;
