@@ -177,23 +177,17 @@ export async function processMarkdown(content: string) {
 }
 
 export function extractDate(filename: string): string | null {
+  // Match pattern: "MM-YYYY" from the start of the string
   const match = filename.match(/^(\d{2})-(\d{4})/);
+
   if (match) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [_, month, year] = match;
-    const monthNum = parseInt(month);
-    
-    if (monthNum < 1 || monthNum > 12) {
-      return null;
-    }
-    
-    const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-    
-    return `${months[monthNum - 1]} ${year}`;
+    // Create date object (using 1st of the month)
+    const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', timeZone: 'UTC' });
   }
+
   return null;
 }
 
