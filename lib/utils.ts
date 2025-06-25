@@ -179,6 +179,7 @@ export async function processMarkdown(content: string) {
 export function extractDate(filename: string): string | null {
   const match = filename.match(/^(\d{2})-(\d{4})/);
   if (match) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [_, month, year] = match;
     const monthNum = parseInt(month);
     
