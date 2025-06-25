@@ -34,10 +34,7 @@ export default function ReportPage({
             </h1>
             <div className="mt-2 flex items-center text-sm text-gray-500">
               <span>
-                {new Date(date).toLocaleDateString("en-US", {
-                  year: "numeric",
-                  month: "long",
-                })}
+                {date}
               </span>
             </div>
             <div className="mt-4 flex flex-wrap gap-2">

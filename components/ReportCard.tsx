@@ -18,11 +18,8 @@ const ReportCard: React.FC<ReportCardProps> = ({
 }) => {
   // Format the date to be more readable
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-    });
+    // Try to parse the date
+    return dateString
   };
 
   return (
