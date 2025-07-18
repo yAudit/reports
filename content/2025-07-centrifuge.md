@@ -17,16 +17,26 @@ description: Electisec Centrifuge report
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     const baseUrl = window.location.origin;
-    
-    // Get PDF name from route or use default
     const currentPath = window.location.pathname;
-    const reportName = currentPath.split('/').pop() || '2025-07-report-centrifuge';
+    const reportName = currentPath.split('/').pop() || '2025-07-centrifuge';
     const pdfPath = `/pdf/${reportName}.pdf`;
     const fullPdfUrl = `${baseUrl}${pdfPath}`;
+    const iframe = document.getElementById('pdf-iframe');
     
-    // Use PDF.js viewer with custom parameters
+    // Try Mozilla's viewer first
     const viewerUrl = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(fullPdfUrl)}#toolbar=1&navpanes=0&scrollbar=1`;
+    iframe.src = viewerUrl;
     
-    document.getElementById('pdf-iframe').src = viewerUrl;
+    // Fallback to direct PDF if CORS fails
+    iframe.addEventListener('error', function() {
+      iframe.src = fullPdfUrl;
+    });
+    
+    // Alternative fallback after timeout
+    setTimeout(function() {
+      if (!iframe.contentDocument) {
+        iframe.src = fullPdfUrl;
+      }
+    }, 5000);
   });
 </script>

@@ -30,6 +30,19 @@ const nextConfig: NextConfig = {
       }
     ];
   },
+  async headers() {
+    return [
+      {
+        source: '/pdf/:path*',
+        headers: [
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: 'https://mozilla.github.io', // Only Mozilla's PDF.js
+          },
+        ],
+      },
+    ]
+  },
 };
 
 export default nextConfig;
