@@ -4,9 +4,23 @@ title: 2025-07-Centrifuge
 description: Electisec Centrifuge report
 ---
 
+<div id="pdf-container" style="width: 100%; height: 1000px;">
+  <iframe 
+    id="pdf-iframe"
+    width="100%" 
+    height="100%" 
+    style="border: none;"
+    title="2025-07-report-centrifuge">
+  </iframe>
+</div>
 
-<object data="pdf/2025-07-report-centrifuge.pdf" type="application/pdf" width="100%" height="1000px">
-    <embed src="pdf/2025-07-report-centrifuge.pdf">
-        <p>This browser does not support PDFs. Please download the PDF to view it: <a href="pdf/2025-07-report-centrifuge.pdf">Download PDF</a>.</p>
-    </embed>
-</object>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const baseUrl = window.location.origin;
+    const pdfPath = '/pdf/2025-07-report-centrifuge.pdf';
+    const fullPdfUrl = `${baseUrl}${pdfPath}`;
+    const googleViewerUrl = `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(fullPdfUrl)}`;
+    
+    document.getElementById('pdf-iframe').src = googleViewerUrl;
+  });
+</script>
