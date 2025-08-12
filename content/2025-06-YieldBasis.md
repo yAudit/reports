@@ -1,5 +1,5 @@
 ---
-tags: ["solidity"]
+tags: ["vyper"]
 title: 2025-06-YieldBasis
 description: Yield Basis DAO
 ---
