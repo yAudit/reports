@@ -1,7 +1,7 @@
 import { GetStaticProps, GetStaticPaths } from "next";
 import path from "path";
 import fs from "fs";
-import { extractDate, processMarkdown } from "../lib/utils";
+import { extractDate, processMarkdown, getAllReportSlugs } from "../lib/utils";
 import Link from "next/link";
 
 interface ReportPageProps {
@@ -68,11 +68,17 @@ export const getStaticPaths: GetStaticPaths = async () => {
   const reportsDirectory = path.join(process.cwd(), "content");
   const filenames = fs.readdirSync(reportsDirectory);
 
-  const paths = filenames
+  // Generate both slug formats for each file
+  const slugSet = new Set<string>();
+  filenames
     .filter((file): file is NonNullable<typeof file> => file !== null)
-    .map((file) => ({
-      params: { slug: file.replace(".md", "") },
-    }));
+    .forEach((file) => {
+      getAllReportSlugs(file).forEach((slug: string) => slugSet.add(slug));
+    });
+
+  const paths = Array.from(slugSet).map((slug) => ({
+    params: { slug },
+  }));
 
   return {
     paths,
@@ -84,15 +90,29 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
   try {
     const slug = params?.slug as string;
     const reportsDirectory = path.join(process.cwd(), "content");
-    const filePath = path.join(reportsDirectory, `${slug}.md`);
+    const filenames = fs.readdirSync(reportsDirectory);
+
+    // Find the filename that matches the slug in either format
+    let matchedFile: string | null = null;
+    for (const file of filenames) {
+      const slugs = getAllReportSlugs(file);
+      if (slugs.includes(slug)) {
+        matchedFile = file;
+        break;
+      }
+    }
+    if (!matchedFile) {
+      return { notFound: true };
+    }
+    const filePath = path.join(reportsDirectory, matchedFile);
     const fileContent = fs.readFileSync(filePath, "utf8");
     const { frontMatter, content } = await processMarkdown(fileContent);
 
     return {
       props: {
-        title: frontMatter.title.split("-").slice(2).join(" ") || "Untitled",
+        title: frontMatter.title?.split("-").slice(2).join(" ") || "Untitled",
         content: content || "",
-        date: extractDate(slug) || new Date(),
+        date: extractDate(matchedFile) || new Date(),
         tags: Array.isArray(frontMatter.tags) ? frontMatter.tags : [],
       },
       revalidate: 3600, // Revalidate every hour

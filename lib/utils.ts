@@ -226,3 +226,33 @@ import { twMerge } from "tailwind-merge";
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+  /**
+   * Given a filename (either YEAR-MONTH-NAME.md or MONTH-YEAR-NAME.md),
+   * returns both possible slug formats (without .md extension):
+   * [YEAR-MONTH-NAME, MONTH-YEAR-NAME]
+   */
+  export function getAllReportSlugs(filename: string): string[] {
+    // Remove .md extension
+    const base = filename.replace(/\.md$/, "");
+    // Match YEAR-MONTH-NAME
+    const yearMonthMatch = base.match(/^(\d{4})-(\d{2})-(.+)$/);
+    if (yearMonthMatch) {
+      const [, year, month, name] = yearMonthMatch;
+      return [
+        `${year}-${month}-${name}`,
+        `${month}-${year}-${name}`,
+      ];
+    }
+    // Match MONTH-YEAR-NAME
+    const monthYearMatch = base.match(/^(\d{2})-(\d{4})-(.+)$/);
+    if (monthYearMatch) {
+      const [, month, year, name] = monthYearMatch;
+      return [
+        `${year}-${month}-${name}`,
+        `${month}-${year}-${name}`,
+      ];
+    }
+    // If not matching, just return the base
+    return [base];
+  }
