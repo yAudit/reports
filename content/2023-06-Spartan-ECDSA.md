@@ -120,7 +120,7 @@ It is possible to submit `s = 0`, `Ux = pubX`, `Uy = pubY` or `s = 0`, `Ux = pub
 
 #### Technical Details
 
-Given check $\ s \* T + U == pubKey\$ ,
+Given check $s \cdot T + U == pubKey$,
 
 ```math
 s * T + U == pubKey
@@ -217,7 +217,7 @@ The pair $(x,y)$ forms a group $G$ of order $N$ under $E(\mathbb{F}_p)/\mathcal{
 
 #### Impact
 
-User may provide a public key (which is just a point $`(x,y)`$) that is not a valid point on the curve. This may leak the private key if the point is chosen from small order $N'$ of another curve $C'$
+User may provide a public key (which is just a point $(x,y)$) that is not a valid point on the curve. This may leak the private key if the point is chosen from small order $N'$ of another curve $C'$
 
 #### Recommendation
 

@@ -241,7 +241,7 @@ If the difference between the spot price in the Balancer pool and the TLC is too
 1. User takes DAI flashloan from Balancer with a 0% cost.
 2. User swaps DAI for TEMPLE in TEMPLE-DAI balancer pool. The volume of the swap can raise the TEMPLE price in the pool to $0.95
 3. User deposits the newly acquired TEMPLE into the TLC and maxes out their LTC with a 85% LTV loan.
-4. The user will get liquidated almost immediately because the interest accumulated in the next block will cause them to exceed the max LTC threshold of 85%. But the user doesn't care, because $1 worth of DAI got them 1/0.95 = 1.053 TEMPLE. This TEMPLE is valued at 1.053\*1.15 = $1.211 and can have 85% of its value borrowed, which is 1.211\*0.85 = 1.029
+4. The user will get liquidated almost immediately because the interest accumulated in the next block will cause them to exceed the max LTC threshold of 85%. But the user doesn't care, because $1 worth of DAI got them 1/0.95 = 1.053 TEMPLE. This TEMPLE is valued at $1.053 \times 1.15 = $1.211 and can have 85% of its value borrowed, which is $1.211 \times 0.85 = 1.029
 5. In this example scenario, the arbitrageur walks away with a 2.9% profit. The bad debt will lower the holdings of the TempleDAO treasury and reduce the TPI, impacting TEMPLE token price.
 
 Another version of this bad debt scenario can happen in reverse if the TPI is decreased significantly while the TEMPLE spot price is significantly below TPI:
