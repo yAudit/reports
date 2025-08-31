@@ -93,7 +93,7 @@ Summa’s two-sided mechanism that overall provides a proof of solvency of an en
 
 The more users verify their proof of inclusion in (b) the more trust the public at large can put in the proof of grand sums in (a). A custodian may incentivise wide verification of inclusion by users through the use of lottery where in each round of verification, say weekly or monthly, certain users are selected randomly to win a monetary reward.
 
-![summa workflow](./assets/summa-workflow.png?raw=true)
+![summa workflow](./assets/summa/summa-workflow.png)
 
 Figure 1: General flow of the Summa protocol in both variants, _credit: [Enrico - Summa tech lead](https://docs.google.com/presentation/d/1xUcH8geMz6I1iD9Jx0kWsIZvUcVlii5Us3mM4Mb3HNg/edit#slide=id.p3)_
 
