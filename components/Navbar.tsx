@@ -44,6 +44,9 @@ const Navbar = () => {
           <Link href="https://blog.electisec.com/">
             <Button text="Blog" />
           </Link>
+          <Link href="https://research.electisec.com/">
+            <Button text="Research" />
+          </Link>
           <Link href="https://electisec.com/fellowships">
             <Button text="Fellowships" />
           </Link>
@@ -80,6 +83,11 @@ const Navbar = () => {
             <Link href="https://blog.electisec.com/">
               <button className="p-6 rounded-xl w-full text-xl text-emeraldlight hover:bg-darkgreen hover:bg-opacity-5 duration-700">
                 Blog
+              </button>
+            </Link>
+            <Link href="https://research.electisec.com/">
+              <button className="p-6 rounded-xl w-full text-xl text-emeraldlight hover:bg-darkgreen hover:bg-opacity-5 duration-700">
+                Research
               </button>
             </Link>
             <Link href="https://electisec.com/fellowships">
