@@ -1,13 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import matter from "gray-matter";
 // import { remark } from "remark";
-import html from "remark-html";
 import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
 // import { Node } from 'unist';
 import { visit } from "unist-util-visit";
 
 import { unified } from "unified";
 import remarkParse from "remark-parse";
+import rehypeStringify from "rehype-stringify";
+import remarkRehype from "remark-rehype";
 
 function generateTableOfContents(content: string) {
   const headings: {
@@ -156,18 +159,26 @@ export async function processMarkdown(content: string) {
     generateTableOfContents(markdownContent)
   );
 
-  // Process markdown with all plugins including image URL replacement
+  // Process markdown with all plugins including image URL replacement and KaTeX
   const processedContent = await unified()
     .use(remarkParse)
+    .use(remarkMath) // Parse math syntax
     .use(remarkGfm)
-
     .use(remarkReplaceImageUrls) // Add the image URL replacement plugin
     .use(remarkHeadingIds)
     .use(remarkTrimBackticks)
-    .use(html, {
-      sanitize: false,
-      allowDangerousHtml: true,
+    .use(remarkRehype, { allowDangerousHtml: true }) // Convert to rehype (HTML AST)
+    .use(rehypeKatex, {
+      strict: false,
+      trust: true,
+      macros: {
+        "\\eqref": "\\href{#1}{}",
+      },
+      errorColor: ' #cc0000',
+      throwOnError: false,
+      displayMode: false,
     })
+    .use(rehypeStringify, { allowDangerousHtml: true }) // Convert to HTML string
     .process(contentWithToc);
 
   return {

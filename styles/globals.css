@@ -73,6 +73,41 @@ code.inline-code-block {
   font-size: 0.875em;
 }
 
+/* LaTeX styling */
+.katex {
+  font-size: 1.1em !important;
+  display: inline !important;
+}
+
+.katex-display {
+  display: block !important;
+  text-align: center !important;
+  margin: 1em 0 !important;
+  font-size: 1.2em !important;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* LaTeX paragraph styling */
+p:has(.katex:not(.katex-display)) {
+  display: block;
+  text-align: left;
+  margin: inherit;
+  max-width: 100%;
+  white-space: normal;
+}
+
+p:has(.katex-display) {
+  display: block;
+  text-align: center;
+  margin: 1rem auto;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: normal;
+  clear: both;
+}
+
 /* For very small screens */
 @media (max-width: 450px) {
   .prose table {

@@ -211,7 +211,9 @@ Circuits do not check whether the point $(x,y)$ is on the curve $E$.
 
 #### Technical Details
 
-The pair $\(x,y)\$ forms a group $G\$ of order $N\$ under $E(\mathbb{F}_p)/\mathcal{P}\$ where $E\$ represents an elliptic curve, $x, y < P\$, $\mathbb{F}_p\$ denotes a finite field, and $\mathcal{P}\$ represents the prime order of the base point. There is no check validating that $\(x,y)\$ $\in$ $G\$.
+The pair $(x,y)$ forms a group $G$ of order $N$ under $E(\mathbb{F}_p)/\mathcal{P}$ where $E$ 
+  represents an elliptic curve, $x, y < P$, $\mathbb{F}_p$ denotes a finite field, and $\mathcal{P}$
+  represents the prime order of the base point. There is no check validating that $(x,y)$ $\in$ $G$.
 
 #### Impact
 

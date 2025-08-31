@@ -1,4 +1,5 @@
 import "@/styles/globals.css";
+import "katex/dist/katex.min.css";
 import type { AppProps } from "next/app";
 import Navbar from "../components/Navbar";
 import { Space_Grotesk } from "next/font/google";
