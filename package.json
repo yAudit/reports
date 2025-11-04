@@ -20,7 +20,7 @@
     "katex": "^0.16.22",
     "lucide-react": "^0.469.0",
     "meilisearch": "^0.47.0",
-    "next": ">=15.4.7",
+    "next": "^15.4.7",
     "next-mdx-remote": "^5.0.0",
     "octokit": "^4.0.2",
     "react": "^19.0.0",
