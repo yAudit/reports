@@ -24,7 +24,7 @@ const ReportCard: React.FC<ReportCardProps> = ({
 
   return (
     <div
-      className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow duration-200 overflow-hidden hover:cursor-pointer duration-700"
+      className="bg-white shadow hover:shadow-lg transition-shadow duration-200 overflow-hidden hover:cursor-pointer duration-700"
     >
       <Link href={`/${slug}`}>
         <div className="p-6">
@@ -37,7 +37,7 @@ const ReportCard: React.FC<ReportCardProps> = ({
               {tags.map((tag, index) => (
                 <span
                   key={index}
-                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emeraldlight bg-opacity-25 text-darkgreen"
+                  className="inline-flex items-center px-2.5 py-0.5 text-xs font-medium bg-deepblue bg-opacity-10 text-deepblue"
                 >
                   {tag}
                 </span>

@@ -41,7 +41,7 @@ export default function ReportPage({
               {tags.map((tag, index) => (
                 <span
                   key={index}
-                  className="inline-flex items-center px-3 py-1.5 rounded-full text-md font-medium bg-emeraldlight bg-opacity-25 text-darkgreen"
+                  className="inline-flex items-center px-3 py-1.5 text-md font-medium bg-deepblue bg-opacity-10 text-deepblue"
                 >
                   {tag}
                 </span>

@@ -4,7 +4,7 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #000000;
 }
 
 body {
@@ -39,7 +39,7 @@ li {
 }
 
 .prose a {
-  color: #15803d;
+  color: #0055FF;
 }
 
 .prose a:hover {

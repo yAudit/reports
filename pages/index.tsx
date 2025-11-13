@@ -108,9 +108,9 @@ export default function Home({ reports }: HomeProps) {
               <button
                 key={index}
                 className={
-                  "inline-flex items-center px-2.5 py-0.5 rounded-full text-md font-medium bg-emeraldlight bg-opacity-25 text-darkgreen hover:bg-opacity-5 duration-700" +
+                  "inline-flex items-center px-2.5 py-0.5 text-md font-medium bg-deepblue bg-opacity-10 text-deepblue hover:bg-opacity-5 duration-700" +
                   (selectedTags.includes(tag)
-                    ? " bg-emerald bg-opacity-25 text-darkgreen"
+                    ? " bg-deepblue bg-opacity-20 text-deepblue"
                     : "")
                 }
                 onClick={() => handleTagSelection(tag)}

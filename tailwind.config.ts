@@ -12,10 +12,8 @@ export default {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
-        black: "#080444",
-        purple: "#BF5AF2",
-        emeraldlight: "#3ee680",
-        darkgreen: "#15803d",
+        black: "#000000",
+        deepblue: "#0055FF",
       },
     },
   },
