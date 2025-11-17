@@ -15,7 +15,7 @@ export default function App({ Component, pageProps }: AppProps) {
   return (
     <>
       <Head>
-        <title>Electisec Reports</title>
+        <title>yAudit Reports</title>
       </Head>
 
       <main className={spaceGrotesk.className}>
