@@ -12,7 +12,6 @@ interface Report {
   description: string;
   date: string;
   slug: string;
-  author: string;
   tags: string[];
 }
 
@@ -152,6 +151,10 @@ export const getStaticProps: GetStaticProps = async () => {
         const filePath = path.join(reportsDirectory, filename);
         const fileContent = fs.readFileSync(filePath, "utf8");
         const { data: frontmatter } = matter(fileContent);
+        const fallbackDate = new Date().toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "long",
+        });
 
         return {
           slug: filename.replace(".md", ""),
@@ -159,9 +162,17 @@ export const getStaticProps: GetStaticProps = async () => {
             (frontmatter.title &&
               frontmatter.title?.split("-").slice(2).join(" ")) ||
             filename,
-          date: extractDate(filename.replace(".md", "")) || new Date(),
-          description: frontmatter.description || null,
-          tags: frontmatter.tags || [],
+          date: extractDate(filename.replace(".md", "")) || fallbackDate,
+          description:
+            typeof frontmatter.description === "string"
+              ? frontmatter.description
+              : "",
+          tags: Array.isArray(frontmatter.tags)
+            ? frontmatter.tags.filter(
+                (tag: unknown): tag is string =>
+                  typeof tag === "string" && tag.trim().length > 0
+              )
+            : [],
         };
       })
       .sort((a, b) => {

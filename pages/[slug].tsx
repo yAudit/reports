@@ -3,6 +3,7 @@ import path from "path";
 import fs from "fs";
 import { extractDate, processMarkdown, getAllReportSlugs } from "../lib/utils";
 import Link from "next/link";
+import Image from "next/image";
 
 interface ReportPageProps {
   title: string;
@@ -25,7 +26,7 @@ export default function ReportPage({
         </Link>
 
         <div className="bg-white shadow p-6 sm:px-6 main-content">
-          <div className="flex lg:flex-row md:flex-row flex-col justify-between lg:items-center md:items-center gap-1 items-left mb-6 text-black no-print">
+          <div className="flex lg:flex-row md:flex-row flex-col justify-between lg:items-center md:items-center gap-1 items-start mb-6 text-black no-print">
             <h1
               className="lg:text-3xl md:text-xl sm:text-md font-bold text-black"
               id={title.toLocaleLowerCase()}
@@ -48,7 +49,15 @@ export default function ReportPage({
               ))}
             </div>
           </div>
-          <img alt="logo" src="/logo.svg" className="h-[5rem] mx-auto mb-12 lg:hidden md:hidden sm:hidden" />
+          <div className="h-[5rem] mx-auto mb-12 lg:hidden md:hidden sm:hidden relative w-[5rem]">
+            <Image
+              alt="logo"
+              src="/logo.svg"
+              fill
+              className="object-contain"
+              priority
+            />
+          </div>
           <div
             className="prose prose-md max-w-none prose-table:shadow-lg prose-table:border prose-td:p-2 prose-th:p-2 prose-th:bg-gray-100 report-content"
             dangerouslySetInnerHTML={{ __html: content }}
@@ -107,12 +116,16 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
     const filePath = path.join(reportsDirectory, matchedFile);
     const fileContent = fs.readFileSync(filePath, "utf8");
     const { frontMatter, content } = await processMarkdown(fileContent);
+    const fallbackDate = new Date().toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+    });
 
     return {
       props: {
         title: frontMatter.title?.split("-").slice(2).join(" ") || "Untitled",
         content: content || "",
-        date: extractDate(matchedFile) || new Date(),
+        date: extractDate(matchedFile) || fallbackDate,
         tags: Array.isArray(frontMatter.tags) ? frontMatter.tags : [],
       },
       revalidate: 3600, // Revalidate every hour

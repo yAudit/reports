@@ -18,9 +18,18 @@ const ReportCard: React.FC<ReportCardProps> = ({
 }) => {
   // Format the date to be more readable
   const formatDate = (dateString: string) => {
-    // Try to parse the date
-    return dateString
+    if (!dateString) return "";
+    const parsedDate = new Date(dateString);
+    if (!Number.isNaN(parsedDate.getTime())) {
+      return parsedDate.toLocaleDateString("en-US", {
+        month: "long",
+        year: "numeric",
+      });
+    }
+    return dateString;
   };
+  const reportDescription =
+    description?.trim() || "No description provided for this report.";
 
   return (
     <div
@@ -31,7 +40,7 @@ const ReportCard: React.FC<ReportCardProps> = ({
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-xl font-semibold text-black">{title}</h2>
           </div>
-          <p className="text-gray-600 mb-4">{description}</p>
+          <p className="text-gray-600 mb-4">{reportDescription}</p>
           <div className="flex items-center justify-between">
             <div className="flex flex-wrap gap-2">
               {tags.map((tag, index) => (
