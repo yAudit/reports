@@ -4,7 +4,7 @@ title: 2025-03-CAP-PremainnetVault
 description: CAP Pre-mainnet vault report
 ---
 
-# Electisec CAP Pre-Mainnet Vault Review <!-- omit in toc -->
+# yAudit CAP Pre-Mainnet Vault Review <!-- omit in toc -->
 
 **Review Resources:**
 
@@ -18,7 +18,7 @@ description: CAP Pre-mainnet vault report
 ## Table of Contents <!-- omit in toc -->
 
 1. TOC
-{:toc}
+   {:toc}
 
 ## Review Summary
 
@@ -41,22 +41,21 @@ After the findings were presented to the CAP team, fixes were made and included 
 
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
-Electisec and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, CAP and users of the contracts agree to use the code at their own risk.
-
+yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, CAP and users of the contracts agree to use the code at their own risk.
 
 ## Code Evaluation Matrix
 
-| Category                 | Mark    | Description |
-| ------------------------ | ------- | ----------- |
-| Access Control           | Good | Access control mechanisms are implemented appropriately where necessary. |
-| Mathematics              | Good | No complex calculations are involved. |
-| Complexity               | Good | The codebase is simple and easy to understand. |
-| Libraries                | Good | Utilizes OpenZeppelin and LayerZero libraries for security and best practices. |
-| Decentralization         | Good | Users can withdraw funds even if the owner does not unlock transfers. |
-| Code stability           | Good | The codebase was stable during the audit. |
-| Documentation            | Good | Well-documented with NatSpec comments, with only minor omissions. |
-| Monitoring               | Good | Events are emitted within state-changing functions. |
-| Testing and verification | Average | Includes unit tests but lacks invariant testing and fuzzing. |
+| Category                 | Mark    | Description                                                                    |
+| ------------------------ | ------- | ------------------------------------------------------------------------------ |
+| Access Control           | Good    | Access control mechanisms are implemented appropriately where necessary.       |
+| Mathematics              | Good    | No complex calculations are involved.                                          |
+| Complexity               | Good    | The codebase is simple and easy to understand.                                 |
+| Libraries                | Good    | Utilizes OpenZeppelin and LayerZero libraries for security and best practices. |
+| Decentralization         | Good    | Users can withdraw funds even if the owner does not unlock transfers.          |
+| Code stability           | Good    | The codebase was stable during the audit.                                      |
+| Documentation            | Good    | Well-documented with NatSpec comments, with only minor omissions.              |
+| Monitoring               | Good    | Events are emitted within state-changing functions.                            |
+| Testing and verification | Average | Includes unit tests but lacks invariant testing and fuzzing.                   |
 
 ## Findings Explanation
 
@@ -261,5 +260,3 @@ Fixed in https://github.com/cap-labs-dev/cap-contracts/pull/78.
 ## Final remarks
 
 The CAP Pre-Mainnet Vault provides users with a simple vault contract to participate in the CAP Pre-Mainnet campaign. The codebase is small and simple, with minimal functionalities. Users can deposit and withdraw(after the campaign ends) from the vault without any conversions or loss of assets. The CAP team promptly addressed the identified issues and found no severe vulnerabilities.
-
-

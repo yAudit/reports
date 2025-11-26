@@ -1,7 +1,7 @@
 ---
 tags: ["solidity"]
 title: 2025-08-Twyne-incremental
-description: Electisec Twyne incremental report
+description: yAudit Twyne incremental report
 ---
 
 <object data="pdf/2025-08-Twyne-incremental.pdf" type="application/pdf" width="100%" height="1000px">

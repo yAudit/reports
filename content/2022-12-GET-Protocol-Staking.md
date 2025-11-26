@@ -1,12 +1,12 @@
 ---
 tags: ["solidity"]
 title: 2022-12-GET-Protocol-Staking
-description: GET Protocol Electisec Report
+description: GET Protocol yAudit Report
 nav_order: 12
 image: assets/images/logo.png
 ---
 
-# Electisec GET Protocol Staking Review
+# yAudit GET Protocol Staking Review
 
 **Review Resources:**
 
@@ -39,7 +39,7 @@ image: assets/images/logo.png
 
 GET Protocol provides a ticketing service that uses ERC721 tokens. This review focused on the GET Locked Revenue Distribution token, which will enable staking of the existing GET token to align incentives of GET token holders with GET's objectives and future trajectory.
 
-The contracts of the [GET Protocol Locked Revenue Distribution token](https://github.com/GETProtocolDAO/locked-revenue-distribution-token) were reviewed over 8 days. The code review was performed by 1 auditor and several Fellows between December 5 and December 12, 2022. In addition, one guest auditor and a number of Electisec Fellows from Fellowship block 4 also reviewed the contracts and contributed over 60 man hours. The repository was under active development during the review, but the review was limited to the latest commit at the start of the review. This was commit ab272ced94d6bc8cc1ded2664408a3fa7ce67128 for the [Locked Revenue Distribution Token repository](https://github.com/GETProtocolDAO/locked-revenue-distribution-token).
+The contracts of the [GET Protocol Locked Revenue Distribution token](https://github.com/GETProtocolDAO/locked-revenue-distribution-token) were reviewed over 8 days. The code review was performed by 1 auditor and several Fellows between December 5 and December 12, 2022. In addition, one guest auditor and a number of yAudit Fellows from Fellowship block 4 also reviewed the contracts and contributed over 60 man hours. The repository was under active development during the review, but the review was limited to the latest commit at the start of the review. This was commit ab272ced94d6bc8cc1ded2664408a3fa7ce67128 for the [Locked Revenue Distribution Token repository](https://github.com/GETProtocolDAO/locked-revenue-distribution-token).
 
 ## Scope
 
@@ -59,7 +59,7 @@ Any code not included in these contracts, such as voting and proposal functions,
 
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
-Electisec and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, GET Protocol and users of the contracts agree to use the code at their own risk.
+yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, GET Protocol and users of the contracts agree to use the code at their own risk.
 
 ## Code Evaluation Matrix
 
@@ -1269,6 +1269,6 @@ The GET Locked Revenue Distribution Token builds on strong foundations, using ex
 
 Overall, the code is well documented and makes good use of existing libraries and projects. I liked the use of RDT as I feel it helped protect against potential vault entry timing abuse issues, although I do have some trepidations about the complexities multi-chain voting may introduce.
 
-## About Electisec
+## About yAudit
 
-[Electisec](https://electisec.com/) is an ecosystem initiative started by Yearn Finance and its ecosystem partners to bootstrap sustainable and collaborative blockchain security reviews and to nurture aspiring security talent. Electisec includes [a fellowship program](https://electisec.com/fellowship-program/), a residents program, and [a guest auditor program](https://electisec.com/guest-auditor-program/). In the fellowship program, fellows perform a series of periodic security reviews and presentations during the program. Residents are past fellows who continue to gain experience by performing security reviews of contracts submitted to Electisec for review (such as this contract). Guest auditors are experts with a track record in the security space who temporarily assist with the review efforts.
+[yAudit](https://yaudit.dev/) is an ecosystem initiative started by Yearn Finance and its ecosystem partners to bootstrap sustainable and collaborative blockchain security reviews and to nurture aspiring security talent. yAudit includes [a fellowship program](https://yaudit.dev/fellowship-program/), a residents program, and [a guest auditor program](https://yaudit.dev/guest-auditor-program/). In the fellowship program, fellows perform a series of periodic security reviews and presentations during the program. Residents are past fellows who continue to gain experience by performing security reviews of contracts submitted to yAudit for review (such as this contract). Guest auditors are experts with a track record in the security space who temporarily assist with the review efforts.

@@ -4,7 +4,7 @@ title: 2025-01-Asymmetry-USA.d
 description: Security review of the USA.d / USDaf v1
 ---
 
-# Electisec USA.d Review <!-- omit in toc -->
+# yAudit USA.d Review <!-- omit in toc -->
 
 **Review Resources:**
 
@@ -20,7 +20,7 @@ description: Security review of the USA.d / USDaf v1
 {: .no_toc }
 
 1. TOC
-{:toc}
+   {:toc}
 
 ## Review Summary
 
@@ -59,7 +59,7 @@ After the findings were presented to the USA.d team, fixes were made and include
 
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
-Electisec and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, USA.d and users of the contracts agree to use the code at their own risk.
+yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, USA.d and users of the contracts agree to use the code at their own risk.
 
 ## Code Evaluation Matrix
 
@@ -80,11 +80,11 @@ Electisec and the auditors make no warranties regarding the security of the code
 Findings are broken down into sections by their respective impact:
 
 - Critical, High, Medium, Low impact
-    - These are findings that range from attacks that may cause loss of funds, impact control/ownership of the contracts, or cause any unintended consequences/actions that are outside the scope of the requirements.
+  - These are findings that range from attacks that may cause loss of funds, impact control/ownership of the contracts, or cause any unintended consequences/actions that are outside the scope of the requirements.
 - Gas savings
-    - Findings that can improve the gas efficiency of the contracts.
+  - Findings that can improve the gas efficiency of the contracts.
 - Informational
-    - Findings including recommendations and best practices.
+  - Findings including recommendations and best practices.
 
 ---
 

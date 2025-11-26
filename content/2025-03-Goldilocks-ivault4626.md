@@ -4,7 +4,7 @@ title: 2025-03-Goldilocks-ivault4626
 description: Goldilocks ivault4626 Report
 ---
 
-# Electisec Goldilocks ivault4626 Review <!-- omit in toc -->
+# yAudit Goldilocks ivault4626 Review <!-- omit in toc -->
 
 **Review Resources:**
 
@@ -18,7 +18,7 @@ description: Goldilocks ivault4626 Report
 ## Table of Contents <!-- omit in toc -->
 
 1. TOC
-{:toc}
+   {:toc}
 
 ## Review Summary
 
@@ -36,7 +36,7 @@ After the findings were presented to the Goldilocks team, fixes were made and in
 
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
-Electisec and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Goldilocks and users of the contracts agree to use the code at their own risk.
+yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Goldilocks and users of the contracts agree to use the code at their own risk.
 
 ## Findings Explanation
 
@@ -73,7 +73,7 @@ Change the logic in the `_unstakableYT()` function to correctly return the maxim
 
 ```solidity
 /// @notice Calculate the maximum amount of YT the user can unstake
-function _unstakableYT(address user, uint256 unstakeAmount) internal view returns (uint256) { 
+function _unstakableYT(address user, uint256 unstakeAmount) internal view returns (uint256) {
   return FixedPointMathLib.min(unstakeAmount, ytStaked[user]);
 }
 ```
@@ -86,7 +86,7 @@ Fixed [here](https://github.com/0xgeeb/goldilocks-core/commit/5f820457f3a5c824fa
 
 #### Technical Details
 
-The flow [`buyYT()`](https://github.com/0xgeeb/goldilocks-core/blob/022263468c7d21afceb44d0ac9ba0ea8a1beedf8/src/core/goldivault/Goldivault4626.sol#L181) can be optimized to minimize pay deposit and withdraw fees to `depositVault`. Vault used in [tests](https://github.com/0xgeeb/goldilocks-core/blob/022263468c7d21afceb44d0ac9ba0ea8a1beedf8/test/integration/BeraborrowGoldivault.t.sol#L49C26-L49C68) has a withdraw fee. 
+The flow [`buyYT()`](https://github.com/0xgeeb/goldilocks-core/blob/022263468c7d21afceb44d0ac9ba0ea8a1beedf8/src/core/goldivault/Goldivault4626.sol#L181) can be optimized to minimize pay deposit and withdraw fees to `depositVault`. Vault used in [tests](https://github.com/0xgeeb/goldilocks-core/blob/022263468c7d21afceb44d0ac9ba0ea8a1beedf8/test/integration/BeraborrowGoldivault.t.sol#L49C26-L49C68) has a withdraw fee.
 
 After the [swap](https://github.com/0xgeeb/goldilocks-core/blob/022263468c7d21afceb44d0ac9ba0ea8a1beedf8/src/core/goldivault/Goldivault4626.sol#L204) from `ot` to `depositVault` token, the user redeems vault tokens and pays withdraw fee. Sends the received `depositToken` to the contract which deposits it back to the same `depositVault`. The user can send `depositVault` tokens directly to the contract without paying the fees.
 
@@ -114,7 +114,6 @@ Change the lines [206-210](https://github.com/0xgeeb/goldilocks-core/blob/022263
 #### Developer Response
 
 Fixed [here](https://github.com/0xgeeb/goldilocks-core/commit/9654d590a5456645604c7eedf2e6322d56500745).
-
 
 ### 3. Medium - Vault is losing asset in the sell flow
 
@@ -209,7 +208,7 @@ function _redeemOwnership(uint256 amount, bool checkVaultConclusion) internal {
 
 #### Developer Response
 
-Acknowledged, we decided to remove unstakableYT [here](https://github.com/0xgeeb/goldilocks-core/commit/b78ccf00f48040047622d8d585011c1cb3324b13) and will make it clear on the UI that YT should be staked before selling or redeeming. 
+Acknowledged, we decided to remove unstakableYT [here](https://github.com/0xgeeb/goldilocks-core/commit/b78ccf00f48040047622d8d585011c1cb3324b13) and will make it clear on the UI that YT should be staked before selling or redeeming.
 
 ### 2. Low - Incorrect check for a flash loan amount
 
@@ -227,7 +226,7 @@ Use `previewRedeem()` which accounts for withdrawal fees.
 
 ```diff
 -    if(ERC4626(depositVault).convertToAssets(ERC20(depositVault).balanceOf(address(this))) < dtNeeded) revert FlashLoanFailed();
-+    if(ERC4626(depositVault).previewRedeem(ERC20(depositVault).balanceOf(address(this))) < dtNeeded) revert FlashLoanFailed(); 
++    if(ERC4626(depositVault).previewRedeem(ERC20(depositVault).balanceOf(address(this))) < dtNeeded) revert FlashLoanFailed();
 ```
 
 #### Developer Response
@@ -344,7 +343,7 @@ Informational.
 
 #### Recommendation
 
-Rename the variable `tokenDecimals` to `inputRatioAmount` or something similar. 
+Rename the variable `tokenDecimals` to `inputRatioAmount` or something similar.
 
 #### Developer Response
 

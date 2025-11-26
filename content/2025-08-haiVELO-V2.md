@@ -1,7 +1,7 @@
 ---
 tags: ["solidity"]
 title: 2025-08-haiVELO-V2
-description: Electisec haiVELO V2 Report
+description: yAudit haiVELO V2 Report
 ---
 
 <object data="pdf/2025-08-haiVELO-V2.pdf" type="application/pdf" width="100%" height="1000px">

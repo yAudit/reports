@@ -1,12 +1,12 @@
 ---
 tags: ["solidity"]
 title: 2023-07-TempleDAO-Lending
-description: TempleDAO Lending Electisec Report
+description: TempleDAO Lending yAudit Report
 nav_order: 31
 image: assets/images/logo.png
 ---
 
-# Electisec TempleDAO Lending Review
+# yAudit TempleDAO Lending Review
 
 **Review Resources:**
 
@@ -50,7 +50,7 @@ Note that the deployment scripts were not in a finalized state at the commit has
 
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
-Electisec and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, TempleDAO and users of the contracts agree to use the code at their own risk.
+yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, TempleDAO and users of the contracts agree to use the code at their own risk.
 
 ## Code Evaluation Matrix
 
@@ -234,7 +234,7 @@ Return Value: 10600
 
 The TPI value is [assumed to be equal to the price of TEMPLE](https://github.com/TempleDAO/temple/blob/b015cd5d1df122ad5fbe0f94fb5bd070db27e335/protocol/contracts/v2/templeLineOfCredit/TempleLineOfCredit.sol#L583) when the value of TEMPLE collateral is calculated in TempleLineOfCredit.sol. This is in contrast to lending protocols such as Compound Finance, which use the current price of a token from Chainlink to determine the value of user collateral. It is possible, in fact likely, that the TPI value is greater than the value of TEMPLE based on the spot price of the Balancer pool. The graph illustrating the variation of the two prices is found on [TempleDAO's homepage](https://templedao.link/).
 
-![TPI-price](https://github.com/Electisec/temple-lending-report/assets/6261182/1e23c13d-7c65-46a5-8760-21447105da3c)
+![TPI-price](https://github.com/yAudit/temple-lending-report/assets/6261182/1e23c13d-7c65-46a5-8760-21447105da3c)
 
 If the difference between the spot price in the Balancer pool and the TLC is too great, an arbitrageur can leave the protocol with bad debt. Consider a scenario where TPI was at $1, the spot price of TEMPLE is $0.90, and the TPI was just raised by governance to $1.15:
 
@@ -1211,7 +1211,7 @@ The two return value structs are [defined in IBalancerVault.sol](https://github.
 
 In comparison, these structs should have the same types according to [the Balancer docs](https://docs.balancer.fi/reference/contracts/query-functions.html#overview).
 
-![types](https://github.com/Electisec/temple-lending-report/assets/6261182/ccdb241c-df13-47e6-8318-47e0e28e64f5)
+![types](https://github.com/yAudit/temple-lending-report/assets/6261182/ccdb241c-df13-47e6-8318-47e0e28e64f5)
 
 The on-chain Balancer implementations of [`JoinPoolRequest`](https://etherscan.io/address/0xE39B5e3B6D74016b2F6A9673D7d7493B6DF549d5#code#F5#L382) and [ExitPoolRequest](https://etherscan.io/address/0xE39B5e3B6D74016b2F6A9673D7d7493B6DF549d5#code#F5#L431) also shows consistency in variable types between the structs, although type `IAsset` is used instead of type `address`.
 
@@ -1285,7 +1285,7 @@ The ability to borrow DAI from TempleLineOfCredit.sol is similar to other protoc
 
 [The values set in the deployment script](https://github.com/TempleDAO/temple/blob/b015cd5d1df122ad5fbe0f94fb5bd070db27e335/protocol/scripts/deploys/v2/sepolia/07-tlc-IRM-linear-kink.ts#L22-L25) for LinearWithKinkInterestRateModel.sol result in a significantly different borrowing curve compared to Compound v2 and Aave DAI markets. Consider the goals and risk implications of the current choices to determine how closely TempleDAO aims to align with these other protocols to remain competitive and maintain a utilization ratio in line with the DAO's goals. If the lowest borrowing rate at zero utilization is 5%, this may be too high of a borrowing rate with current market conditions to remain competitive. Compound and Aave regularly modify the values that determine their borrowing curves based on feedback from Gauntlet that accounts for current market conditions.
 
-![lending_curves](https://github.com/Electisec/temple-lending-report/assets/6261182/cf764ccb-4dfc-4c24-ab30-f90cb3228484)
+![lending_curves](https://github.com/yAudit/temple-lending-report/assets/6261182/cf764ccb-4dfc-4c24-ab30-f90cb3228484)
 
 The suggestion to lower the interest rate at zero utilization is only valid with the current Maker DSR rate of 3.19%. If Maker increases the DSR rate, such as with [the recent eDSR proposal](https://forum.makerdao.com/t/request-for-gov12-1-2-edit-to-the-stability-scope-to-quickly-implement-enhanced-dsr/21405) that passed, then a different y-intercept value would make sense nearer to whatever base rate DAI in the TempleDAO base strategy is earning.
 

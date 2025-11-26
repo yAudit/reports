@@ -4,7 +4,7 @@ title: 2025-05-Olympus-CCIP
 description: Olympus OHM bridge using CCIP
 ---
 
-# Electisec Olympus OHM CCIP PR#69 Review <!-- omit in toc -->
+# yAudit Olympus OHM CCIP PR#69 Review <!-- omit in toc -->
 
 **Review Resources:**
 
@@ -18,7 +18,7 @@ description: Olympus OHM bridge using CCIP
 ## Table of Contents <!-- omit in toc -->
 
 1. TOC
-{:toc}
+   {:toc}
 
 ## Review Summary
 
@@ -31,7 +31,6 @@ The PR of the Olympus OHM CCIP [Repo](https://github.com/OlympusDAO/olympus-v3) 
 ## Scope
 
 The scope of the review consisted of the following contracts at the specific commit:
-
 
 ```
 src/
@@ -51,7 +50,7 @@ src/
 
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
-Electisec and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Olympus OHM CCIP and users of the contracts agree to use the code at their own risk.
+yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Olympus OHM CCIP and users of the contracts agree to use the code at their own risk.
 
 ## Findings Explanation
 
@@ -71,12 +70,15 @@ Findings are broken down into sections by their respective impact:
 ## Critical Findings
 
 None
+
 ## High Findings
 
 None
+
 ## Medium Findings
 
 None
+
 ## Low Findings
 
 ### 1. Low - SVM trusted remotes can't be revoked
@@ -116,12 +118,12 @@ Modify the method to allow writing any boolean value to the remote's `isSet` fie
      }
 
 @@ -49,7 +49,7 @@ interface ICCIPCrossChainBridge {
- 
+
      event TrustedRemoteEVMSet(uint64 indexed dstChainSelector, address indexed to);
- 
+
 -    event TrustedRemoteSVMSet(uint64 indexed dstChainSelector, bytes32 indexed to);
 +    event TrustedRemoteSVMSet(uint64 indexed dstChainSelector, bytes32 indexed to, bool isSet);
- 
+
      event MessageFailed(bytes32 messageId);
 ```
 
@@ -132,6 +134,7 @@ Fixed in [PR#72](https://github.com/OlympusDAO/olympus-v3/pull/72).
 ## Gas Saving Findings
 
 None
+
 ## Informational Findings
 
 ### 1. Informational - CCIPCrossChainBridge allows an empty cross-chain sender to pass verification
@@ -172,31 +175,31 @@ Informational
 
 Modify the `PeripheryEnabler` contract, adding a `supportInterface(bytes4)` method, e.g.:
 
- ```diff
+```diff
 @@ -88,4 +88,8 @@ abstract contract PeripheryEnabler is IEnabler {
-         // Emit the disabled event
-         emit Disabled();
-     }
+        // Emit the disabled event
+        emit Disabled();
+    }
 +
 +    function supportsInterface(bytes4 interfaceId_) public view virtual returns(bool) {
 +            return interfaceId_ == type(IEnabler).interfaceId;
 +    }
- }
+}
 
 @@ -460,10 +460,11 @@ contract CCIPCrossChainBridge is CCIPReceiver, PeripheryEnabler, Owned, ICCIPCro
-         return i_ccipRouter;
-     }
- 
+        return i_ccipRouter;
+    }
+
 -    function supportsInterface(bytes4 interfaceId_) public view virtual override returns (bool) {
 +    function supportsInterface(bytes4 interfaceId_) public view virtual override(CCIPReceiver, PeripheryEnabler) returns (bool) {
-         return
-             interfaceId_ == type(ICCIPCrossChainBridge).interfaceId ||
+        return
+            interfaceId_ == type(ICCIPCrossChainBridge).interfaceId ||
 -            super.supportsInterface(interfaceId_);
-+            CCIPReceiver.supportsInterface(interfaceId_) || 
++            CCIPReceiver.supportsInterface(interfaceId_) ||
 +            PeripheryEnabler.supportsInterface(interfaceId_);
-     }
- 
-     // ========= ENABLER FUNCTIONS ========= //
+    }
+
+    // ========= ENABLER FUNCTIONS ========= //
 ```
 
 #### Developer Response

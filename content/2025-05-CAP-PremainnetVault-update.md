@@ -4,7 +4,7 @@ title: 2025-05-CAP-PremainnetVault-update
 description: CAP Pre-mainnet vault update report
 ---
 
-# Electisec CAP Pre-Mainnet Vault Update Review <!-- omit in toc -->
+# yAudit CAP Pre-Mainnet Vault Update Review <!-- omit in toc -->
 
 **Review Resources:**
 
@@ -18,7 +18,7 @@ description: CAP Pre-mainnet vault update report
 ## Table of Contents <!-- omit in toc -->
 
 1. TOC
-{:toc}
+   {:toc}
 
 ## Review Summary
 
@@ -40,21 +40,21 @@ After the findings were presented to the CAP team, fixes were made and included 
 
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
-Electisec and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, CAP and users of the contracts agree to use the code at their own risk.
+yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, CAP and users of the contracts agree to use the code at their own risk.
 
 ## Code Evaluation Matrix
 
-| Category                 | Mark    | Description |
-| ------------------------ | ------- | ----------- |
-| Access Control           | Good | Access control mechanisms are implemented appropriately where necessary. |
-| Mathematics              | Good | No complex calculations are involved. |
-| Complexity               | Good | The codebase is simple and easy to understand. |
-| Libraries                | Good | Utilizes OpenZeppelin and LayerZero libraries for security and best practices. |
-| Decentralization         | Good | Users can withdraw funds even if the owner does not unlock transfers. |
-| Code stability           | Good | The codebase was stable during the audit. |
-| Documentation            | Good | Well-documented with NatSpec comments, with only minor omissions. |
-| Monitoring               | Good | Events are emitted within state-changing functions. |
-| Testing and verification | Average | Includes unit tests but lacks invariant testing and fuzzing. |
+| Category                 | Mark    | Description                                                                    |
+| ------------------------ | ------- | ------------------------------------------------------------------------------ |
+| Access Control           | Good    | Access control mechanisms are implemented appropriately where necessary.       |
+| Mathematics              | Good    | No complex calculations are involved.                                          |
+| Complexity               | Good    | The codebase is simple and easy to understand.                                 |
+| Libraries                | Good    | Utilizes OpenZeppelin and LayerZero libraries for security and best practices. |
+| Decentralization         | Good    | Users can withdraw funds even if the owner does not unlock transfers.          |
+| Code stability           | Good    | The codebase was stable during the audit.                                      |
+| Documentation            | Good    | Well-documented with NatSpec comments, with only minor omissions.              |
+| Monitoring               | Good    | Events are emitted within state-changing functions.                            |
+| Testing and verification | Average | Includes unit tests but lacks invariant testing and fuzzing.                   |
 
 ## Findings Explanation
 
@@ -107,7 +107,7 @@ Fixed in [PR#154](https://github.com/cap-labs-dev/cap-contracts/pull/154).
 
 #### Technical Details
 
-Variables [`asset`, `cap` and `stakedCap` are cast](https://github.com/cap-labs-dev/cap-contracts/blob/5ddb865c429c6c9216e60c5e5e3d70f695bc9285/contracts/testnetCampaign/PreMainnetVault.sol#L90-L91) to address types.  Instead of casting variables to address type, input parameters that are of the correct type can be used instead.
+Variables [`asset`, `cap` and `stakedCap` are cast](https://github.com/cap-labs-dev/cap-contracts/blob/5ddb865c429c6c9216e60c5e5e3d70f695bc9285/contracts/testnetCampaign/PreMainnetVault.sol#L90-L91) to address types. Instead of casting variables to address type, input parameters that are of the correct type can be used instead.
 
 #### Impact
 
@@ -115,7 +115,7 @@ Gas savings.
 
 #### Recommendation
 
-Use address variable `_asset ` instead of `asset`, _cap` instead of `cap` and `_stakedCap` instead of `stakedCap` [when approving](https://github.com/cap-labs-dev/cap-contracts/blob/5ddb865c429c6c9216e60c5e5e3d70f695bc9285/contracts/testnetCampaign/PreMainnetVault.sol#L90-L91) to save gas.
+Use address variable `_asset ` instead of `asset`, \_cap`instead of`cap`and`\_stakedCap`instead of`stakedCap` [when approving](https://github.com/cap-labs-dev/cap-contracts/blob/5ddb865c429c6c9216e60c5e5e3d70f695bc9285/contracts/testnetCampaign/PreMainnetVault.sol#L90-L91) to save gas.
 
 #### Developer Response
 
@@ -147,7 +147,7 @@ Fixed in [PR#155](https://github.com/cap-labs-dev/cap-contracts/pull/155).
 
 #### Technical Details
 
-Immutable [`cap` variable](https://github.com/cap-labs-dev/cap-contracts/blob/5ddb865c429c6c9216e60c5e5e3d70f695bc9285/contracts/testnetCampaign/PreMainnetVault.sol#L29C29-L29C32) is defined as `IVault`.  Later in the contract, it is [cast to `IMinter`](https://github.com/cap-labs-dev/cap-contracts/blob/5ddb865c429c6c9216e60c5e5e3d70f695bc9285/contracts/testnetCampaign/PreMainnetVault.sol#L127).
+Immutable [`cap` variable](https://github.com/cap-labs-dev/cap-contracts/blob/5ddb865c429c6c9216e60c5e5e3d70f695bc9285/contracts/testnetCampaign/PreMainnetVault.sol#L29C29-L29C32) is defined as `IVault`. Later in the contract, it is [cast to `IMinter`](https://github.com/cap-labs-dev/cap-contracts/blob/5ddb865c429c6c9216e60c5e5e3d70f695bc9285/contracts/testnetCampaign/PreMainnetVault.sol#L127).
 
 #### Impact
 

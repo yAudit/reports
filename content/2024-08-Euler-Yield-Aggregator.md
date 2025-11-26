@@ -19,7 +19,7 @@ description: Euler Yield Aggregator Report
 ## Table of Contents
 
 1. TOC
-{:toc}
+   {:toc}
 
 ## Review Summary
 
@@ -27,7 +27,7 @@ description: Euler Yield Aggregator Report
 
 The Yield Aggregator is an open-source protocol for permissionless risk curation on top of [ERC4626 vaults](https://eips.ethereum.org/EIPS/eip-4626)(strategies). Although it is initially designed to be integrated with [Euler V2 vaults](https://github.com/euler-xyz/euler-vault-kit), technically, it supports any other vault as long as it is ERC4626 compliant.
 
-The Yield Aggregator is an ERC4626 vault; any risk curator can deploy one through the factory. Each vault has one loan asset and can allocate deposits to multiple strategies. The aggregator vaults are noncustodial and immutable instances that offer users an easy way to provide liquidity and passively earn yield. 
+The Yield Aggregator is an ERC4626 vault; any risk curator can deploy one through the factory. Each vault has one loan asset and can allocate deposits to multiple strategies. The aggregator vaults are noncustodial and immutable instances that offer users an easy way to provide liquidity and passively earn yield.
 
 The contracts of the Yield Aggregator [repository](https://github.com/euler-xyz/yield-aggregator) were reviewed over eight days. Two auditors performed the code review between August 26th and September 4th, 2024. The repository was under active development during the review, but the review was limited to the latest commit at the start. This was commit [a00602c3429cdddaa1cbfe3c741705823cd2923e](https://github.com/euler-xyz/yield-aggregator/commit/a00602c3429cdddaa1cbfe3c741705823cd2923e) for the Yield Aggregator repository.
 
@@ -66,22 +66,21 @@ After the findings were presented to the Euler team, fixes were made and include
 
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
-Electisec and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Euler and users of the contracts agree to use the code at their own risk.
-
+yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Euler and users of the contracts agree to use the code at their own risk.
 
 ## Code Evaluation Matrix
 
-| Category                 | Mark    | Description |
-| ------------------------ | ------- | ----------- |
-| Access Control           | Good | Proper access control is enforced using roles (RBAC). |
-| Mathematics              | Good | The implementation doesn't involve complex math operations. |
+| Category                 | Mark    | Description                                                                                                                                                                |
+| ------------------------ | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Access Control           | Good    | Proper access control is enforced using roles (RBAC).                                                                                                                      |
+| Mathematics              | Good    | The implementation doesn't involve complex math operations.                                                                                                                |
 | Complexity               | Average | We identified several issues stemming from the logic in the harvest and rebalance functions, which could impact general accounting and adherence to the ERC-4626 standard. |
-| Libraries                | Good | The protocol uses an up-to-date version of the OpenZeppelin library. |
-| Decentralization         | Average | Centralized functionalities are limited to the vault and strategies configuration. Wrong configuration could affect user's safety. |
-| Code stability           | Good | The codebase remained stable during the review. |
-| Documentation            | Good | The contracts are documented using NatSpec. Additional resources include the whitepaper and a specification document. |
-| Monitoring               | Good | Multiple events are emitted through the protocol life-cycle. |
-| Testing and verification | Good | The codebase has an extensive testing suite, including unit, integration, fuzz, and invariant tests. |
+| Libraries                | Good    | The protocol uses an up-to-date version of the OpenZeppelin library.                                                                                                       |
+| Decentralization         | Average | Centralized functionalities are limited to the vault and strategies configuration. Wrong configuration could affect user's safety.                                         |
+| Code stability           | Good    | The codebase remained stable during the review.                                                                                                                            |
+| Documentation            | Good    | The contracts are documented using NatSpec. Additional resources include the whitepaper and a specification document.                                                      |
+| Monitoring               | Good    | Multiple events are emitted through the protocol life-cycle.                                                                                                               |
+| Testing and verification | Good    | The codebase has an extensive testing suite, including unit, integration, fuzz, and invariant tests.                                                                       |
 
 ## Findings Explanation
 
@@ -214,7 +213,6 @@ Low. The `maxWithdraw()` and `maxRedeem()` functions could potentially return an
 #### Recommendation
 
 Consider applying the same logic used in the `withdraw()` and `redeem()` functions to the `maxWithdraw()` and `maxRedeem()` implementations to ensure consistency with the expected withdrawal behavior. Alternatively, ensure this is properly documented as it deviates from the expected standard behavior.
-
 
 #### Developer Response
 
@@ -359,7 +357,7 @@ Given that the YieldAggregatorVault.sol contract overrides the `deposit()` and `
 ```solidity
 54:     function deposit(uint256 _assets, address _receiver) public virtual override nonReentrant returns (uint256) {
 55:         _callHooksTarget(Constants.DEPOSIT, _msgSender());
-56: 
+56:
 57:         uint256 maxAssets = _maxDeposit();
 58:         if (_assets > maxAssets) {
 59:             revert Errors.ERC4626ExceededMaxDeposit(_receiver, _assets, maxAssets);
@@ -371,7 +369,7 @@ Given that the YieldAggregatorVault.sol contract overrides the `deposit()` and `
 ```solidity
 72:     function mint(uint256 _shares, address _receiver) public virtual override nonReentrant returns (uint256) {
 73:         _callHooksTarget(Constants.MINT, _msgSender());
-74: 
+74:
 75:         uint256 maxShares = _maxMint();
 76:         if (_shares > maxShares) {
 77:             revert Errors.ERC4626ExceededMaxMint(_receiver, _shares, maxShares);
@@ -458,7 +456,7 @@ Acknowledged. The `setPerformanceFee()` function can only be called by an addres
 
 The function [`adjustAllocationPoints()`](https://github.com/euler-xyz/yield-aggregator/blob/a00602c3429cdddaa1cbfe3c741705823cd2923e/src/module/Strategy.sol#L27-L27) allows to update the allocation points for a strategy. It can be called only by the `GUARDIAN` role.
 
-The `STRATEGY_OPERATOR` is in charge of adding and removing strategies. By not being able to call `adjustAllocationPoints(),` he won't be able to correct allocation points for a strategy that was added with the wrong amount, or that needs to be updated. He also won't be able to remove a strategy, as it can only be removed if there are 0 funds allocated to it. 
+The `STRATEGY_OPERATOR` is in charge of adding and removing strategies. By not being able to call `adjustAllocationPoints(),` he won't be able to correct allocation points for a strategy that was added with the wrong amount, or that needs to be updated. He also won't be able to remove a strategy, as it can only be removed if there are 0 funds allocated to it.
 
 This limits the `STRATEGY_OPERATOR` role and will require the `GUARDIAN` for "safe" operations, which might not be ideal.
 
@@ -472,7 +470,7 @@ Allow the `STRATEGY_OPERATOR` to call `adjustAllocationPoints()`.
 
 #### Developer Response
 
-Acknowledged. The roles system is designed in a granular way to ensure maximum safety for the users and to decrease the chance of any rug-pull like scenario. 
+Acknowledged. The roles system is designed in a granular way to ensure maximum safety for the users and to decrease the chance of any rug-pull like scenario.
 
 For that reason, strategy allocation points update is left outside of the `STRATEGY_OPERATOR` privileges.
 
@@ -545,15 +543,15 @@ When losses are deducted through [`_deductLoss()`](https://github.com/euler-xyz/
 ```solidity
 45:         uint256 totalAssetsDepositedCache = $.totalAssetsDeposited;
 46:         uint256 totalNotDistributed = _totalAssetsAllocatable() - totalAssetsDepositedCache;
-47: 
+47:
 48:         // set interestLeft to zero, will be updated to the right value during _gulp()
 49:         $.interestLeft = 0;
 50:         if (_lossAmount > totalNotDistributed) {
 51:             _lossAmount -= totalNotDistributed;
-52: 
+52:
 53:             // socialize the loss
 54:             $.totalAssetsDeposited = totalAssetsDepositedCache - _lossAmount;
-55: 
+55:
 56:             emit Events.DeductLoss(_lossAmount);
 57:         }
 ```
@@ -589,7 +587,7 @@ Call `_updateInterestAccrued()` when deactivating a strategy in `toggleStrategyE
 
         emit Events.ToggleStrategyEmergencyStatus(_strategy, true);
     } else {
-``` 
+```
 
 #### Developer Response
 

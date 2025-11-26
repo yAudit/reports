@@ -1,12 +1,12 @@
 ---
 tags: ["solidity"]
 title: 2024-01-Inverse-sDOLA
-description: Inverse Finance DOLA Savings Electisec Report
+description: Inverse Finance DOLA Savings yAudit Report
 nav_order: 46
 image: assets/images/logo.png
 ---
 
-# Electisec Inverse Finance DOLA Savings Review
+# yAudit Inverse Finance DOLA Savings Review
 
 **Review Resources:**
 
@@ -42,7 +42,7 @@ After the findings were presented to the Dola savings team, fixes were made and 
 
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
-Electisec and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Inverse Finance and users of the contracts agree to use the code at their own risk.
+yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Inverse Finance and users of the contracts agree to use the code at their own risk.
 
 ## Code Evaluation Matrix
 
@@ -556,4 +556,4 @@ Addressed in https://github.com/InverseFinance/dola-savings/pull/7/commits/85938
 
 ## Final remarks
 
-The Electisec of Inverse Finance's Dola Savings platform, conducted by adriro and pandadefi, provided a thorough examination of its smart contracts. The audit, spanning three days, uncovered a range of findings from high to low impact, alongside gas-saving and informational insights. Critical vulnerabilities, such as the susceptibility of the sDola vault to inflation attacks and the potential manipulation of sDola in lending-borrowing markets, were promptly addressed. Lower-impact issues, focusing on aspects like checks and function optimizations, were also noted for improvement. The audit emphasizes the platform's strong foundation in smart contract development and its commitment to security, efficiency, and continuous improvement.
+The yAudit of Inverse Finance's Dola Savings platform, conducted by adriro and pandadefi, provided a thorough examination of its smart contracts. The audit, spanning three days, uncovered a range of findings from high to low impact, alongside gas-saving and informational insights. Critical vulnerabilities, such as the susceptibility of the sDola vault to inflation attacks and the potential manipulation of sDola in lending-borrowing markets, were promptly addressed. Lower-impact issues, focusing on aspects like checks and function optimizations, were also noted for improvement. The audit emphasizes the platform's strong foundation in smart contract development and its commitment to security, efficiency, and continuous improvement.

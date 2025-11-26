@@ -1,12 +1,12 @@
 ---
 tags: ["solidity"]
 title: 2023-06-VMEX-incentives
-description: VMEX Incentives Electisec Report
+description: VMEX Incentives yAudit Report
 nav_order: 26
 image: assets/images/logo.png
 ---
 
-# Electisec VMEX Incentives Review
+# yAudit VMEX Incentives Review
 
 **Review Resources:**
 
@@ -54,7 +54,7 @@ After the findings were presented to the VMEX team, fixes were made and included
 
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
-Electisec and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, VMEX and users of the contracts agree to use the code at their own risk.
+yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, VMEX and users of the contracts agree to use the code at their own risk.
 
 ## Code Evaluation Matrix
 
@@ -64,11 +64,11 @@ Electisec and the auditors make no warranties regarding the security of the code
 | Mathematics              | Medium  | One of the findings in the report is related to a division rounding error.                                                                   |
 | Complexity               | Good    | See the Final Remarks section. The auditors felt as though the same technical outcome could have been achieved with a less complex solution. |
 | Libraries                | Good    | The libraries used in the pull request are appropriate and used correctly.                                                                   |
-| Decentralization         | Low     | Similar to the first VMEX report produced by Electisec, there are trusted actors in the system who have a high degree of power.                 |
+| Decentralization         | Low     | Similar to the first VMEX report produced by yAudit, there are trusted actors in the system who have a high degree of power.                 |
 | Code stability           | Medium  | There were a few minor commits added to the PR after the audit commenced.                                                                    |
 | Documentation            | Good    | The documentation supplied was insightful and the comments in the pull request provide useful context.                                       |
 | Monitoring               | Average | The core functions of the ExternalRewardDistributor emit events.                                                                             |
-| Testing and verification | Average | Similar to the first VMEX report produced by Electisec. Increased code coverage is suggested and would have caught some of the issues.          |
+| Testing and verification | Average | Similar to the first VMEX report produced by yAudit. Increased code coverage is suggested and would have caught some of the issues.          |
 
 ## Findings Explanation
 
@@ -737,7 +737,7 @@ Update the design of the contract to make this feature possible.
 
 Fixed in this commit: [457bcfa66ae6b36ff5426a718e3806849d226fd4](https://github.com/VMEX-finance/vmex/pull/145/commits/457bcfa66ae6b36ff5426a718e3806849d226fd4).
 
-#### Electisec Response
+#### yAudit Response
 
 Multiple findings were found in the new features added by this fix:
 
