@@ -4,4 +4,4 @@
 
 [Prod Site](https://reports.yaudit.dev/) - [![Netlify Status](https://api.netlify.com/api/v1/badges/55557632-17ca-4cbd-a915-84289b4abd1d/deploy-status)](https://app.netlify.com/sites/electisec-reports-site/deploys)
 
-Navigate to [content/](https://github.com/electisec/reports/tree/main/content) to find reports in `markdown`
+Navigate to [content/](https://github.com/yaudit/reports/tree/main/content) to find reports in `markdown`

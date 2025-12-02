@@ -1,10 +1,10 @@
 ---
 tags: ["solidity", "layerzero", "berachain"]
 title: 2025-01-Royco-CCDM
-description: Royco CCDM Electisec Report
+description: Royco CCDM yAudit Report
 ---
 
-# Electisec Royco CCDM Review <!-- omit in toc -->
+# yAudit Royco CCDM Review <!-- omit in toc -->
 
 **Review Resources:**
 

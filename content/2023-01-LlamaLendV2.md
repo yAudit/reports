@@ -1,12 +1,12 @@
 ---
 tags: ["solidity"]
 title: 2023-01-LlamaLend-V2
-description: LlamaLend V2 Electisec Report
+description: LlamaLend V2 yAudit Report
 nav_order: 16
 image: assets/images/logo.png
 ---
 
-# Electisec LlamaLend V2 Review
+# yAudit LlamaLend V2 Review
 
 **Review Resources:**
 
@@ -32,7 +32,7 @@ image: assets/images/logo.png
 
 LlamaLend is a protocol to borrow ETH against NFTs. Most of the NFT liquidity protocols don't support small collections and need oracle support. LlamaLend allows anyone to run their own oracle for any collection, so NFT projects can create pools to let their holders borrow ETH against the NFTs instead of selling.
 
-The contracts of the LlamaLend [Repo](https://github.com/LlamaLend/contracts/tree/eb8034f88a410d0dd3d6bce4e442cc69e0e12ea3) were reviewed by 2 auditors and 1 Electisec Fellow between January 9, 2023 and January 20, 2023. The review was limited to the latest commit at the start of the review. This was [commit eb8034f88a410d0dd3d6bce4e442cc69e0e12ea3](https://github.com/LlamaLend/contracts/tree/eb8034f88a410d0dd3d6bce4e442cc69e0e12ea3) for the LlamaLend repo.
+The contracts of the LlamaLend [Repo](https://github.com/LlamaLend/contracts/tree/eb8034f88a410d0dd3d6bce4e442cc69e0e12ea3) were reviewed by 2 auditors and 1 yAudit Fellow between January 9, 2023 and January 20, 2023. The review was limited to the latest commit at the start of the review. This was [commit eb8034f88a410d0dd3d6bce4e442cc69e0e12ea3](https://github.com/LlamaLend/contracts/tree/eb8034f88a410d0dd3d6bce4e442cc69e0e12ea3) for the LlamaLend repo.
 
 ## Scope
 
@@ -54,9 +54,9 @@ One key variable in the LlamaLend design is the limitation on the amount that ca
 
 ![currentDailyBorrows mechanics visualization](../public/assets/llamalend/daily-borrowed.png)
 
-This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability. The review was a pro bono effort and is not guaranteed to follow the same process or to have been reviewed for the same amount of time as a typical Electisec audit.
+This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability. The review was a pro bono effort and is not guaranteed to follow the same process or to have been reviewed for the same amount of time as a typical yAudit audit.
 
-Electisec and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Rage Trade and users of the contracts agree to use the code at their own risk.
+yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Rage Trade and users of the contracts agree to use the code at their own risk.
 
 ## Findings Explanation
 
@@ -586,6 +586,6 @@ The protocol's design is intelligent and puts well-reasoned trust on different a
 
 The LlamaLend protocol takes a very simplistic approach to a lending and borrowing protocol, removing substantial amounts of complexity that many other borrowing protocols implement. While this simplification does cut a couple of corners, the compromises seem reasonable given the scale and intended use cases of the protocol.
 
-## About Electisec
+## About yAudit
 
-[Electisec](https://electisec.com/) is an ecosystem initiative started by Yearn Finance and its ecosystem partners to bootstrap sustainable and collaborative blockchain security reviews and to nurture aspiring security talent. Electisec includes [a fellowship program](https://electisec.com/fellowship-program/), a residents program, and [a guest auditor program](https://electisec.com/guest-auditor-program/). In the fellowship program, fellows perform a series of periodic security reviews and presentations during the program. Residents are past fellows who continue to gain experience by performing security reviews of contracts submitted to Electisec for review (such as this contract). Guest auditors are experts with a track record in the security space who temporarily assist with the review efforts.
+[yAudit](https://yaudit.dev/) is an ecosystem initiative started by Yearn Finance and its ecosystem partners to bootstrap sustainable and collaborative blockchain security reviews and to nurture aspiring security talent. yAudit includes [a fellowship program](https://yaudit.dev/fellowship-program/), a residents program, and [a guest auditor program](https://yaudit.dev/guest-auditor-program/). In the fellowship program, fellows perform a series of periodic security reviews and presentations during the program. Residents are past fellows who continue to gain experience by performing security reviews of contracts submitted to yAudit for review (such as this contract). Guest auditors are experts with a track record in the security space who temporarily assist with the review efforts.

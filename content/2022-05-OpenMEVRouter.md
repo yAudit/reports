@@ -1,12 +1,12 @@
 ---
 tags: ["solidity"]
 title: 2022-05-OpenMEV
-description: OpenMEV Electisec Report
+description: OpenMEV yAudit Report
 nav_order: 5
 image: assets/images/logo.png
 ---
 
-# Electisec OpenMEV Review
+# yAudit OpenMEV Review
 
 **Review Resources:**
 
@@ -42,7 +42,7 @@ After the findings were presented to the OpenMEV team, fixes were made and inclu
 
 The review was a time-limited review to provide rapid feedback on potential vulnerabilities. The review was not a full audit. The review did not explore all potential attack vectors or areas of vulnerability and may not have identified all potential issues.
 
-Electisec and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. Manifold and third parties should use the code at their own risk.
+yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. Manifold and third parties should use the code at their own risk.
 
 ## Code Evaluation Matrix
 

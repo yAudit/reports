@@ -1,12 +1,12 @@
 ---
 tags: ["solidity"]
 title: 2022-06-LevGeist
-description: LevGeist Electisec Report
+description: LevGeist yAudit Report
 nav_order: 7
 image: assets/images/logo.png
 ---
 
-# Electisec LevGeist Review
+# yAudit LevGeist Review
 
 **Review Resources:**
 Documentation was provided
@@ -31,19 +31,19 @@ Documentation was provided
 
 **Yearn LevGeist**
 
-The levgeist branch of the Yearn-contracts [Repo](https://github.com/Electisec-block-2/yearnV2-gen-lev-lending/tree/levgeist) was reviewed over 11 days. The contracts were reviewed by 1 auditor and several Fellows from June 13 to June 24, 2022. The repository was under active development during the review, but the review was limited to commit [6c43c39c2e9cfcfb329edf3678843c5b57095dcf](https://github.com/Electisec-block-2/yearnV2-gen-lev-lending/tree/levgeist).
+The levgeist branch of the Yearn-contracts [Repo](https://github.com/yAudit-block-2/yearnV2-gen-lev-lending/tree/levgeist) was reviewed over 11 days. The contracts were reviewed by 1 auditor and several Fellows from June 13 to June 24, 2022. The repository was under active development during the review, but the review was limited to commit [6c43c39c2e9cfcfb329edf3678843c5b57095dcf](https://github.com/yAudit-block-2/yearnV2-gen-lev-lending/tree/levgeist).
 
 ## Scope
 
-[Code Repo](https://github.com/Electisec-block-2/yearnV2-gen-lev-lending/tree/levgeist)
+[Code Repo](https://github.com/yAudit-block-2/yearnV2-gen-lev-lending/tree/levgeist)
 
 The review covered contracts modified by the pull request at above specific commit and focused on the contracts directory.
 
-After the findings were presented to the Yearn team, fixes were made and included up to [commit 6c43c39c2e9cfcfb329edf3678843c5b57095dcf](https://github.com/Electisec-block-2/yearnV2-gen-lev-lending/tree/levgeist). Fixes were reviewed to confirm whether they remedied the original finding, but a new security review was not performed on the revised code (e.g. to determine whether new vulnerabilities were introduced by the fixes).
+After the findings were presented to the Yearn team, fixes were made and included up to [commit 6c43c39c2e9cfcfb329edf3678843c5b57095dcf](https://github.com/yAudit-block-2/yearnV2-gen-lev-lending/tree/levgeist). Fixes were reviewed to confirm whether they remedied the original finding, but a new security review was not performed on the revised code (e.g. to determine whether new vulnerabilities were introduced by the fixes).
 
 The review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
-Electisec and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the auditors do not represent nor imply to third party users that the code has been audited nor that the code is free from defects. By deploying or using the code, yearn and users of the contracts agree to use the code at their own risk.
+yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third party users that the code has been audited nor that the code is free from defects. By deploying or using the code, yearn and users of the contracts agree to use the code at their own risk.
 
 ## Code Evaluation Matrix
 
@@ -210,7 +210,7 @@ Delete lines 254 to 257. This issue is also present in LevAave between lines 307
 
 #### Proof of concept
 
-On line 336 https://github.com/Electisec-block-2/yearnV2-gen-lev-lending/blob/levgeist/contracts/Strategy.sol#L336 the function checks if the want balance is sufficient to cover the amountNeeded, this is set as `wantBalance > _amountNeeded`. If wantBalance is the same as \_amountNeeded the strategy still has sufficient funds to cover the withdraw, meaning the logic that follows this if statement is unnecessary.
+On line 336 https://github.com/yAudit-block-2/yearnV2-gen-lev-lending/blob/levgeist/contracts/Strategy.sol#L336 the function checks if the want balance is sufficient to cover the amountNeeded, this is set as `wantBalance > _amountNeeded`. If wantBalance is the same as \_amountNeeded the strategy still has sufficient funds to cover the withdraw, meaning the logic that follows this if statement is unnecessary.
 
 #### Impact
 
@@ -349,8 +349,8 @@ emit SetRewardBehavior(_swapRouter, _minRewardToSell);
 #### Impact
 
 Variable shadowing might lead to some confusion and unexpected behaviour.
-https://github.com/Electisec-block-2/yearnV2-gen-lev-lending/blob/6c43c39c2e9cfcfb329edf3678843c5b57095dcf/contracts/Strategy.sol#L187
-https://github.com/Electisec-block-2/yearnV2-gen-lev-lending/blob/6c43c39c2e9cfcfb329edf3678843c5b57095dcf/contracts/Strategy.sol#L197
+https://github.com/yAudit-block-2/yearnV2-gen-lev-lending/blob/6c43c39c2e9cfcfb329edf3678843c5b57095dcf/contracts/Strategy.sol#L187
+https://github.com/yAudit-block-2/yearnV2-gen-lev-lending/blob/6c43c39c2e9cfcfb329edf3678843c5b57095dcf/contracts/Strategy.sol#L197
 
 #### Recommendation
 
@@ -414,6 +414,6 @@ Monitor the LP profile of the GEIST/FTM pair and if liquidity drops too far then
 
 Acknowledged
 
-## About Electisec
+## About yAudit
 
-[Electisec](https://electisec.com/) is an ecosystem initiative started by Yearn Finance and its ecosystem partners to bootstrap sustainable and collaborative blockchain security reviews and to nurture aspiring security talent. Electisec includes [a fellowship program](https://electisec.com/fellowship-program/), a residents program, and [a guest auditor program](https://electisec.com/guest-auditor-program/). In the fellowship program, fellows perform a series of periodic security reviews and presentations during the program. Residents are past fellows who continue to gain experience by performing security reviews of contracts submitted to Electisec for review (such as this contract). Guest auditors are experts with a track record in the security space who temporarily assist with the review efforts.
+[yAudit](https://yaudit.dev/) is an ecosystem initiative started by Yearn Finance and its ecosystem partners to bootstrap sustainable and collaborative blockchain security reviews and to nurture aspiring security talent. yAudit includes [a fellowship program](https://yaudit.dev/fellowship-program/), a residents program, and [a guest auditor program](https://yaudit.dev/guest-auditor-program/). In the fellowship program, fellows perform a series of periodic security reviews and presentations during the program. Residents are past fellows who continue to gain experience by performing security reviews of contracts submitted to yAudit for review (such as this contract). Guest auditors are experts with a track record in the security space who temporarily assist with the review efforts.

@@ -1,12 +1,12 @@
 ---
 tags: ["solidity"]
 title: 2022-06-Superfluid
-description: Superfluid Electisec Report
+description: Superfluid yAudit Report
 nav_order: 8
 image: assets/images/logo.png
 ---
 
-# Electisec Superfluid Review
+# yAudit Superfluid Review
 
 **Review Resources:**
 
@@ -44,7 +44,7 @@ Superfluid enables programmable cashflows that stream continuously. This is done
 
 ![Superfluid Host](https://3591469525-files.gitbook.io/~/files/v0/b/gitbook-x-prod.appspot.com/o/spaces%2F-MKEcOOf_qoYMObicyRu%2Fuploads%2FfpT5qWsN1ki9HBO6RksU%2Fimage.png?alt=media&token=e7a56fbf-ce55-4dff-9fcb-37152c8ff4d2)
 
-The main branch of the Superfluid [Repo](https://github.com/superfluid-finance/protocol-monorepo) was reviewed over 14 days. The code review was performed by 2 residents between June 27 and July 10, 2022. A number of Electisec Fellows also reviewed the contracts and contributed over 40 man hours. The repository was under active development during the review, but the review was limited to [one specific commit](https://github.com/superfluid-finance/protocol-monorepo/tree/8534dba06f6040bb31e2db69175ac3097430c528).
+The main branch of the Superfluid [Repo](https://github.com/superfluid-finance/protocol-monorepo) was reviewed over 14 days. The code review was performed by 2 residents between June 27 and July 10, 2022. A number of yAudit Fellows also reviewed the contracts and contributed over 40 man hours. The repository was under active development during the review, but the review was limited to [one specific commit](https://github.com/superfluid-finance/protocol-monorepo/tree/8534dba06f6040bb31e2db69175ac3097430c528).
 
 ## Scope
 
@@ -60,7 +60,7 @@ The Superfluid.sol contract in the scope of this review did not store any value 
 
 The review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
-Electisec and the fellows make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the fellows do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Superfluid and users of the contracts agree to use the code at their own risk.
+yAudit and the fellows make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the fellows do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Superfluid and users of the contracts agree to use the code at their own risk.
 
 ## Code Evaluation Matrix
 
@@ -387,7 +387,7 @@ If an argument is only read in a function, it's cheaper to read it from `calldat
 
 #### Proof of concept
 
-These are the functions using `memory` arguments: [`batchCall()`](https://github.com/Electisec-block-2/protocol-monorepo/blob/8534dba06f6040bb31e2db69175ac3097430c528/packages/ethereum-contracts/contracts/superfluid/Superfluid.sol#L813), [`forwardBatchCall()`](https://github.com/Electisec-block-2/protocol-monorepo/blob/8534dba06f6040bb31e2db69175ac3097430c528/packages/ethereum-contracts/contracts/superfluid/Superfluid.sol#L821), [`_batchCall()`](https://github.com/Electisec-block-2/protocol-monorepo/blob/8534dba06f6040bb31e2db69175ac3097430c528/packages/ethereum-contracts/contracts/superfluid/Superfluid.sol#L764), [`decodeCtx()`](https://github.com/Electisec-block-2/protocol-monorepo/blob/8534dba06f6040bb31e2db69175ac3097430c528/packages/ethereum-contracts/contracts/superfluid/Superfluid.sol#L744), [`_decodeCtx()`](https://github.com/Electisec-block-2/protocol-monorepo/blob/8534dba06f6040bb31e2db69175ac3097430c528/packages/ethereum-contracts/contracts/superfluid/Superfluid.sol#L888),
+These are the functions using `memory` arguments: [`batchCall()`](https://github.com/yAudit-block-2/protocol-monorepo/blob/8534dba06f6040bb31e2db69175ac3097430c528/packages/ethereum-contracts/contracts/superfluid/Superfluid.sol#L813), [`forwardBatchCall()`](https://github.com/yAudit-block-2/protocol-monorepo/blob/8534dba06f6040bb31e2db69175ac3097430c528/packages/ethereum-contracts/contracts/superfluid/Superfluid.sol#L821), [`_batchCall()`](https://github.com/yAudit-block-2/protocol-monorepo/blob/8534dba06f6040bb31e2db69175ac3097430c528/packages/ethereum-contracts/contracts/superfluid/Superfluid.sol#L764), [`decodeCtx()`](https://github.com/yAudit-block-2/protocol-monorepo/blob/8534dba06f6040bb31e2db69175ac3097430c528/packages/ethereum-contracts/contracts/superfluid/Superfluid.sol#L744), [`_decodeCtx()`](https://github.com/yAudit-block-2/protocol-monorepo/blob/8534dba06f6040bb31e2db69175ac3097430c528/packages/ethereum-contracts/contracts/superfluid/Superfluid.sol#L888),
 
 #### Impact
 
@@ -403,7 +403,7 @@ If a variable is used in a certain branch, it saves gas to compute that variable
 
 #### Proof of concept
 
-In function [`registerAppWithKey()`](https://github.com/Electisec-block-2/protocol-monorepo/blob/8534dba06f6040bb31e2db69175ac3097430c528/packages/ethereum-contracts/contracts/superfluid/Superfluid.sol#L313), `configKey` is computed each time, but is used only when `APP_WHITE_LISTING_ENABLED` is true. So the gas spent on computing `configKey` is wasted when `APP_WHITE_LISTING_ENABLED` is false.
+In function [`registerAppWithKey()`](https://github.com/yAudit-block-2/protocol-monorepo/blob/8534dba06f6040bb31e2db69175ac3097430c528/packages/ethereum-contracts/contracts/superfluid/Superfluid.sol#L313), `configKey` is computed each time, but is used only when `APP_WHITE_LISTING_ENABLED` is true. So the gas spent on computing `configKey` is wasted when `APP_WHITE_LISTING_ENABLED` is false.
 
 #### Impact
 
@@ -446,7 +446,7 @@ Utilize custom errors instead of `require()` with revert strings.
 
 ### 5. Gas - Using >0 for unsigned integers (SaharAP)
 
-`!= 0` is a cheaper operation compared to `>0`, when dealing with uint. `>0` can be replaced with `!= 0` for gas optimization. The `>0` has been used in many places in Superfluid contract such as [here](https://github.com/Electisec-block-2/protocol-monorepo/blob/8534dba06f6040bb31e2db69175ac3097430c528/packages/ethereum-contracts/contracts/superfluid/Superfluid.sol#L344) and [here](https://github.com/Electisec-block-2/protocol-monorepo/blob/8534dba06f6040bb31e2db69175ac3097430c528/packages/ethereum-contracts/contracts/superfluid/Superfluid.sol#L373).
+`!= 0` is a cheaper operation compared to `>0`, when dealing with uint. `>0` can be replaced with `!= 0` for gas optimization. The `>0` has been used in many places in Superfluid contract such as [here](https://github.com/yAudit-block-2/protocol-monorepo/blob/8534dba06f6040bb31e2db69175ac3097430c528/packages/ethereum-contracts/contracts/superfluid/Superfluid.sol#L344) and [here](https://github.com/yAudit-block-2/protocol-monorepo/blob/8534dba06f6040bb31e2db69175ac3097430c528/packages/ethereum-contracts/contracts/superfluid/Superfluid.sol#L373).
 
 #### Impact
 
@@ -460,7 +460,7 @@ Replace `>0` with `!=0` when comparing unsigned integer variables to save gas.
 
 I have seen other Solidity coders using unchecked increment in for loop to save gas, in case the upper limit has already been
 checked.
-An example would be in [SlotsBitmapLibrary.sol](https://github.com/Electisec-block-2/protocol-monorepo/blob/8534dba06f6040bb31e2db69175ac3097430c528/packages/ethereum-contracts/contracts/libs/SlotsBitmapLibrary.sol#L36),
+An example would be in [SlotsBitmapLibrary.sol](https://github.com/yAudit-block-2/protocol-monorepo/blob/8534dba06f6040bb31e2db69175ac3097430c528/packages/ethereum-contracts/contracts/libs/SlotsBitmapLibrary.sol#L36),
 since `slotId < _MAX_NUM_SLOTS`, we could use unchecked to wrap `++slotId`. The same could be applied to a couple of other places.
 
 #### Impact
@@ -886,9 +886,9 @@ An address configured by governance can register multiple SuperApps.
 
 #### Proof of concept
 
-Governance's owner can call [`setConfig()`](https://github.com/Electisec-block-2/protocol-monorepo/blob/8534dba06f6040bb31e2db69175ac3097430c528/packages/ethereum-contracts/contracts/gov/SuperfluidGovernanceBase.sol#L109) to allow an address `a` (hashed into `key`) to register a SuperApp with Superfluid.sol (host). The `value` parameter is the timestamp until which the address can register the app.
+Governance's owner can call [`setConfig()`](https://github.com/yAudit-block-2/protocol-monorepo/blob/8534dba06f6040bb31e2db69175ac3097430c528/packages/ethereum-contracts/contracts/gov/SuperfluidGovernanceBase.sol#L109) to allow an address `a` (hashed into `key`) to register a SuperApp with Superfluid.sol (host). The `value` parameter is the timestamp until which the address can register the app.
 
-`a` can initiate a transaction to register multiple apps through [`registerAppWithKey()`](https://github.com/Electisec-block-2/protocol-monorepo/blob/dev/packages/ethereum-contracts/contracts/superfluid/Superfluid.sol#L310) as long as `block.timestamp` <= `value`.
+`a` can initiate a transaction to register multiple apps through [`registerAppWithKey()`](https://github.com/yAudit-block-2/protocol-monorepo/blob/dev/packages/ethereum-contracts/contracts/superfluid/Superfluid.sol#L310) as long as `block.timestamp` <= `value`.
 
 #### Impact
 
@@ -903,15 +903,15 @@ Instead of delegating the responsibility of registering SuperApps to an address,
 
 ### 3. Informational - Valid context is not checked before modifying it (blockdev)
 
-Each function which modifies `_ctxStamp` in Superfluid.sol forces on it an initial state. [`appCallbackPop()`](https://github.com/Electisec-block-2/protocol-monorepo/blob/8534dba06f6040bb31e2db69175ac3097430c528/packages/ethereum-contracts/contracts/superfluid/Superfluid.sol#L531) is the only function which lets an agreement to modify it without verifying the initial state.
+Each function which modifies `_ctxStamp` in Superfluid.sol forces on it an initial state. [`appCallbackPop()`](https://github.com/yAudit-block-2/protocol-monorepo/blob/8534dba06f6040bb31e2db69175ac3097430c528/packages/ethereum-contracts/contracts/superfluid/Superfluid.sol#L531) is the only function which lets an agreement to modify it without verifying the initial state.
 
 #### Proof of concept
 
-For reference, [`appCallbackPush()`](https://github.com/Electisec-block-2/protocol-monorepo/blob/8534dba06f6040bb31e2db69175ac3097430c528/packages/ethereum-contracts/contracts/superfluid/Superfluid.sol#L513) has asserts a valid context through `assertValidCtx(ctx)`. There is no such verification for `appCallbackPop()`.
+For reference, [`appCallbackPush()`](https://github.com/yAudit-block-2/protocol-monorepo/blob/8534dba06f6040bb31e2db69175ac3097430c528/packages/ethereum-contracts/contracts/superfluid/Superfluid.sol#L513) has asserts a valid context through `assertValidCtx(ctx)`. There is no such verification for `appCallbackPop()`.
 
 #### Impact
 
-Informational. This issue is known to the team as all the calls to `appCallbackPop()` ([AgreementLibrary.sol#L104](https://github.com/Electisec-block-2/protocol-monorepo/blob/8534dba06f6040bb31e2db69175ac3097430c528/packages/ethereum-contracts/contracts/agreements/AgreementLibrary.sol#L104) and [AgreementLibrary.sol#L149](https://github.com/Electisec-block-2/protocol-monorepo/blob/8534dba06f6040bb31e2db69175ac3097430c528/packages/ethereum-contracts/contracts/agreements/AgreementLibrary.sol#L149)) come with the following comment &mdash;
+Informational. This issue is known to the team as all the calls to `appCallbackPop()` ([AgreementLibrary.sol#L104](https://github.com/yAudit-block-2/protocol-monorepo/blob/8534dba06f6040bb31e2db69175ac3097430c528/packages/ethereum-contracts/contracts/agreements/AgreementLibrary.sol#L104) and [AgreementLibrary.sol#L149](https://github.com/yAudit-block-2/protocol-monorepo/blob/8534dba06f6040bb31e2db69175ac3097430c528/packages/ethereum-contracts/contracts/agreements/AgreementLibrary.sol#L149)) come with the following comment &mdash;
 
 ```
 // [SECURITY] NOTE: ctx should be const, do not modify it ever to ensure callback stack correctness
@@ -927,7 +927,7 @@ There are typos in require strings.
 
 #### Proof of concept
 
-`agreeement` ([Superfluid.sol#L1053](https://github.com/Electisec-block-2/protocol-monorepo/blob/8534dba06f6040bb31e2db69175ac3097430c528/packages/ethereum-contracts/contracts/superfluid/Superfluid.sol#L1053) and [Superfluid.sol#L1063](https://github.com/Electisec-block-2/protocol-monorepo/blob/8534dba06f6040bb31e2db69175ac3097430c528/packages/ethereum-contracts/contracts/superfluid/Superfluid.sol#L1063)) might be better spelled as `agreement`.
+`agreeement` ([Superfluid.sol#L1053](https://github.com/yAudit-block-2/protocol-monorepo/blob/8534dba06f6040bb31e2db69175ac3097430c528/packages/ethereum-contracts/contracts/superfluid/Superfluid.sol#L1053) and [Superfluid.sol#L1063](https://github.com/yAudit-block-2/protocol-monorepo/blob/8534dba06f6040bb31e2db69175ac3097430c528/packages/ethereum-contracts/contracts/superfluid/Superfluid.sol#L1063)) might be better spelled as `agreement`.
 
 #### Impact
 
@@ -1102,6 +1102,6 @@ contract ContractTest is DSTest {
 
 ```
 
-## About Electisec
+## About yAudit
 
-[Electisec](https://electisec.com/) is an ecosystem initiative started by Yearn Finance and its ecosystem partners to bootstrap sustainable and collaborative blockchain security reviews and to nurture aspiring security talent. Electisec includes [a fellowship program](https://electisec.com/fellowship-program/), a residents program, and [a guest auditor program](https://electisec.com/guest-auditor-program/). In the fellowship program, fellows perform a series of periodic security reviews and presentations during the program. Residents are past fellows who continue to gain experience by performing security reviews of contracts submitted to Electisec for review (such as this contract). Guest auditors are experts with a track record in the security space who temporarily assist with the review efforts.
+[yAudit](https://yaudit.dev/) is an ecosystem initiative started by Yearn Finance and its ecosystem partners to bootstrap sustainable and collaborative blockchain security reviews and to nurture aspiring security talent. yAudit includes [a fellowship program](https://yaudit.dev/fellowship-program/), a residents program, and [a guest auditor program](https://yaudit.dev/guest-auditor-program/). In the fellowship program, fellows perform a series of periodic security reviews and presentations during the program. Residents are past fellows who continue to gain experience by performing security reviews of contracts submitted to yAudit for review (such as this contract). Guest auditors are experts with a track record in the security space who temporarily assist with the review efforts.

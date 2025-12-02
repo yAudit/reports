@@ -267,3 +267,60 @@ export function cn(...inputs: ClassValue[]) {
     // If not matching, just return the base
     return [base];
   }
+
+  /**
+   * Given a markdown filename, find the corresponding PDF file
+   * Handles different naming conventions between markdown and PDF files
+   */
+  export function findMatchingPdf(mdFilename: string, pdfFiles: string[]): string | null {
+    // Remove .md extension
+    const base = mdFilename.replace(/\.md$/, "");
+
+    // Match YEAR-MONTH-NAME format
+    const yearMonthMatch = base.match(/^(\d{4})-(\d{2})-(.+)$/);
+    if (yearMonthMatch) {
+      const [, year, month, name] = yearMonthMatch;
+
+      // Normalize the name for comparison (remove special characters, lowercase)
+      const normalizeName = (str: string) =>
+        str.toLowerCase()
+           .replace(/[-_]/g, '')
+           .replace(/\s+/g, '');
+
+      const normalizedName = normalizeName(name);
+
+      // Try to find a matching PDF by comparing normalized names
+      const matchedPdf = pdfFiles.find(pdf => {
+        // Extract date and name from PDF filename
+        const pdfBase = pdf.replace(/\.pdf$/i, '');
+
+        // Try different patterns
+        // Pattern 1: MM-YYYY-Name or YYYY-MM-Name
+        const dateMatch = pdfBase.match(/^(\d{2}|\d{4})-(\d{2}|\d{4})-(.+)$/);
+        if (dateMatch) {
+          const [, part1, part2, pdfName] = dateMatch;
+          // Check if dates match (either YYYY-MM or MM-YYYY)
+          const datesMatch = (part1 === year && part2 === month) ||
+                           (part1 === month && part2 === year);
+
+          if (datesMatch) {
+            // Compare normalized names (ignoring suffixes like "yAudit-Report")
+            const normalizedPdfName = normalizeName(
+              pdfName.replace(/-?yaudit-?report$/i, '')
+                     .replace(/-?report$/i, '')
+            );
+
+            // Check if the PDF name contains the markdown name or vice versa
+            return normalizedPdfName.includes(normalizedName) ||
+                   normalizedName.includes(normalizedPdfName);
+          }
+        }
+
+        return false;
+      });
+
+      return matchedPdf || null;
+    }
+
+    return null;
+  }
