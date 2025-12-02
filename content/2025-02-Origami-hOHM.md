@@ -4,7 +4,7 @@ title: 02-205-Origami-hOHM
 description: Security review of Origami hOHM protocol
 ---
 
-# Electisec Origami hOHM Review <!-- omit in toc -->
+# yAudit Origami hOHM Review <!-- omit in toc -->
 
 **Review Resources:**
 
@@ -18,7 +18,7 @@ description: Security review of Origami hOHM protocol
 ## Table of Contents <!-- omit in toc -->
 
 1. TOC
-{:toc}
+   {:toc}
 
 ## Review Summary
 
@@ -56,22 +56,21 @@ After the findings were presented to the Origami hOHM team, fixes were made and 
 
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
-Electisec and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Origami hOHM and users of the contracts agree to use the code at their own risk.
-
+yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Origami hOHM and users of the contracts agree to use the code at their own risk.
 
 ## Code Evaluation Matrix
 
-| Category                 | Mark    | Description |
-| ------------------------ | ------- | ----------- |
-| Access Control           | Good | Proper access control is implemented using the OrigamiElevatedAccess mixin. |
-| Mathematics              | Average | Some rounding issues were detected in the Tokenized Balance Sheet contract. |
-| Complexity               | Good | Complexity is handled with a modular architecture and well-balanced separation of concerns, enabling the potential reuse of the Tokenized Balance Sheet logic. |
-| Libraries                | Good | The contracts integrate with the OpenZeppelin and LayerZero V2 libraries. |
-| Decentralization         | Average | Part of the vault's lifecycle requires privileged access. |
-| Code stability           | Good    | Contracts remained stable throughout the revision. |
-| Documentation            | Good | Documentation at the source code level is excellent. Additionally, high-level specs for the system were provided. |
-| Monitoring               | Good | Proper monitoring events for key operations are in place. |
-| Testing and verification | Good | The codebase includes a unit and invariant test suite with good coverage.  |
+| Category                 | Mark    | Description                                                                                                                                                    |
+| ------------------------ | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Access Control           | Good    | Proper access control is implemented using the OrigamiElevatedAccess mixin.                                                                                    |
+| Mathematics              | Average | Some rounding issues were detected in the Tokenized Balance Sheet contract.                                                                                    |
+| Complexity               | Good    | Complexity is handled with a modular architecture and well-balanced separation of concerns, enabling the potential reuse of the Tokenized Balance Sheet logic. |
+| Libraries                | Good    | The contracts integrate with the OpenZeppelin and LayerZero V2 libraries.                                                                                      |
+| Decentralization         | Average | Part of the vault's lifecycle requires privileged access.                                                                                                      |
+| Code stability           | Good    | Contracts remained stable throughout the revision.                                                                                                             |
+| Documentation            | Good    | Documentation at the source code level is excellent. Additionally, high-level specs for the system were provided.                                              |
+| Monitoring               | Good    | Proper monitoring events for key operations are in place.                                                                                                      |
+| Testing and verification | Good    | The codebase includes a unit and invariant test suite with good coverage.                                                                                      |
 
 ## Findings Explanation
 
@@ -111,7 +110,7 @@ Suppose we have the following scenario:
 - `tokenAmount = 4`
 - `shares = joinWithToken(tokenAmount) = roundDown(tokenAmount * totalSupply / inputTokenBalance) = roundDown(4 * 2 / 5) = 1`.
 - `exitWithShares(shares) = roundUp(shares * inputTokenBalance / totalSupply) = roundUp(1 * 5 / 2) = 3`
-  
+
 This means we got four tokens as a liability when we joined and deposited only three tokens when we exited.
 
 The same happens with [`exitWithToken()`](https://github.com/TempleDAO/origami/blob/6b0e28eb43cd32f0bf61c600d9c9e561df6796de/apps/protocol/contracts/common/OrigamiTokenizedBalanceSheetVault.sol#L327) as it always rounds up the number of required shares. This is fine when the input token is an asset since the vault should ensure the user gets burned at least the returned value. However, it has the opposite effect when the input token is a liability since the value is now being deposited into the vault.
@@ -174,24 +173,24 @@ Given a specific available share capacity, the implementation of [`_maxJoinWithT
 491:     ) internal virtual view returns (uint256 maxTokens) {
 492:         // If the token balance of the requested token is zero then cannot join
 493:         if (cache.inputTokenBalance == 0) return 0;
-494: 
+494:
 495:         // If this is an unknown asset then return zero
 496:         (bool inputIsAsset, bool inputIsLiability) = isBalanceSheetToken(cache.inputTokenAddress);
 497:         if (!(inputIsAsset || inputIsLiability)) return 0;
-498: 
+498:
 499:         uint256 maxTotalSupply_ = maxTotalSupply();
 500:         if (maxTotalSupply_ == type(uint256).max) return maxTotalSupply_;
-501: 
+501:
 502:         uint256 availableShares = _availableSharesCapacity(cache.totalSupply, maxTotalSupply_);
-503: 
+503:
 504:         // When calculating the max assets or liabilities amount, if the input token is:
 505:         //   - an asset: ROUND_UP (assets are pulled from the caller)
 506:         //   - a liability: ROUND_DOWN (liabilities sent to recipient)
 507:         // Shares are rounded down within previewJoinWithToken, so can be rounded up when determining
 508:         // the max here.
 509:         return _convertSharesToOneToken({
-510:             shares: availableShares.inverseSubtractBps(feeBps, OrigamiMath.Rounding.ROUND_UP), 
-511:             cache: cache, 
+510:             shares: availableShares.inverseSubtractBps(feeBps, OrigamiMath.Rounding.ROUND_UP),
+511:             cache: cache,
 512:             rounding: inputIsAsset ? OrigamiMath.Rounding.ROUND_UP : OrigamiMath.Rounding.ROUND_DOWN
 513:         });
 514:     }
@@ -203,8 +202,8 @@ Given a specific available share capacity, the implementation of [`_maxJoinWithT
 847:         _Cache memory cache,
 848:         OrigamiMath.Rounding rounding
 849:     ) private pure returns (uint256) {
-850:         // An initial seed deposit is required first. 
-851:         // In the case of a new asset added to an existing vault, a donation of tokens 
+850:         // An initial seed deposit is required first.
+851:         // In the case of a new asset added to an existing vault, a donation of tokens
 852:         // must be added to the vault first.
 853:         return cache.inputTokenBalance == 0
 854:             ? 0
@@ -232,12 +231,12 @@ The same happens in `maxExitWithToken()` but for liabilities. The implementation
 600:         // If this is an unknown asset then return zero
 601:         (bool inputIsAsset, bool inputIsLiability) = isBalanceSheetToken(cache.inputTokenAddress);
 602:         if (!(inputIsAsset || inputIsLiability)) return 0;
-603: 
+603:
 604:         // Special case for address(0), unlimited
 605:         if (sharesOwner == address(0)) return type(uint256).max;
-606: 
+606:
 607:         uint256 shares = balanceOf(sharesOwner);
-608: 
+608:
 609:         // When calculating the max assets or liabilities amount, if the input token is:
 610:         //   - an asset: ROUND_DOWN (assets are sent to the recipient)
 611:         //   - a liability: ROUND_DOWN (liabilities are pulled from the caller)
@@ -249,7 +248,7 @@ The same happens in `maxExitWithToken()` but for liabilities. The implementation
 617:             cache: cache,
 618:             rounding: inputIsAsset ? OrigamiMath.Rounding.ROUND_DOWN : OrigamiMath.Rounding.ROUND_UP
 619:         });
-620: 
+620:
 621:         // Return the minimum of the available balance of the requested token in the balance sheet
 622:         // and the derived amount from the available shares
 623:         return maxFromShares < cache.inputTokenBalance ? maxFromShares : cache.inputTokenBalance;
@@ -279,9 +278,11 @@ None.
 #### Technical Details
 
 In the `OlympusCoolerDelegation` library, there is a potential integer overflow risk when converting from uint256 to int256 in the `_syncDelegationRequest` function:
+
 ```solidity
 int256 delta = int256(newDelegationAmount) - int256(existingDelegationAmount);
 ```
+
 This is unlikely to be problematic in the current Olympus implementation, as the gOHM token amounts will never approach these extreme values. However, as this library could be reused in other contexts with different tokens, it represents a potential vulnerability if used with tokens that have very large supplies or amounts.
 
 #### Impact
@@ -351,7 +352,6 @@ Acknowledged. Not really an issue. When the vault is being unwound, the exit fee
 
 #### Technical Details
 
-
 ```solidity
 File: contracts/common/OrigamiTokenizedBalanceSheetVault.sol
 
@@ -378,6 +378,7 @@ File: contracts/investments/OrigamiInvestmentVault.sol
 ```
 
 [OrigamiInvestmentVault.sol#L57](https://github.com/TempleDAO/origami/blob/6b0e28eb43cd32f0bf61c600d9c9e561df6796de/apps/protocol/contracts/investments/OrigamiInvestmentVault.sol#L57), [OrigamiInvestmentVault.sol#L65](https://github.com/TempleDAO/origami/blob/6b0e28eb43cd32f0bf61c600d9c9e561df6796de/apps/protocol/contracts/investments/OrigamiInvestmentVault.sol#L65), [OrigamiInvestmentVault.sol#L105](https://github.com/TempleDAO/origami/blob/6b0e28eb43cd32f0bf61c600d9c9e561df6796de/apps/protocol/contracts/investments/OrigamiInvestmentVault.sol#L105)
+
 #### Impact
 
 Informational.
@@ -395,7 +396,6 @@ Fixed in [311e156](https://github.com/TempleDAO/origami/pull/1341/commits/311e15
 The identifier is imported but never used within the file.
 
 #### Technical Details
-
 
 ```solidity
 File: contracts/common/OrigamiTokenizedBalanceSheetVault.sol
@@ -421,9 +421,7 @@ Fixed in [08e9579](https://github.com/TempleDAO/origami/pull/1341/commits/08e957
 
 Unused error is defined and can be removed.
 
-
 #### Technical Details
-
 
 ```solidity
 File: contracts/interfaces/common/IOrigamiTokenizedBalanceSheetVault.sol
@@ -459,7 +457,7 @@ The implementation of [`_syncSavings()`](https://github.com/TempleDAO/origami/bl
 543:     function _syncSavings(uint256 requiredDebtTokenBalance) private {
 544:         IERC4626 _savingsVault = debtTokenSavingsVault;
 545:         if (address(_savingsVault) == address(0)) return;
-546: 
+546:
 547:         uint256 _debtTokenBalance = debtToken.balanceOf(address(this));
 548:         if (_debtTokenBalance > requiredDebtTokenBalance) {
 549:             // deposit any surplus into savings
@@ -468,7 +466,7 @@ The implementation of [`_syncSavings()`](https://github.com/TempleDAO/origami/bl
 552:             // withdraw deficit from savings. Cap to the max amount which can be withdrawn.
 553:             uint256 delta = requiredDebtTokenBalance - _debtTokenBalance;
 554:             uint256 maxWithdraw = _savingsVault.maxWithdraw(address(this));
-555:             if (delta > maxWithdraw) delta = maxWithdraw;               
+555:             if (delta > maxWithdraw) delta = maxWithdraw;
 556:             if (delta > 0) {
 557:                 _savingsVault.withdraw(delta, address(this), address(this));
 558:             }

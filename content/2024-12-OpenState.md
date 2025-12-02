@@ -6,7 +6,7 @@ nav_order: 76
 image: assets/images/logo.png
 ---
 
-# Electisec OpenState Review <!-- omit in toc -->
+# yAudit OpenState Review <!-- omit in toc -->
 
 **Review Resources:**
 
@@ -76,7 +76,7 @@ After the findings were presented to the OpenState team, fixes were made and inc
 
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
-Electisec and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, OpenState and users of the contracts agree to use the code at their own risk.
+yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, OpenState and users of the contracts agree to use the code at their own risk.
 
 ## Code Evaluation Matrix
 

@@ -4,7 +4,7 @@ title: 2025-05-Asymmetry-USDaf-V2
 description: Asymmetry USDaf V2 Security Review
 ---
 
-# Electisec Asymmetry USDaf V2 Review <!-- omit in toc -->
+# yAudit Asymmetry USDaf V2 Review <!-- omit in toc -->
 
 **Review Resources:**
 
@@ -18,13 +18,13 @@ description: Asymmetry USDaf V2 Security Review
 ## Table of Contents <!-- omit in toc -->
 
 1. TOC
-{:toc}
+   {:toc}
 
 ## Review Summary
 
 **USDaf**
 
-USDaf is a synthetic dollar, part of a collateralized debt position (CDP), backed by a stablecoin and BTC basket. 
+USDaf is a synthetic dollar, part of a collateralized debt position (CDP), backed by a stablecoin and BTC basket.
 
 The codebase is forked from Liquity V2 (codename _bold_) and adjusted to include the collateral changes.
 
@@ -66,22 +66,21 @@ After the findings were presented to the Asymmetry team, fixes were made and inc
 
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
-Electisec and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Asymmetry and users of the contracts agree to use the code at their own risk.
-
+yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Asymmetry and users of the contracts agree to use the code at their own risk.
 
 ## Code Evaluation Matrix
 
-| Category                 | Mark    | Description |
-| ------------------------ | ------- | ----------- |
-| Access Control           | Good | Most changes don't require access control. The InterestRouter contract, owned by the Asymmetry multisig, acts as the Liquity Governance replacement.  |
-| Mathematics              | Good | No arithmetic issues were detected. |
-| Complexity               | Average | While the changes do not involve an increase in complexity, it is important to note that Liquity itself is a complex protocol. |
-| Libraries                | Good | The codebase relies on the OpenZeppelin library. |
-| Decentralization         | Good | The protocol inherits the decentralized nature of Liquity. |
-| Code stability           | Good | No changes were made to the contract during the review. |
-| Documentation            | Good | Being a Liquity fork, there is plenty of documentation available. |
-| Monitoring               | Good | Monitoring events are correctly emitted. |
-| Testing and verification | Average | Even though Liquity has been extensively tested, additional testing of the zapper and pricing functionality is recommended. |
+| Category                 | Mark    | Description                                                                                                                                          |
+| ------------------------ | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Access Control           | Good    | Most changes don't require access control. The InterestRouter contract, owned by the Asymmetry multisig, acts as the Liquity Governance replacement. |
+| Mathematics              | Good    | No arithmetic issues were detected.                                                                                                                  |
+| Complexity               | Average | While the changes do not involve an increase in complexity, it is important to note that Liquity itself is a complex protocol.                       |
+| Libraries                | Good    | The codebase relies on the OpenZeppelin library.                                                                                                     |
+| Decentralization         | Good    | The protocol inherits the decentralized nature of Liquity.                                                                                           |
+| Code stability           | Good    | No changes were made to the contract during the review.                                                                                              |
+| Documentation            | Good    | Being a Liquity fork, there is plenty of documentation available.                                                                                    |
+| Monitoring               | Good    | Monitoring events are correctly emitted.                                                                                                             |
+| Testing and verification | Average | Even though Liquity has been extensively tested, additional testing of the zapper and pricing functionality is recommended.                          |
 
 ## Findings Explanation
 
@@ -206,7 +205,7 @@ Some changes in Liquity's zappers can be adapted to the USDaf zapper.
 
 #### Technical Details
 
-- Include the original caller address in the index when opening a trove: 
+- Include the original caller address in the index when opening a trove:
   - [WETHZapper.sol#L32](https://github.com/asymmetryfinance/USDaf-v2/blob/cc3bd0537ad4555c34ab58ca285c11284c252fec/contracts/src/Zappers/WETHZapper.sol#L32)
 - Ensure the zapper contract is the actual receiver when redeeming assets:
   - [WETHZapper.sol#L92](https://github.com/asymmetryfinance/USDaf-v2/blob/cc3bd0537ad4555c34ab58ca285c11284c252fec/contracts/src/Zappers/WETHZapper.sol#L92)
@@ -231,7 +230,7 @@ Fixed in [65d46f5](https://github.com/asymmetryfinance/USDaf-v2/commit/65d46f594
 
 [The USDS oracle currently uses the DAI Chainlink price feed](https://github.com/asymmetryfinance/USDaf-v2/blob/cc3bd0537ad4555c34ab58ca285c11284c252fec/contracts/src/PriceFeeds/USDaf/SusdsOracle.sol#L10-L10).
 
-USDS and DAI are convertible, and some existing lending markets, such as AAVE and Morpho, use DAI price feeds to price USDS. 
+USDS and DAI are convertible, and some existing lending markets, such as AAVE and Morpho, use DAI price feeds to price USDS.
 
 However, given Liquity's immutable nature, if the DAI to USDS convertibility were to change, it could become dangerous for the protocol to keep using the DAI price feed.
 

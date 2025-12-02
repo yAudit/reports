@@ -4,7 +4,7 @@ title: 2025-04-Asymmetry-dASF
 description: Asymmetry dASF Security Review
 ---
 
-# Electisec Asymmetry dASF Review <!-- omit in toc -->
+# yAudit Asymmetry dASF Review <!-- omit in toc -->
 
 **Review Resources:**
 
@@ -18,7 +18,7 @@ None beyond the code repositories.
 ## Table of Contents <!-- omit in toc -->
 
 1. TOC
-{:toc}
+   {:toc}
 
 ## Review Summary
 
@@ -54,21 +54,20 @@ After the findings were presented to the Asymmetry team, fixes were made and inc
 
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
-Electisec and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Asymmetry and users of the contracts agree to use the code at their own risk.
-
+yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Asymmetry and users of the contracts agree to use the code at their own risk.
 
 ## Code Evaluation Matrix
 
-| Category                 | Mark    | Description |
-| ------------------------ | ------- | ----------- |
-| Access Control           | Good | The Ownable2Step logic in Solidity and Vyper variants provides suitable access control. |
-| Mathematics              | Average | A rounded division during dASF redemption might lead to overcharging users. |
-| Complexity               | Good | Contracts are well-designed and easy to understand. |
-| Libraries                | Good | The Solidity contract uses the OpenZeppelin library. No libraries are present in the Vyper implementation. |
-| Decentralization         | Average | While contracts are mostly permissionless, governance can enable privileged accounts to redeem dASF for free. |
-| Code stability           | Good | The codebase remained stable throughout the review. |
-| Documentation            | Average | Although no high-level documentation was provided, the contracts include inline comments describing their intended behavior. |
-| Monitoring               | Good | Monitoring events are in place, despite missing logging at initialization. |
+| Category                 | Mark    | Description                                                                                                                                                                                                                                                                     |
+| ------------------------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Access Control           | Good    | The Ownable2Step logic in Solidity and Vyper variants provides suitable access control.                                                                                                                                                                                         |
+| Mathematics              | Average | A rounded division during dASF redemption might lead to overcharging users.                                                                                                                                                                                                     |
+| Complexity               | Good    | Contracts are well-designed and easy to understand.                                                                                                                                                                                                                             |
+| Libraries                | Good    | The Solidity contract uses the OpenZeppelin library. No libraries are present in the Vyper implementation.                                                                                                                                                                      |
+| Decentralization         | Average | While contracts are mostly permissionless, governance can enable privileged accounts to redeem dASF for free.                                                                                                                                                                   |
+| Code stability           | Good    | The codebase remained stable throughout the review.                                                                                                                                                                                                                             |
+| Documentation            | Average | Although no high-level documentation was provided, the contracts include inline comments describing their intended behavior.                                                                                                                                                    |
+| Monitoring               | Good    | Monitoring events are in place, despite missing logging at initialization.                                                                                                                                                                                                      |
 | Testing and verification | Average | The codebase includes a testing suite with several tests that fork mainnet. However, coverage is not comprehensive as there aren't many tests exploring different execution paths, particularly in the price feed and flash dump contracts, which only have one test case each. |
 
 ## Findings Explanation
@@ -200,7 +199,7 @@ Consider adding the fee to the repayment amount so the implementation continues 
 
 #### Developer Response
 
-Will use a different provider if they do so. 
+Will use a different provider if they do so.
 
 ### 2. Informational - Missing events for parameters during construction
 
@@ -210,7 +209,6 @@ While setters emit events, parameters defined in constructors don't emit initial
 
 - [ownable_2step.vy#L47](https://github.com/asymmetryfinance/dASF/blob/e41a1c6b5b8bb7dc8d54de134374f50fd49b4582/src/ownable_2step.vy#L47)
 - [redemption.vy#L105-L109](https://github.com/asymmetryfinance/dASF/blob/e41a1c6b5b8bb7dc8d54de134374f50fd49b4582/src/redemption.vy#L105-L109)
-
 
 #### Impact
 
@@ -250,7 +248,7 @@ Fixed [here](https://github.com/asymmetryfinance/dASF/pull/1/commits/92d937346d4
 
 When calling the function [`redeem()`](https://github.com/asymmetryfinance/dASF/blob/e41a1c6b5b8bb7dc8d54de134374f50fd49b4582/src/redemption.vy#L166-L166), the user will pay a certain amount of USAD depending on the current price of ASF and the number of weeks to lock them for.
 
-There is currently no way for a user to input the maximum price of USAD he is willing to pay to redeem his DASF. If the price fluctuates or the discount changes while the transaction is being confirmed, a user may pay a slightly higher or lower price than expected. 
+There is currently no way for a user to input the maximum price of USAD he is willing to pay to redeem his DASF. If the price fluctuates or the discount changes while the transaction is being confirmed, a user may pay a slightly higher or lower price than expected.
 
 #### Impact
 

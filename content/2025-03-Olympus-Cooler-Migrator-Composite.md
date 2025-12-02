@@ -4,7 +4,7 @@ title: 2025-03-Olympus-Cooler-Migrator-and-Composite
 description: Olympus Migrator and Composite features for Cooler protocol
 ---
 
-# Electisec Olympus Cooler - Migrator and Composite Review <!-- omit in toc -->
+# yAudit Olympus Cooler - Migrator and Composite Review <!-- omit in toc -->
 
 **Review Resources:**
 
@@ -18,7 +18,7 @@ None beyond the code repositories.
 ## Table of Contents <!-- omit in toc -->
 
 1. TOC
-{:toc}
+   {:toc}
 
 ## Review Summary
 
@@ -44,6 +44,7 @@ src/policies/cooler
 ```
 
 **Migrator**
+
 ```
 src/policies/cooler/
 |── CoolerV2Migrator.sol
@@ -53,7 +54,7 @@ After the findings were presented to the Olympus team, fixes were made and inclu
 
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
-Electisec and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Olympus and users of the contracts agree to use the code at their own risk.
+yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Olympus and users of the contracts agree to use the code at their own risk.
 
 ## Findings Explanation
 
@@ -172,7 +173,7 @@ An attacker can abuse the migration process to tamper with other users' delegati
 
 #### Technical Details
 
-The migration process allows users to set a new owner when loans are migrated to the Cooler V2. 
+The migration process allows users to set a new owner when loans are migrated to the Cooler V2.
 
 Since the process involves applying delegations and borrowing USDS, the new owner of the position must authorize the migrator contract to operate on their behalf, either by bundling the required signature in the migration or by calling `setAuthorization()` before starting the process.
 
@@ -193,6 +194,7 @@ Fixed in [PR#57](https://github.com/OlympusDAO/olympus-v3/pull/57).
 ## Medium Findings
 
 None
+
 ## Low Findings
 
 ### 1. Low - Missing USDS approval to Sky Migrator
@@ -242,7 +244,7 @@ MonoCooler's [`repay()`](https://github.com/OlympusDAO/olympus-v3/blob/12d5f2ab2
 470:         // Cap the amount to be repaid to the current debt as of this block
 471:         if (repayAmount < latestDebt) {
 472:             amountRepaid = repayAmount;
-473: 
+473:
 474:             // Ensure the minimum debt amounts are still maintained
 475:             unchecked {
 476:                 aState.debtCheckpoint = _accountDebtCheckpoint = latestDebt - amountRepaid;
@@ -289,6 +291,7 @@ if (authorization.account != address(0)) {
     COOLER.setAuthorizationWithSig(authorization, signature);
 }
 ```
+
 [CoolerComposites.sol#L41-L41](https://github.com/OlympusDAO/olympus-v3/blob/12d5f2ab2a187aafd6041c2b12b291b281506e31/src/policies/cooler/CoolerComposites.sol#L41-L41)
 [CoolerComposites.sol#L58-L58](https://github.com/OlympusDAO/olympus-v3/blob/12d5f2ab2a187aafd6041c2b12b291b281506e31/src/policies/cooler/CoolerComposites.sol#L58-L58)
 

@@ -1,12 +1,12 @@
 ---
 tags: ["solidity"]
 title: 2023-02-RageTrade
-description: Rage Trade Upgrade Electisec Report
+description: Rage Trade Upgrade yAudit Report
 nav_order: 19
 image: assets/images/logo.png
 ---
 
-# Electisec Rage Trade Upgrade Review
+# yAudit Rage Trade Upgrade Review
 
 **Review Resources:**
 
@@ -32,11 +32,11 @@ The contracts of the Rage Trade [Repo](https://github.com/RageTrade/delta-neutra
 
 ## Scope
 
-The scope of the review consisted of all the contracts in the repo at the specific commit. The goal was the review the changes made since the previous Electisec review. Most of the contract changes were made in [PR #71](https://github.com/RageTrade/delta-neutral-gmx-vaults/pull/71) and [PR #84](https://github.com/RageTrade/delta-neutral-gmx-vaults/pull/84). After the findings were presented to the Rage Trade team, fixes were made and included in several PRs.
+The scope of the review consisted of all the contracts in the repo at the specific commit. The goal was the review the changes made since the previous yAudit review. Most of the contract changes were made in [PR #71](https://github.com/RageTrade/delta-neutral-gmx-vaults/pull/71) and [PR #84](https://github.com/RageTrade/delta-neutral-gmx-vaults/pull/84). After the findings were presented to the Rage Trade team, fixes were made and included in several PRs.
 
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
-Electisec and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Rage Trade and users of the contracts agree to use the code at their own risk.
+yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Rage Trade and users of the contracts agree to use the code at their own risk.
 
 ## Code Evaluation Matrix
 

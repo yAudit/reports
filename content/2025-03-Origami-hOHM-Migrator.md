@@ -4,7 +4,7 @@ title: 2025-03-Origami-hOHM-Migrator
 description: Security review of the Origami hOHM Migrator contract
 ---
 
-# Electisec Origami hOHM Migrator Review <!-- omit in toc -->
+# yAudit Origami hOHM Migrator Review <!-- omit in toc -->
 
 **Review Resources:**
 
@@ -18,7 +18,7 @@ description: Security review of the Origami hOHM Migrator contract
 ## Table of Contents <!-- omit in toc -->
 
 1. TOC
-{:toc}
+   {:toc}
 
 ## Review Summary
 
@@ -40,7 +40,7 @@ After the findings were presented to the Origami hOHM Migrator team, fixes were 
 
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
-Electisec and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Origami hOHM Migrator and users of the contracts agree to use the code at their own risk.
+yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Origami hOHM Migrator and users of the contracts agree to use the code at their own risk.
 
 ## Findings Explanation
 
@@ -97,7 +97,7 @@ Remove the type cast.
 
 Fixed in [2b076d1c](https://github.com/TempleDAO/origami/pull/1404/commits/2b076d1c3ddd1f387fd1c3937c7b0ad0ed85ce20).
 
-### 2. Gas - Replace _`clearinghouses` with three constants
+### 2. Gas - Replace \_`clearinghouses` with three constants
 
 #### Technical Details
 
@@ -159,4 +159,4 @@ None.
 
 ## Final Remarks
 
-Electisec reviewed the Origami Cooler migrator mechanism and found no major security issues or vulnerabilities in its implementation.
+yAudit reviewed the Origami Cooler migrator mechanism and found no major security issues or vulnerabilities in its implementation.

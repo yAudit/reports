@@ -1,16 +1,16 @@
 ---
 tags: ["solidity"]
 title: 2024-06-Multiplier-Technologies-Recheck
-description: Multiplier Technologies Lending Base Layer Recheck Electisec report
+description: Multiplier Technologies Lending Base Layer Recheck yAudit report
 nav_order: 63
 image: assets/images/logo.png
 ---
 
-# Electisec Multiplier Technologies Lending Base Layer Recheck Review <!-- omit in toc -->
+# yAudit Multiplier Technologies Lending Base Layer Recheck Review <!-- omit in toc -->
 
 **Review Resources:**
 
-- Previous Multiplier Technologies audit report by Electisec
+- Previous Multiplier Technologies audit report by yAudit
 - Internal design docs were shared
 
 **Auditors:**
@@ -69,7 +69,7 @@ After the findings were presented to the Multiplier Technologies team, fixes wer
 
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
-Electisec and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Multiplier Technologies and users of the contracts agree to use the code at their own risk.
+yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Multiplier Technologies and users of the contracts agree to use the code at their own risk.
 
 ## Code Evaluation Matrix
 
@@ -829,7 +829,7 @@ Acknowledged. We believe that our chosen trust assumptions strike a reasonable b
 
 ## Final Remarks
 
-The mitigations introduced in response to the findings in the first Electisec audit report fixed nearly all of the original issues identified. Only a few remaining items need to be modified slightly. Some larger refactoring changes were made, such as using transient storage and removing the adapter design entirely. Still, these changes have been made properly without adding notable new issues.
+The mitigations introduced in response to the findings in the first yAudit audit report fixed nearly all of the original issues identified. Only a few remaining items need to be modified slightly. Some larger refactoring changes were made, such as using transient storage and removing the adapter design entirely. Still, these changes have been made properly without adding notable new issues.
 
 The MT Lending Base Layer code does meet the requirements outlined in the whitepaper provided by the development team, which was one of the primary goals of this audit.
 

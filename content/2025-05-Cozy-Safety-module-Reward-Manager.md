@@ -4,7 +4,7 @@ title: 2025-05-Cozy-safety-module-reward-manager
 description: Cozy safety module reward manager report
 ---
 
-# Electisec Cozy safety module reward manager Review <!-- omit in toc -->
+# yAudit Cozy safety module reward manager Review <!-- omit in toc -->
 
 **Review Resources:**
 
@@ -18,7 +18,7 @@ description: Cozy safety module reward manager report
 ## Table of Contents <!-- omit in toc -->
 
 1. TOC
-{:toc}
+   {:toc}
 
 ## Review Summary
 
@@ -70,22 +70,21 @@ After the findings were presented to the Cozy team, fixes were made and included
 
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
-Electisec and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code,  Cozy safety module reward manager and users of the contracts agree to use the code at their own risk.
-
+yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Cozy safety module reward manager and users of the contracts agree to use the code at their own risk.
 
 ## Code Evaluation Matrix
 
-| Category                 | Mark    | Description |
-| ------------------------ | ------- | ----------- |
-| Access Control           | Good | Role-based permissions well implemented with a clear ownership model. |
-| Mathematics              | Good | The mathematical calculations appear correct, and no arithmetic issues were identified. |
+| Category                 | Mark    | Description                                                                                                                                |
+| ------------------------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Access Control           | Good    | Role-based permissions well implemented with a clear ownership model.                                                                      |
+| Mathematics              | Good    | The mathematical calculations appear correct, and no arithmetic issues were identified.                                                    |
 | Complexity               | Average | Supporting multiple staked and reward tokens increases complexity. Certain architectural choices also contribute to this added complexity. |
-| Libraries                | Average | Some unnecessary imports and dependencies. |
-| Decentralization         | Good | Protocol allows permissionless operation with appropriate governance. |
-| Code stability           | Good    | The codebase remained stable, with little to no new development introduced during the review. |
-| Documentation            | Good | Inline comments and function documentation are present. |
-| Monitoring               | Good | Good event coverage. |
-| Testing and verification | Good | Good test coverage and invariant suite. Be cautious when using mock contracts for testing. |
+| Libraries                | Average | Some unnecessary imports and dependencies.                                                                                                 |
+| Decentralization         | Good    | Protocol allows permissionless operation with appropriate governance.                                                                      |
+| Code stability           | Good    | The codebase remained stable, with little to no new development introduced during the review.                                              |
+| Documentation            | Good    | Inline comments and function documentation are present.                                                                                    |
+| Monitoring               | Good    | Good event coverage.                                                                                                                       |
+| Testing and verification | Good    | Good test coverage and invariant suite. Be cautious when using mock contracts for testing.                                                 |
 
 ## Findings Explanation
 
@@ -99,6 +98,7 @@ Findings are broken down into sections by their respective impact:
   - Findings including recommendations and best practices.
 
 ---
+
 ## Critical Findings
 
 None.
@@ -133,7 +133,6 @@ Call `_dripAndApplyPendingDrippedRewards()` before updating a users rewards if t
 
 Acknowledged. We will leave the implementation unchanged. We had discussed this at time of design and wanted to keep it as is. One can obviously always explicitly claim rewards prior to transferring stake receipt tokens if desired.
 
-
 ## Gas Saving Findings
 
 ### 1. Gas - Structs can be packed into fewer storage slots
@@ -141,7 +140,6 @@ Acknowledged. We will leave the implementation unchanged. We had discussed this 
 Each slot saved can avoid an extra Gsset (**20000 gas**) for the first setting of the struct. Subsequent reads and writes have smaller gas savings.
 
 #### Technical Details
-
 
 ```solidity
 File: src/lib/RewardsDistributor.sol
@@ -195,7 +193,6 @@ File: src/lib/structs/Rewards.sol
 
 [src/lib/structs/Rewards.sol#L41](https://github.com/Cozy-Finance/cozy-safety-module-rewards-manager/blob/5ca18ab03f8430be7285097eca83d86fb52e3700/src/lib/structs/Rewards.sol#L41)
 
-
 #### Impact
 
 Gas savings.
@@ -222,7 +219,7 @@ Since the stkToken is always worth 1 - 1 underlying asset, the library can be re
 
 - Additionally, multiple contracts have unused imports. Consider removing them:
 
-All of the imports missing: 
+All of the imports missing:
 
 ```solidity
 File: src/interfaces/IDepositorEvents.sol
@@ -286,7 +283,6 @@ File: src/lib/Staker.sol
 
 [src/lib/Staker.sol#L11](https://github.com/Cozy-Finance/cozy-safety-module-rewards-manager/blob/5ca18ab03f8430be7285097eca83d86fb52e3700/src/lib/Staker.sol#L11)
 
-
 #### Impact
 
 Informational.
@@ -340,5 +336,5 @@ Fixed: https://github.com/Cozy-Finance/cozy-safety-module-rewards-manager/pull/5
 
 ## Final remarks
 
-The Cozy Safety Module Reward Manager features a robust codebase with a comprehensive test suite; no critical vulnerabilities were found. However, the auditors caution against the extensive use of mock contracts in testing, as they may not always accurately reflect real conditions and the additional complexity introduced by certain reward computation mechanisms.  The team provided extra fixes that were not
+The Cozy Safety Module Reward Manager features a robust codebase with a comprehensive test suite; no critical vulnerabilities were found. However, the auditors caution against the extensive use of mock contracts in testing, as they may not always accurately reflect real conditions and the additional complexity introduced by certain reward computation mechanisms. The team provided extra fixes that were not
 directly linked to findings, and these commits were also reviewed, up to [PR#63](https://github.com/Cozy-Finance/cozy-safety-module-rewards-manager/pull/63).

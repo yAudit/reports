@@ -1,12 +1,12 @@
 ---
 tags: ["solidity"]
 title: 2022-12-LlamaPay-V2
-description: LlamaPay V2 Electisec Report
+description: LlamaPay V2 yAudit Report
 nav_order: 13
 image: assets/images/logo.png
 ---
 
-# Electisec Llamapay V2 Review
+# yAudit Llamapay V2 Review
 
 **Review Resources:**
 
@@ -81,9 +81,9 @@ At a lower level, `_updateStream()` plays an important role in updating the stre
 
 After the findings were presented to the LlamaPay development team, fixes were made and included in several PRs.
 
-This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability. The review was a pro bono effort and is not guaranteed to follow the same process or to have been reviewed for the same amount of time as a typical Electisec audit.
+This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability. The review was a pro bono effort and is not guaranteed to follow the same process or to have been reviewed for the same amount of time as a typical yAudit audit.
 
-Electisec and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, LlamaPay V2 and users of the contracts agree to use the code at their own risk.
+yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, LlamaPay V2 and users of the contracts agree to use the code at their own risk.
 
 ## Code Evaluation Matrix
 
@@ -1418,6 +1418,6 @@ Overall, the code is easy to understand and well designed. Adding documentation 
 
 LlamaPay V2 is building on the solid foundation of LlamaPay V1. Some of the design differences still have some rough edges to iron out, but the overall approach is reasonable. One of the difficult elements in this code is validating that the payment stream can only follow a specific call flow where unintended call flows should not be possible. This requires extensive testing for the many permutations and possible edge cases. Visualizing and documentating how the call flow should look could help create positive and negative tests to validate the code matches the intended flow.
 
-## About Electisec
+## About yAudit
 
-[Electisec](https://electisec.com/) is an ecosystem initiative started by Yearn Finance and its ecosystem partners to bootstrap sustainable and collaborative blockchain security reviews and to nurture aspiring security talent. Electisec includes [a fellowship program](https://electisec.com/fellowship-program/), a residents program, and [a guest auditor program](https://electisec.com/guest-auditor-program/). In the fellowship program, fellows perform a series of periodic security reviews and presentations during the program. Residents are past fellows who continue to gain experience by performing security reviews of contracts submitted to Electisec for review (such as this contract). Guest auditors are experts with a track record in the security space who temporarily assist with the review efforts.
+[yAudit](https://yaudit.dev/) is an ecosystem initiative started by Yearn Finance and its ecosystem partners to bootstrap sustainable and collaborative blockchain security reviews and to nurture aspiring security talent. yAudit includes [a fellowship program](https://yaudit.dev/fellowship-program/), a residents program, and [a guest auditor program](https://yaudit.dev/guest-auditor-program/). In the fellowship program, fellows perform a series of periodic security reviews and presentations during the program. Residents are past fellows who continue to gain experience by performing security reviews of contracts submitted to yAudit for review (such as this contract). Guest auditors are experts with a track record in the security space who temporarily assist with the review efforts.

@@ -4,7 +4,7 @@ title: 2025-04-Ooga-Booga
 description: Ooga Booga's staking and rewards distribution review
 ---
 
-# Electisec Ooga Booga Review <!-- omit in toc -->
+# yAudit Ooga Booga Review <!-- omit in toc -->
 
 **Review Resources:**
 
@@ -18,7 +18,7 @@ description: Ooga Booga's staking and rewards distribution review
 ## Table of Contents <!-- omit in toc -->
 
 1. TOC
-{:toc}
+   {:toc}
 
 ## Review Summary
 
@@ -45,22 +45,21 @@ After the findings were presented to the Ooga Booga team, fixes were made and in
 
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
-Electisec and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Ooga Booga and users of the contracts agree to use the code at their own risk.
-
+yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Ooga Booga and users of the contracts agree to use the code at their own risk.
 
 ## Code Evaluation Matrix
 
-| Category                 | Mark    | Description |
-| ------------------------ | ------- | ----------- |
-| Access Control           | Good | The contracts correctly use access control checks on functions that need them. |
-| Mathematics              | Good | Correctly implemented mathematical relations are in the reviewed contracts. |
+| Category                 | Mark    | Description                                                                                                                                                                                 |
+| ------------------------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Access Control           | Good    | The contracts correctly use access control checks on functions that need them.                                                                                                              |
+| Mathematics              | Good    | Correctly implemented mathematical relations are in the reviewed contracts.                                                                                                                 |
 | Complexity               | Average | A straightforward staking algorithm is implemented, which presents a linear unvesting schedule. However, the complexity of the reward distribution cycle mechanism led to several findings. |
-| Libraries                | Good | The protocol builds on the OpenZeppelin library. |
-| Decentralization         | Average | Authorized parties are provided with the power to execute delicate configuration changes to the reviewed contracts. |
-| Code stability           | Good    | The protocol's code is forked from deployed contracts with minor naming and contract configuration modifications. |
-| Documentation            | Average | Contracts have adequate inline comments, but no high-level documentation was provided. |
-| Monitoring               | Good | The reviewed contracts correctly emit events for crucial actions and state changes. |
-| Testing and verification | Low | The provided contracts lack any tests. Developing a strong test suite with high line, function, and branch coverage is strongly encouraged. |
+| Libraries                | Good    | The protocol builds on the OpenZeppelin library.                                                                                                                                            |
+| Decentralization         | Average | Authorized parties are provided with the power to execute delicate configuration changes to the reviewed contracts.                                                                         |
+| Code stability           | Good    | The protocol's code is forked from deployed contracts with minor naming and contract configuration modifications.                                                                           |
+| Documentation            | Average | Contracts have adequate inline comments, but no high-level documentation was provided.                                                                                                      |
+| Monitoring               | Good    | The reviewed contracts correctly emit events for crucial actions and state changes.                                                                                                         |
+| Testing and verification | Low     | The provided contracts lack any tests. Developing a strong test suite with high line, function, and branch coverage is strongly encouraged.                                                 |
 
 ## Findings Explanation
 
@@ -132,6 +131,7 @@ The [`emergencyWithdrawAll()`](https://github.com/0xoogabooga/oogabooga-token-co
 268:         _safeTokenTransfer(token, msg.sender, balance);
 269:     }
 ```
+
 ```solidity
 274:     function emergencyWithdrawAll() external nonReentrant onlyOwner {
 275:         for (uint256 index = 0; index < _distributedTokens.length(); ++index) {
@@ -207,7 +207,7 @@ Amended as per recommendation from auditors.
 ```solidity
 157:    function pendingRewardsAmount(address token, address userAddress) external view returns (uint256) {
 158:        if (totalAllocation == 0) {
-159:            return 0; // AUDIT no allocation => no pending rewards? - what about user.pendingRewards? 
+159:            return 0; // AUDIT no allocation => no pending rewards? - what about user.pendingRewards?
 160:        }
            ...
 187:    }
@@ -260,7 +260,7 @@ The calculation of `userSOOGAAllocation.mul(accRewardsPerShare).div(1e18)` is re
 ```solidity
 499:         uint256 pending =
 500:             user.pendingRewards.add(userSOOGAAllocation.mul(accRewardsPerShare).div(1e18).sub(user.rewardDebt));
-501: 
+501:
 502:         user.pendingRewards = 0;
 503:         user.rewardDebt = userSOOGAAllocation.mul(accRewardsPerShare).div(1e18);
 ```
@@ -397,7 +397,7 @@ Amended as per recommendation from auditors.
 
 Once the first cycle has begun, if no account triggers a call to `_updateRewardsInfo`, the contract will fail to detect that the first cycle has already started. It will ultimately detect a cycle change once the cycle has begun and stream rewards starting from the beginning of the second cycle.
 
-This occurs because cycle changes are detected by checking that `block.timestamp > currentCycleStartTime + _cycleDurationSeconds`. Because `currentCycleStartTime = startTime` is written within the contract's constructor, no cycle change will be computed until after `currentCycleStartTime + _cycleDurationSeconds`. 
+This occurs because cycle changes are detected by checking that `block.timestamp > currentCycleStartTime + _cycleDurationSeconds`. Because `currentCycleStartTime = startTime` is written within the contract's constructor, no cycle change will be computed until after `currentCycleStartTime + _cycleDurationSeconds`.
 
 Note that this also applies to users who have created allocations **before** `startTime` and plan on simply collecting fees after the first cycle has passed.
 

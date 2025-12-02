@@ -4,7 +4,7 @@ title: 2025-02-Olympus-Cooler-V2
 description: Security review of Olympus Cooler V2 protocol
 ---
 
-# Electisec Olympus Cooler V2 Review <!-- omit in toc -->
+# yAudit Olympus Cooler V2 Review <!-- omit in toc -->
 
 **Review Resources:**
 
@@ -19,7 +19,7 @@ description: Security review of Olympus Cooler V2 protocol
 ## Table of Contents <!-- omit in toc -->
 
 1. TOC
-{:toc}
+   {:toc}
 
 ## Review Summary
 
@@ -67,22 +67,21 @@ After the findings were presented to the Olympus team, fixes were made and inclu
 
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
-Electisec and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Olympus and users of the contracts agree to use the code at their own risk.
-
+yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Olympus and users of the contracts agree to use the code at their own risk.
 
 ## Code Evaluation Matrix
 
-| Category                 | Mark    | Description |
-| ------------------------ | ------- | ----------- |
-| Access Control           | Good    | The protocol implements proper role-based access control for administrative functions. Only one minor issue was found with authorization deadline checks. |
-| Mathematics              | Good    | The interest calculations and liquidation mechanisms appear to be implemented correctly, with only a minor edge case identified related to small amounts of burns during liquidations. |
-| Complexity               | Good    | The codebase demonstrates appropriate complexity for its functionality, with a clear separation of concerns between components. |
-| Libraries                | Good    | The protocol uses established libraries well and includes custom utility libraries like CompoundedInterest and SafeCast for specific needs. |
-| Decentralization         | Good    | The system includes proper governance controls while balancing admin functions and user autonomy. |
-| Code stability           | Good    | The codebase appears stable, with minimal issues identified during the audit period. |
-| Documentation            | Good    | The code includes appropriate documentation and external resources were provided to help understand the system architecture. |
-| Monitoring               | Good    | The protocol implements proper event emission for key state changes, facilitating off-chain monitoring. |
-| Testing and verification | Good    | The codebase was well-tested before the audit. |
+| Category                 | Mark | Description                                                                                                                                                                            |
+| ------------------------ | ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Access Control           | Good | The protocol implements proper role-based access control for administrative functions. Only one minor issue was found with authorization deadline checks.                              |
+| Mathematics              | Good | The interest calculations and liquidation mechanisms appear to be implemented correctly, with only a minor edge case identified related to small amounts of burns during liquidations. |
+| Complexity               | Good | The codebase demonstrates appropriate complexity for its functionality, with a clear separation of concerns between components.                                                        |
+| Libraries                | Good | The protocol uses established libraries well and includes custom utility libraries like CompoundedInterest and SafeCast for specific needs.                                            |
+| Decentralization         | Good | The system includes proper governance controls while balancing admin functions and user autonomy.                                                                                      |
+| Code stability           | Good | The codebase appears stable, with minimal issues identified during the audit period.                                                                                                   |
+| Documentation            | Good | The code includes appropriate documentation and external resources were provided to help understand the system architecture.                                                           |
+| Monitoring               | Good | The protocol implements proper event emission for key state changes, facilitating off-chain monitoring.                                                                                |
+| Testing and verification | Good | The codebase was well-tested before the audit.                                                                                                                                         |
 
 ## Findings Explanation
 
@@ -96,12 +95,15 @@ Findings are broken down into sections by their respective impact:
   - Findings including recommendations and best practices.
 
 ---
+
 ## Critical Findings
 
 None
+
 ## High Findings
 
 None
+
 ## Medium Findings
 
 ### 1. Medium - Front-running liquidation with delegation can revert liquidation
@@ -113,6 +115,7 @@ Liquidation can be prevented by frontrunning the liquidation transaction with de
 The [`_undelegateForLiquidation`](https://github.com/OlympusDAO/olympus-v3/blob/6b702f06d5bf90e8729d8b8b7baaeaffd54383fd/src/policies/cooler/MonoCooler.sol#L1018-L1018) function in `MonoCooler.sol` is vulnerable to a frontrunning attack that could prevent legitimate liquidations. The issue arises when a user-facing liquidation is frontrunning the liquidation transaction by modifying their delegations (e.g., changing delegation addresses or amounts).
 
 Let's say we have a user with the following state:
+
 - Total collateral: 100 gOHM
 - Delegated to Bob: 80 gOHM
 - Undelegated: 20 gOHM
@@ -120,16 +123,16 @@ Let's say we have a user with the following state:
 The user's position becomes liquidatable. A liquidator submits a transaction to batchLiquidate with a delegation request to undelegate 80 gOHM from Bob.
 
 However, the user sees this pending transaction and frontruns it with their own transaction that:
+
 - Undelegates 70 gOHM from Bob
 - Delegates 70 gOHM to Alice
-Now, when the liquidator's transaction executes:
+  Now, when the liquidator's transaction executes:
 
 The request to undelegate 80 gOHM from Bob will fail because there are only 10 gOHM delegated to Bob now. the liquidation will fail.
 
-
 #### Impact
 
-Medium. 
+Medium.
 
 #### Recommendation
 
@@ -139,13 +142,11 @@ When a position is liquidable, allow only the owner to add funds to prevent liqu
 
 Fixed [#53](https://github.com/OlympusDAO/olympus-v3/pull/53/files)
 
-
 ## Low Findings
 
 ### 1. Low - Add an upper limit
 
 #### Technical Details
-
 
 The `setInterestRateWad()` function in MonoCooler.sol allows an admin to set any interest rate without an upper bound. While this requires admin privileges, having no maximum cap creates unnecessary risk if the admin role is compromised or if a mistake is made.
 
@@ -154,14 +155,13 @@ File: MonoCooler.sol
 651:     function setInterestRateWad(uint96 newInterestRate) external override onlyAdminRole {
 652:         // Force an update of state on the old rate first.
 653:         _globalStateRW();
-654: 
+654:
 655:         emit InterestRateSet(newInterestRate);
 656:         interestRateWad = newInterestRate;
 657:     }
 ```
 
 [MonoCooler.sol#L651-L657](https://github.com/OlympusDAO/olympus-v3/blob/6b702f06d5bf90e8729d8b8b7baaeaffd54383fd/src/policies/cooler/MonoCooler.sol#L651-L657)
-
 
 #### Impact
 
@@ -188,7 +188,7 @@ The [`batchLiquidate()`](https://github.com/OlympusDAO/olympus-v3/blob/6b702f06d
 585:         if (totalCollateralClaimed > 0) {
 586:             // Unstake and burn gOHM holdings.
 587:             uint128 gOhmToBurn = totalCollateralClaimed - totalLiquidationIncentive;
-588: 
+588:
 589:             if (gOhmToBurn > 0) {
 590:                 _COLLATERAL_TOKEN.safeApprove(address(_STAKING), gOhmToBurn);
 591:                 MINTR.burnOhm(
@@ -196,7 +196,7 @@ The [`batchLiquidate()`](https://github.com/OlympusDAO/olympus-v3/blob/6b702f06d
 593:                     _STAKING.unstake(address(this), gOhmToBurn, false, false)
 594:                 );
 595:             }
-596: 
+596:
 597:             totalCollateral -= totalCollateralClaimed;
 598:         }
 ```
@@ -222,9 +222,9 @@ Given this relation is not 1:1, a non-zero amount of gOHM could be unstaked as a
 52:         uint256 amount_
 53:     ) external override permissioned onlyWhileActive {
 54:         if (amount_ == 0) revert MINTR_ZeroAmount();
-55: 
+55:
 56:         ohm.burnFrom(from_, amount_);
-57: 
+57:
 58:         emit Burn(msg.sender, from_, amount_);
 59:     }
 ```
@@ -312,8 +312,6 @@ Use [unchecked block](https://docs.soliditylang.org/en/latest/control-structures
 
 Fixed [197564ea](https://github.com/OlympusDAO/olympus-v3/pull/46/commits/197564ea653191b6de9d7229b72426533dd1efbb).
 
-
-
 ## Informational Findings
 
 ### 1. Informational - Authorization check incorrectly handles authorization deadline
@@ -369,8 +367,7 @@ Double-check if anything should be paused while disabled, or replace PolicyEnabl
 
 #### Developer Response
 
-Fixed [cdaae3](https://github.com/OlympusDAO/olympus-v3/commit/cdaae3ba5993424172fb94c79fd6aedaf9a3a5ad) 
-
+Fixed [cdaae3](https://github.com/OlympusDAO/olympus-v3/commit/cdaae3ba5993424172fb94c79fd6aedaf9a3a5ad)
 
 ## Final remarks
 

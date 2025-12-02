@@ -4,7 +4,7 @@ title: 2025-03-Beefy-Sonic
 description: Beefy Sonic Report
 ---
 
-# Electisec Beefy Sonic Review <!-- omit in toc -->
+# yAudit Beefy Sonic Review <!-- omit in toc -->
 
 **Review Resources:**
 
@@ -18,7 +18,7 @@ description: Beefy Sonic Report
 ## Table of Contents <!-- omit in toc -->
 
 1. TOC
-{:toc}
+   {:toc}
 
 ## Review Summary
 
@@ -47,22 +47,21 @@ After the findings were presented to the Beefy team, fixes were made and include
 
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
-Electisec and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Beefy and users of the contracts agree to use the code at their own risk.
-
+yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Beefy and users of the contracts agree to use the code at their own risk.
 
 ## Code Evaluation Matrix
 
-| Category | Mark | Description |
-| ------------------------ | ------- | ----------- |
-| Access Control | Good | Well-implemented role system with owner, keeper and ERC-7540 controller and operator. Critical functions have appropriate access controls. |
-| Mathematics | Good | No complex math operations. Proper handling of decimals and precision (1e18). Safe operations for fee calculations and share/asset conversions. |
-| Complexity | Good | Generally clean code structure. Some complexity is added by slashing management, but it's well handled through dedicated functions. |
-| Libraries | Good | Good use of OpenZeppelin's battle-tested contracts (ERC4626, Upgradeable patterns, SafeERC20). |
-| Decentralization | Medium | While staking is permissionless, significant power remains with admin roles. |
-| Code stability | Good | Proper use of UUPS upgrade pattern. Well-structured storage layout. Clear separation of concerns. |
-| Documentation | Low | Minimal inline documentation. Complex mechanisms (e.g., slashing management) need better documentation. Missing architectural overview and detailed specifications. |
-| Monitoring | Good | Key events are emitted. |
-| Testing and verification | Medium | High test coverage, but it lacks fuzzing and invariant testing. |
+| Category                 | Mark   | Description                                                                                                                                                         |
+| ------------------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Access Control           | Good   | Well-implemented role system with owner, keeper and ERC-7540 controller and operator. Critical functions have appropriate access controls.                          |
+| Mathematics              | Good   | No complex math operations. Proper handling of decimals and precision (1e18). Safe operations for fee calculations and share/asset conversions.                     |
+| Complexity               | Good   | Generally clean code structure. Some complexity is added by slashing management, but it's well handled through dedicated functions.                                 |
+| Libraries                | Good   | Good use of OpenZeppelin's battle-tested contracts (ERC4626, Upgradeable patterns, SafeERC20).                                                                      |
+| Decentralization         | Medium | While staking is permissionless, significant power remains with admin roles.                                                                                        |
+| Code stability           | Good   | Proper use of UUPS upgrade pattern. Well-structured storage layout. Clear separation of concerns.                                                                   |
+| Documentation            | Low    | Minimal inline documentation. Complex mechanisms (e.g., slashing management) need better documentation. Missing architectural overview and detailed specifications. |
+| Monitoring               | Good   | Key events are emitted.                                                                                                                                             |
+| Testing and verification | Medium | High test coverage, but it lacks fuzzing and invariant testing.                                                                                                     |
 
 ## Findings Explanation
 
@@ -81,7 +80,7 @@ Findings are broken down into sections by their respective impact:
 
 ### 1. Medium - `harvest()` can be gamed to gain previously accumulated rewards
 
-The harvest mechanism combines reward claiming and delegation into a single atomic operation. This design can dilute rewards when validator capacity is full, as new users can back-run validator additions to capture accumulated rewards. 
+The harvest mechanism combines reward claiming and delegation into a single atomic operation. This design can dilute rewards when validator capacity is full, as new users can back-run validator additions to capture accumulated rewards.
 
 #### Technical Details
 
@@ -230,7 +229,7 @@ Medium. Users monitoring slashing events will be able to bypass socialization.
 
 #### Recommendation
 
-Check if socialization is ongoing for a validator before continuing the loop and revert if that's the case. 
+Check if socialization is ongoing for a validator before continuing the loop and revert if that's the case.
 
 #### Developer Response
 
@@ -303,7 +302,6 @@ function _claim(uint256 startIndex, uint256 endIndex) private {
 
 Acknowledged. We probably won't add this just due to contract size constraints and the fact that its very unlikely an array can get to a size where this is an issue.
 
-
 ## Gas Saving Findings
 
 ### 1. Gas - Fail earlier
@@ -345,12 +343,11 @@ function setLiquidityFee(uint256 _liquidityFee) external onlyOwner {
 
 Acknowledged.
 
-
 ### 2. Gas - Inverse check order in `_onlyOperatorOrController()`
 
 #### Technical Details
 
-  In the modifier [`_onlyOperatorOrController()`](https://github.com/beefyfinance/beefy-sonic/blob/ed087129fb81f38c66b323ecd4a01f430bb97a8c/contracts/BeefySonic.sol#L88-L88), the condition can be modified to first check `_controller != msg.sender` as the `controller` will most likely always be the `msg.sender`, and it will save a storage read.
+In the modifier [`_onlyOperatorOrController()`](https://github.com/beefyfinance/beefy-sonic/blob/ed087129fb81f38c66b323ecd4a01f430bb97a8c/contracts/BeefySonic.sol#L88-L88), the condition can be modified to first check `_controller != msg.sender` as the `controller` will most likely always be the `msg.sender`, and it will save a storage read.
 
 #### Impact
 
@@ -370,13 +367,13 @@ Fixed in [PR#32](https://github.com/beefyfinance/beefy-sonic/pull/32).
 
 Throughout the contract, storage variables are sometimes accessed multiple times inside the same function. Consider caching them to save storage read.
 
-  - In [`_claim()`](https://github.com/beefyfinance/beefy-sonic/blob/ed087129fb81f38c66b323ecd4a01f430bb97a8c/contracts/BeefySonic.sol#L704-L704) `validator.id` is used multiple times
-  - In [`_getValidatorToDeposit()`](https://github.com/beefyfinance/beefy-sonic/blob/ed087129fb81f38c66b323ecd4a01f430bb97a8c/contracts/BeefySonic.sol#L165-L165) `validators.length` is used multiple times.
-  - In [`_requestRedeem()`](https://github.com/beefyfinance/beefy-sonic/blob/ed087129fb81f38c66b323ecd4a01f430bb97a8c/contracts/BeefySonic.sol#L225-L225) `$.wId` might be read and updated multiple times in the loop.
-  - In [`completeSlashedValidatorWithdraw()`](https://github.com/beefyfinance/beefy-sonic/blob/ed087129fb81f38c66b323ecd4a01f430bb97a8c/contracts/BeefySonic.sol#L435-L435) `stakingContract` is used multiple times.
-  - In [`_removeRequest()`](https://github.com/beefyfinance/beefy-sonic/blob/ed087129fb81f38c66b323ecd4a01f430bb97a8c/contracts/BeefySonic.sol#L503-L503) `pendingRequests.length` is used multiple times.
-  - In [`_chargeFees()`](https://github.com/beefyfinance/beefy-sonic/blob/ed087129fb81f38c66b323ecd4a01f430bb97a8c/contracts/BeefySonic.sol#L722-L722) `liquidityFee` is used multiple times.
-  - In [`addValidator()`](https://github.com/beefyfinance/beefy-sonic/blob/ed087129fb81f38c66b323ecd4a01f430bb97a8c/contracts/BeefySonic.sol#L901-L901) `validators.length` is used multiple times.
+- In [`_claim()`](https://github.com/beefyfinance/beefy-sonic/blob/ed087129fb81f38c66b323ecd4a01f430bb97a8c/contracts/BeefySonic.sol#L704-L704) `validator.id` is used multiple times
+- In [`_getValidatorToDeposit()`](https://github.com/beefyfinance/beefy-sonic/blob/ed087129fb81f38c66b323ecd4a01f430bb97a8c/contracts/BeefySonic.sol#L165-L165) `validators.length` is used multiple times.
+- In [`_requestRedeem()`](https://github.com/beefyfinance/beefy-sonic/blob/ed087129fb81f38c66b323ecd4a01f430bb97a8c/contracts/BeefySonic.sol#L225-L225) `$.wId` might be read and updated multiple times in the loop.
+- In [`completeSlashedValidatorWithdraw()`](https://github.com/beefyfinance/beefy-sonic/blob/ed087129fb81f38c66b323ecd4a01f430bb97a8c/contracts/BeefySonic.sol#L435-L435) `stakingContract` is used multiple times.
+- In [`_removeRequest()`](https://github.com/beefyfinance/beefy-sonic/blob/ed087129fb81f38c66b323ecd4a01f430bb97a8c/contracts/BeefySonic.sol#L503-L503) `pendingRequests.length` is used multiple times.
+- In [`_chargeFees()`](https://github.com/beefyfinance/beefy-sonic/blob/ed087129fb81f38c66b323ecd4a01f430bb97a8c/contracts/BeefySonic.sol#L722-L722) `liquidityFee` is used multiple times.
+- In [`addValidator()`](https://github.com/beefyfinance/beefy-sonic/blob/ed087129fb81f38c66b323ecd4a01f430bb97a8c/contracts/BeefySonic.sol#L901-L901) `validators.length` is used multiple times.
 
 #### Impact
 
@@ -389,7 +386,6 @@ Cache the storage variable in memory.
 #### Developer Response
 
 Acknowledged.
-
 
 ### 4. Gas - `lockedProfit()` not needed inside `harvest()`
 
@@ -624,7 +620,6 @@ Define constants for all magic numbers:
 
 Acknowledged.
 
-
 ### 7. Informational - Incorrect events emission
 
 #### Technical Details
@@ -724,7 +719,7 @@ Fixed in [PR#35](https://github.com/beefyfinance/beefy-sonic/pull/35).
 
 The function [`_requestRedeem()`](https://github.com/beefyfinance/beefy-sonic/blob/ed087129fb81f38c66b323ecd4a01f430bb97a8c/contracts/BeefySonic.sol#L225-L225) saves the timestamp at which the request can be executed using the `withdrawDuration()` inside `claimableTimestamp`.
 
-However, this value may change if the Sonic admins update it, resulting in an incorrect `claimableTimestamp`. 
+However, this value may change if the Sonic admins update it, resulting in an incorrect `claimableTimestamp`.
 
 Users who requested before the `withdrawDuration()` update may think they can claim, but it will revert, or may think they can't claim even though it's actually available, depending on whether the value was increased or decreased.
 

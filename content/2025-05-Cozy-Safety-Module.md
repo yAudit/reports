@@ -4,7 +4,7 @@ title: 2025-05-Cozy-safety-module
 description: cozy safety module report
 ---
 
-# Electisec Cozy safety module Review <!-- omit in toc -->
+# yAudit Cozy safety module Review <!-- omit in toc -->
 
 **Review Resources:**
 
@@ -19,7 +19,7 @@ description: cozy safety module report
 ## Table of Contents <!-- omit in toc -->
 
 1. TOC
-{:toc}
+   {:toc}
 
 ## Review Summary
 
@@ -57,26 +57,26 @@ src/
     ├── StateChanger.sol
     ├── StateTransitionsLib.sol
 ```
+
 After the findings were presented to the Cozy safety module team, fixes were made and included in several PRs.
 
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
-Electisec and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Cozy safety module and users of the contracts agree to use the code at their own risk.
-
+yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Cozy safety module and users of the contracts agree to use the code at their own risk.
 
 ## Code Evaluation Matrix
 
-| Category                 | Mark    | Description |
-| ------------------------ | ------- | ----------- |
-| Access Control           | Good    | Role-based permissions well implemented with a clear ownership model. |
-| Mathematics              | Average  | Potential rounding issues in redemption calculations affecting invariants. |
-| Complexity               | Good    | Clean architecture with well-defined responsibilities. |
-| Libraries                | Average | Some unnecessary imports and dependencies. |
-| Decentralization         | Average    | Governance actors can significantly impact the safety module by pausing it or adding Trigger and Payout addresses, which reduces the level of decentralization. |
-| Code stability           | Good    | The codebase remained stable, with little to no new development introduced during the review. |
-| Documentation            | Good    | Inline comments and function documentation are present. |
-| Monitoring               | Good    | Good event coverage. |
-| Testing and verification | Average | Good test coverage and invariant suite, but some findings suggest room for improvement, such as integration tests. |
+| Category                 | Mark    | Description                                                                                                                                                     |
+| ------------------------ | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Access Control           | Good    | Role-based permissions well implemented with a clear ownership model.                                                                                           |
+| Mathematics              | Average | Potential rounding issues in redemption calculations affecting invariants.                                                                                      |
+| Complexity               | Good    | Clean architecture with well-defined responsibilities.                                                                                                          |
+| Libraries                | Average | Some unnecessary imports and dependencies.                                                                                                                      |
+| Decentralization         | Average | Governance actors can significantly impact the safety module by pausing it or adding Trigger and Payout addresses, which reduces the level of decentralization. |
+| Code stability           | Good    | The codebase remained stable, with little to no new development introduced during the review.                                                                   |
+| Documentation            | Good    | Inline comments and function documentation are present.                                                                                                         |
+| Monitoring               | Good    | Good event coverage.                                                                                                                                            |
+| Testing and verification | Average | Good test coverage and invariant suite, but some findings suggest room for improvement, such as integration tests.                                              |
 
 ## Findings Explanation
 
@@ -90,6 +90,7 @@ Findings are broken down into sections by their respective impact:
   - Findings including recommendations and best practices.
 
 ---
+
 ## Critical Findings
 
 None.
@@ -246,7 +247,6 @@ File: src/CozySafetyModuleManager.sol
 
 [CozySafetyModuleManager.sol#L176](https://github.com/Cozy-Finance/cozy-safety-module-private/blob/638f6e740cedc07e8a96071fc628c792ef3710ab/src/CozySafetyModuleManager.sol#L176)
 
-
 #### Impact
 
 Gas savings.
@@ -297,6 +297,7 @@ Fixed: https://github.com/Cozy-Finance/cozy-safety-module-private/pull/126.
 #### Technical Details
 
 The `_getCallerRole` function currently uses a temporary variable `role_` to store the caller's role before returning it. This approach requires an unnecessary variable declaration and multiple assignments, resulting in higher gas costs.
+
 ```solidity
 File: StateChanger.sol
 119:   function _getCallerRole(address who_) internal view returns (CallerRole) {
@@ -460,7 +461,6 @@ File: src/lib/StateChanger.sol
 
 [src/lib/StateChanger.sol#L7](https://github.com/Cozy-Finance/cozy-safety-module-private/blob/638f6e740cedc07e8a96071fc628c792ef3710ab/src/lib/StateChanger.sol#L7)
 
-
 #### Impact
 
 Informational.
@@ -475,7 +475,6 @@ Fixed: https://github.com/Cozy-Finance/cozy-safety-module-private/pull/123.
 
 ### 2. Informational - Typos
 
-
 #### Technical Details
 
 ```solidity
@@ -486,7 +485,6 @@ File: src/lib/Redeemer.sol
 ```
 
 [src/lib/Redeemer.sol#L95](https://github.com/Cozy-Finance/cozy-safety-module-private/blob/638f6e740cedc07e8a96071fc628c792ef3710ab/src/lib/Redeemer.sol#L95)
-
 
 #### Impact
 
@@ -499,7 +497,6 @@ Fix the typo.
 #### Developer Response
 
 Fixed: https://github.com/Cozy-Finance/cozy-safety-module-private/pull/124.
-
 
 ### 3. Informational - `else` block unnecessary
 
@@ -539,7 +536,6 @@ File: src/lib/SafetyModuleInspector.sol
 
 [src/lib/SafetyModuleInspector.sol#L86](https://github.com/Cozy-Finance/cozy-safety-module-private/blob/638f6e740cedc07e8a96071fc628c792ef3710ab/src/lib/SafetyModuleInspector.sol#L86)
 
-
 #### Impact
 
 Informational.
@@ -551,7 +547,6 @@ Remove the else block.
 #### Developer Response
 
 Fixed: https://github.com/Cozy-Finance/cozy-safety-module-private/pull/125.
-
 
 ### 4. Informational - Rename `redemptionAmount_` parameter inside `updateRedemptionsAfterTrigger()`
 

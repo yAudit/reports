@@ -1,12 +1,12 @@
 ---
 tags: ["solidity"]
 title: 2023-07-Bunni-Oracle
-description: Timeless Bunni Oracle Electisec Report
+description: Timeless Bunni Oracle yAudit Report
 nav_order: 30
 image: assets/images/logo.png
 ---
 
-# Electisec Timeless Bunni Oracle Review
+# yAudit Timeless Bunni Oracle Review
 
 **Review Resources:**
 
@@ -40,7 +40,7 @@ After the findings were presented to the Timeless team, fixes were made and incl
 
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
-Electisec and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Timeless and users of the contracts agree to use the code at their own risk.
+yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Timeless and users of the contracts agree to use the code at their own risk.
 
 ## Code Evaluation Matrix
 
@@ -156,7 +156,7 @@ Low.
 
 Fixed at commit [1daca0f17dc1350be8b40fcefd40347d612ce840](https://github.com/timeless-fi/bunni-oracle/commit/1daca0f17dc1350be8b40fcefd40347d612ce840).
 
-#### Electisec Response
+#### yAudit Response
 
 Reviewed. Circle has since launched native USDC on more chains including Arbitrum. This means that USDC has two versions (bridged and native). Please ensure you are using the intended address.
 
@@ -190,7 +190,7 @@ If AMPL/USD oracle is not supposed to be used with this contract, future oracle 
 
 Fixed at [5c40aa17bad00ef694fc8d5578ce6cf3e1e2b5d4](https://github.com/timeless-fi/bunni-oracle/commit/5c40aa17bad00ef694fc8d5578ce6cf3e1e2b5d4).
 
-#### Electisec Response
+#### yAudit Response
 
 Chainlink feed decimals are hardcoded for popular tokens. For Ethereum mainnet and Arbitrum, these values are correct, but make sure to verify the correctness before deploying on new chains. You can add such a check in the deploy script.
 

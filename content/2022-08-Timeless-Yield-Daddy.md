@@ -1,12 +1,12 @@
 ---
 tags: ["solidity"]
 title: 2022-08-Timeless-Yield-Daddy
-description: Timeless Yield Daddy Electisec Report
+description: Timeless Yield Daddy yAudit Report
 nav_order: 10
 image: assets/images/logo.png
 ---
 
-# Electisec Timeless Yield Daddy Review
+# yAudit Timeless Yield Daddy Review
 
 **Review Resources:**
 None beyond the code repositories
@@ -54,7 +54,7 @@ No other protocol ERC4626 wrappers are to be reviewed in Yield Daddy, such as th
 
 This review is a code review to identify potential vulnerabilities in the code. The reviewers did not investigate security practices or operational security and assumed that privileged accounts could be trusted. The reviewers did not evaluate the security of the code relative to a standard or specification. The review may not have identified all potential attack vectors or areas of vulnerability.
 
-Electisec and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. Electisec and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Yield Daddy and users of the contracts agree to use the code at their own risk.
+yAudit and the auditors make no warranties regarding the security of the code and do not warrant that the code is free from defects. yAudit and the auditors do not represent nor imply to third parties that the code has been audited nor that the code is free from defects. By deploying or using the code, Yield Daddy and users of the contracts agree to use the code at their own risk.
 
 ## Code Evaluation Matrix
 
