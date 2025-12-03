@@ -3,7 +3,6 @@ import path from "path";
 import fs from "fs";
 import { extractDate, processMarkdown, getAllReportSlugs, findMatchingPdf } from "../lib/utils";
 import Link from "next/link";
-import Image from "next/image";
 import { useState } from "react";
 
 interface ReportPageProps {
@@ -14,6 +13,12 @@ interface ReportPageProps {
   hasPdf: boolean;
   pdfPath?: string;
   hasWebView: boolean;
+}
+
+interface ReportFrontMatter {
+  title?: string;
+  tags?: string[];
+  [key: string]: unknown;
 }
 
 export default function ReportPage({
@@ -177,7 +182,7 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
     }
 
     let content = "";
-    let frontMatter: any = {};
+    let frontMatter: ReportFrontMatter = {};
     let hasWebView = false;
 
     // If markdown file exists, process it
