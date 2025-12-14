@@ -8,6 +8,20 @@ export default {
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
+    screens: {
+      sm: {
+        min: "300px",
+        max: "768px",
+      },
+      md: {
+        min: "768px",
+        max: "1150px",
+      },
+      lg: {
+        min: "1150px",
+        max: "4440px",
+      },
+    },
     extend: {
       colors: {
         background: "var(--background)",

@@ -20,7 +20,7 @@ const Navbar = () => {
     <>
       <nav className="w-full bg-white flex h-18 items-center justify-between top-0 py-6">
         {/* Logo section */}
-        <div className="flex flex-row gap-4 text-deepblue items-center text-xl lg:ml-[20vw] ml-4">
+        <div className="lg:ml-[19vw] ml-4">
           <Link href="https://yaudit.dev/">
             <img alt="Logo" src="/logo.svg" className="h-10" />
           </Link>
@@ -35,9 +35,9 @@ const Navbar = () => {
         </button>
 
         {/* Desktop menu */}
-        <div className="hidden lg:flex flex-row items-center gap-1 lg:mr-[20vw]">
+        <div className="hidden lg:flex flex-row items-center lg:mr-[19vw]">
           <Link href="https://reports.yaudit.dev/">
-            <button className="px-6 py-3 text-sm hover:text-deepblue text-bold text-deepblue duration-700">
+            <button className="px-4 py-3 text-sm hover:text-deepblue text-bold text-deepblue duration-700">
               Reports
             </button>
           </Link>

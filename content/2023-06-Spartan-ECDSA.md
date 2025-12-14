@@ -186,7 +186,7 @@ Reported by [Antonio Viggiano](https://github.com/aviggiano), [Igor Line](https:
 
 ### 3. High - Under constrained circuits compromising the soundness of the system
 
-In the file [mul.circom](https://github.com/electisec/spartan-ecdsa/blob/main/packages/circuits/eff_ecdsa_membership/secp256k1/mul.circom), the signals `slo` & `shi` are assigned but not constrained.
+In the file [mul.circom](https://github.com/yaudit/spartan-ecdsa/blob/main/packages/circuits/eff_ecdsa_membership/secp256k1/mul.circom), the signals `slo` & `shi` are assigned but not constrained.
 
 #### Technical Details
 
@@ -273,11 +273,11 @@ Reported by [Bahurum](https://github.com/bahurum), [0xnagu](https://github.com/t
 
 ### 1. Informational - Over-allocation of circom components
 
-In [mul.circom:Secp256k1Mul](https://github.com/electisec/spartan-ecdsa/blob/main/packages/circuits/eff_ecdsa_membership/secp256k1/mul.circom), the value `accIncomplete` and `PComplete` are over-allocated.
+In [mul.circom:Secp256k1Mul](https://github.com/yaudit/spartan-ecdsa/blob/main/packages/circuits/eff_ecdsa_membership/secp256k1/mul.circom), the value `accIncomplete` and `PComplete` are over-allocated.
 
 #### Technical Details
 
-In [mul.circom:Secp256k1Mul](https://github.com/electisec/spartan-ecdsa/blob/main/packages/circuits/eff_ecdsa_membership/secp256k1/mul.circom), the value `accIncomplete` and `PComplete` are over-allocated.
+In [mul.circom:Secp256k1Mul](https://github.com/yaudit/spartan-ecdsa/blob/main/packages/circuits/eff_ecdsa_membership/secp256k1/mul.circom), the value `accIncomplete` and `PComplete` are over-allocated.
 
 ```
     component accIncomplete[bits];

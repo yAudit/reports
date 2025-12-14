@@ -528,7 +528,7 @@ unconstrained cell in "Perform range check on balance 0 of user 1" region: Colum
 unconstrained cell in "Perform range check on balance 0 of user 1" region: Column { index: 5, column_type: Advice } (rotation: 0) -- very likely a bug.
 ```
 
-Here's the complete [report](https://github.com/electisec/summa-audit-report/blob/main/appendix/V2/Halo2-analyzer/output.md)
+Here's the complete [report](https://github.com/yaudit/summa-audit-report/blob/main/appendix/V2/Halo2-analyzer/output.md)
 
 ### 2. Polyexen-demo
 
@@ -542,28 +542,28 @@ Polyexen (Polynomial Expression Engine) transforms circuits designed with the Ha
 
 We used polyexen-demo to debug the assignments & double check the constraints. Here’s the output :
 
-- Fixed Columns - [CSV](https://github.com/electisec/summa-audit-report/blob/main/appendix/V2/Polyexen/ugc_fixed.csv)
-- Lookup constraints - [ugc_lookups.toml](https://github.com/electisec/summa-audit-report/blob/main/appendix/V2/Polyexen/ugc_lookups.toml)
-- Gate constraints - [ugc_polys.toml](https://github.com/electisec/summa-audit-report/blob/main/appendix/V2/Polyexen/ugc_polys.toml)
-- Copy constraints - [ugc.toml](https://github.com/electisec/summa-audit-report/blob/main/appendix/V2/Polyexen/ugc.toml)
+- Fixed Columns - [CSV](https://github.com/yaudit/summa-audit-report/blob/main/appendix/V2/Polyexen/ugc_fixed.csv)
+- Lookup constraints - [ugc_lookups.toml](https://github.com/yaudit/summa-audit-report/blob/main/appendix/V2/Polyexen/ugc_lookups.toml)
+- Gate constraints - [ugc_polys.toml](https://github.com/yaudit/summa-audit-report/blob/main/appendix/V2/Polyexen/ugc_polys.toml)
+- Copy constraints - [ugc.toml](https://github.com/yaudit/summa-audit-report/blob/main/appendix/V2/Polyexen/ugc.toml)
 
 ### 3. Highlighter
 
 Highlighter is a python script which runs against a HALO2 (or Rust) project and will highlight any code that may need to be checked a bit closer
 
-Highlighter works on a set of rules to look for error prone areas such as incorrect endianness, improper use of `unwrap`, finding `TODO` comments which might signify incomplete code, overflows & underflows. Here's the complete [report](https://github.com/electisec/summa-audit-report/blob/main/appendix/V2/Highlighter/output.md) of the findings by Highlighter.
+Highlighter works on a set of rules to look for error prone areas such as incorrect endianness, improper use of `unwrap`, finding `TODO` comments which might signify incomplete code, overflows & underflows. Here's the complete [report](https://github.com/yaudit/summa-audit-report/blob/main/appendix/V2/Highlighter/output.md) of the findings by Highlighter.
 
 ### 4. NPM Audit
 
-`npm audit` scans your project's dependencies for known security vulnerabilities, reports them with severity levels, and suggests fixes. It helps keep your Node.js application secure by identifying and addressing potential risks in your packages. View the complete report of security vulnerabilities in the `contracts` package [here](https://github.com/electisec/summa-audit-report/blob/main/appendix/V2/npm-audit/output.md)
+`npm audit` scans your project's dependencies for known security vulnerabilities, reports them with severity levels, and suggests fixes. It helps keep your Node.js application secure by identifying and addressing potential risks in your packages. View the complete report of security vulnerabilities in the `contracts` package [here](https://github.com/yaudit/summa-audit-report/blob/main/appendix/V2/npm-audit/output.md)
 
 ### 5. Cargo Audit
 
-`cargo audit` scans your Rust project's dependencies for known security vulnerabilities, reports them with severity levels, and suggests fixes. It helps keep your Rust application secure by identifying and addressing potential risks in your crates. View the complete report of security vulnerabilities in `prover` and `backend` [here](https://github.com/electisec/summa-audit-report/blob/main/appendix/V2/cargo-audit/output.md).
+`cargo audit` scans your Rust project's dependencies for known security vulnerabilities, reports them with severity levels, and suggests fixes. It helps keep your Rust application secure by identifying and addressing potential risks in your crates. View the complete report of security vulnerabilities in `prover` and `backend` [here](https://github.com/yaudit/summa-audit-report/blob/main/appendix/V2/cargo-audit/output.md).
 
 ### 6. Clippy
 
-`clippy` is a linter for Rust that checks your code for common mistakes and style issues. It provides helpful suggestions to improve your code quality and maintainability. Using `clippy` helps ensure your Rust code is clean, efficient, and follows best practices. Here's the [report](https://github.com/electisec/summa-audit-report/blob/main/appendix/V2/clippy/output.md).
+`clippy` is a linter for Rust that checks your code for common mistakes and style issues. It provides helpful suggestions to improve your code quality and maintainability. Using `clippy` helps ensure your Rust code is clean, efficient, and follows best practices. Here's the [report](https://github.com/yaudit/summa-audit-report/blob/main/appendix/V2/clippy/output.md).
 
 ## B - Fuzz Testing
 

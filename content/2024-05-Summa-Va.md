@@ -186,7 +186,7 @@ yAudit and the auditors make no warranties regarding the security of the code an
 | Code stability           | Good    | The code was reviewed at a specific commit. The code did not change during the review. Moreover, it is not likely to change significantly with addition of features or updates                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | Documentation            | Good    | Summa codebase comprises a centralized and up-to-date [Gitbook documentation](https://summa.gitbook.io/summa/v/1). However, we recommend aggregating the limitations and the attack vectors of the Summa Protocol in the documentation. We found only one discrepancy with regards to the documentation here [Informational#2](#2-informational-inclusionverifieryulnot-generated).                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | Monitoring               | N/A     | The protocol is intended to be integrated by other systems or dApps which will be responsible for the monitoring                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| Testing and verification | Average | The protocol contains only a few tests for the circuits. It is recommended to add more tests to increase the test coverage. When it comes to circuits, we believe it is necessary to develop an adversarial testing process, especially focused on malicious prover behavior. We raised the following PRs to increase code coverage & emphasize testing - [#3](https://github.com/electisec/summa-solvency-diffie/pull/3), [#5](https://github.com/electisec/summa-solvency-schneier/pull/5), [#8](https://github.com/electisec/summa-solvency-schneier/pull/8/files), [#17](https://github.com/electisec/summa-solvency-schneier/pull/17). We also recommend [fuzz testing](#fuzz-testing) and incorporating tools we used in [Automated Testing](#automated-testing) in Summa's software development lifecycle to produce secure code |
+| Testing and verification | Average | The protocol contains only a few tests for the circuits. It is recommended to add more tests to increase the test coverage. When it comes to circuits, we believe it is necessary to develop an adversarial testing process, especially focused on malicious prover behavior. We raised the following PRs to increase code coverage & emphasize testing - [#3](https://github.com/yaudit/summa-solvency-diffie/pull/3), [#5](https://github.com/yaudit/summa-solvency-schneier/pull/5), [#8](https://github.com/yaudit/summa-solvency-schneier/pull/8/files), [#17](https://github.com/yaudit/summa-solvency-schneier/pull/17). We also recommend [fuzz testing](#fuzz-testing) and incorporating tools we used in [Automated Testing](#automated-testing) in Summa's software development lifecycle to produce secure code |
 
 # Automated Testing
 
@@ -252,8 +252,8 @@ We recommend that a range check is done inside the circuit or inside the smart c
 
 #### Refer
 
-- [Guarantee usernames stays inside field](https://github.com/electisec/summa-solvency-schneier/issues/13) by [sebastiantf](https://github.com/sebastiantf)
-- [Possible Overflow in username in big_intify_username combined with calling big_uint_to_fp](https://github.com/electisec/summa-solvency-diffie/issues/16) by [parsley](https://github.com/bbresearcher)
+- [Guarantee usernames stays inside field](https://github.com/yaudit/summa-solvency-schneier/issues/13) by [sebastiantf](https://github.com/sebastiantf)
+- [Possible Overflow in username in big_intify_username combined with calling big_uint_to_fp](https://github.com/yaudit/summa-solvency-diffie/issues/16) by [parsley](https://github.com/bbresearcher)
 
 ## 2. High: Sum Balance Overflow
 
@@ -261,7 +261,7 @@ The lack of in-circuit range check for the sum of balances posesses a risk of ov
 
 #### Refer
 
-- [Sum Balance Overflow](https://github.com/electisec/summa-solvency-diffie/issues/10) by [zeroqn](https://github.com/zeroqn)
+- [Sum Balance Overflow](https://github.com/yaudit/summa-solvency-diffie/issues/10) by [zeroqn](https://github.com/zeroqn)
 
 ## 3. High: Inconsistency in range checks
 
@@ -271,7 +271,7 @@ Root's max balance is `(NLEVEL - 1) * m` as can be inferred from circuits/contra
 
 #### Refer
 
-- [Inconsistency in range checks](https://github.com/electisec/summa-solvency-Turing/issues/14) by [y5yash](https://github.com/Y5Yash)
+- [Inconsistency in range checks](https://github.com/yaudit/summa-solvency-Turing/issues/14) by [y5yash](https://github.com/Y5Yash)
 
 ## Low
 
@@ -298,7 +298,7 @@ In the code [here](https://github.com/summa-dev/summa-solvency/blob/master/zk_pr
 
 #### Refer
 
-- [Mixed endian usage in code](https://github.com/electisec/summa-solvency-diffie/issues/17) by [parsely](https://github.com/bbresearcher)
+- [Mixed endian usage in code](https://github.com/yaudit/summa-solvency-diffie/issues/17) by [parsely](https://github.com/bbresearcher)
 
 ## Informational
 
@@ -308,7 +308,7 @@ The [range check](https://github.com/summa-dev/summa-solvency/blob/52373464b7ac4
 
 #### Refer
 
-- [Range check uses lookup_any instead of lookup](https://github.com/electisec/summa-solvency-schneier/issues/18) By [obatirou](https://github.com/obatirou)
+- [Range check uses lookup_any instead of lookup](https://github.com/yaudit/summa-solvency-schneier/issues/18) By [obatirou](https://github.com/obatirou)
 
 ## 2. Informational: `InclusionVerifier.yul`not generated
 
@@ -318,35 +318,35 @@ It is mentioned in the Summa Book on the [summa-solvency page](https://summa.git
 
 #### Refer
 
-- [`InclusionVerifier.yul`not generated](https://github.com/electisec/summa-solvency-schneier/issues/16) by [flyingnobita](https://github.com/flyingnobita)
+- [`InclusionVerifier.yul`not generated](https://github.com/yaudit/summa-solvency-schneier/issues/16) by [flyingnobita](https://github.com/flyingnobita)
 
 ## 3. Informational: Improvement to public inputs in contract
 
-The [`publicInputs`](https://github.com/electisec/summa-solvency/blob/95d63fe1a55935542810138aa5d8de7f50f4e94b/contracts/src/Summa.sol#L193) input to the contract is taken as an array. But its not a homogenous array. The expected [public inputs](https://summa.gitbook.io/summa-book/circuits/merkle-sum-tree-inclusion#public-inputs-outputs) are: user leaf hash, MST root followed by root balances: [Refer #L188-L197](https://github.com/electisec/summa-solvency/blob/95d63fe1a55935542810138aa5d8de7f50f4e94b/contracts/src/Summa.sol#L188-L197)
+The [`publicInputs`](https://github.com/yaudit/summa-solvency/blob/95d63fe1a55935542810138aa5d8de7f50f4e94b/contracts/src/Summa.sol#L193) input to the contract is taken as an array. But its not a homogenous array. The expected [public inputs](https://summa.gitbook.io/summa-book/circuits/merkle-sum-tree-inclusion#public-inputs-outputs) are: user leaf hash, MST root followed by root balances: [Refer #L188-L197](https://github.com/yaudit/summa-solvency/blob/95d63fe1a55935542810138aa5d8de7f50f4e94b/contracts/src/Summa.sol#L188-L197)
 
 Since they are not homogenous or not values that have the same meaning, it might be better DX/UX to have them as separate meaningful inputs and combine them into an array within the function before submitting them to the verifier.
 
 #### Refer
 
-- [Improvement to public inputs in contract](https://github.com/electisec/summa-solvency-schneier/issues/12) By [sebastiantf](https://github.com/sebastiantf)
+- [Improvement to public inputs in contract](https://github.com/yaudit/summa-solvency-schneier/issues/12) By [sebastiantf](https://github.com/sebastiantf)
 
 ## 4. Informational: Use only mapping for `addressOwnershipProofs`
 
-Currently both the array [`addressOwnershipProofs`](https://github.com/electisec/summa-solvency/blob/95d63fe1a55935542810138aa5d8de7f50f4e94b/contracts/src/Summa.sol#L68) and the mapping [`_ownershipProofByAddress`](https://github.com/electisec/summa-solvency/blob/95d63fe1a55935542810138aa5d8de7f50f4e94b/contracts/src/Summa.sol#L83C41-L83C65) are being used to track address ownership proofs. But the use of both seems unnecessary, inefficient and error-prone. Storing address proofs on chain when the rounds become much more frequent would be highly inefficient.
+Currently both the array [`addressOwnershipProofs`](https://github.com/yaudit/summa-solvency/blob/95d63fe1a55935542810138aa5d8de7f50f4e94b/contracts/src/Summa.sol#L68) and the mapping [`_ownershipProofByAddress`](https://github.com/yaudit/summa-solvency/blob/95d63fe1a55935542810138aa5d8de7f50f4e94b/contracts/src/Summa.sol#L83C41-L83C65) are being used to track address ownership proofs. But the use of both seems unnecessary, inefficient and error-prone. Storing address proofs on chain when the rounds become much more frequent would be highly inefficient.
 
 We recommend removing the array, modifying the mapping to store the `AddressOwnershipProof` struct as an efficient and simpler alternative.
 
 #### Refer
 
-- [Use only mapping for `addressOwnershipProofs`](https://github.com/electisec/summa-solvency-schneier/issues/11) by [sebastiantf](https://github.com/sebastiantf)
+- [Use only mapping for `addressOwnershipProofs`](https://github.com/yaudit/summa-solvency-schneier/issues/11) by [sebastiantf](https://github.com/sebastiantf)
 
 ## 5. Informational: `Summa.sol` : Improvements to generating the `addressHash`
 
-The hash calculation of the `cexAddress` at [Summa.sol#L117](https://github.com/electisec/summa-solvency-schneier/blob/95d63fe1a55935542810138aa5d8de7f50f4e94b/contracts/src/Summa.sol#L117) does not take into consideration the chain of the address. Considering a multi chain architecture, using at least two distinct identifiers for generating the hash enhances security and prevents potential collisions or misuse.
+The hash calculation of the `cexAddress` at [Summa.sol#L117](https://github.com/yaudit/summa-solvency-schneier/blob/95d63fe1a55935542810138aa5d8de7f50f4e94b/contracts/src/Summa.sol#L117) does not take into consideration the chain of the address. Considering a multi chain architecture, using at least two distinct identifiers for generating the hash enhances security and prevents potential collisions or misuse.
 
 #### Refer
 
-- [`Summa.sol` : Issue with `submitProofOfAddressOwnership()`](https://github.com/electisec/summa-solvency-schneier/issues/7) by [zzzuhaibmohd](https://github.com/zzzuhaibmohd)
+- [`Summa.sol` : Issue with `submitProofOfAddressOwnership()`](https://github.com/yaudit/summa-solvency-schneier/issues/7) by [zzzuhaibmohd](https://github.com/zzzuhaibmohd)
 
 ## 6. Informational: `Summa.sol` : Ownable: Does not implement 2-Step Process for transferring ownership
 
@@ -357,18 +357,18 @@ While the probability of this happening is highly unlikely, we recommend followi
 
 #### Refer
 
-- [`Summa.sol` : Ownable: Does not implement 2-Step-Process for transferring ownership](https://github.com/electisec/summa-solvency-schneier/issues/6) by [zzzuhaibmohd](https://github.com/zzzuhaibmohd)
+- [`Summa.sol` : Ownable: Does not implement 2-Step-Process for transferring ownership](https://github.com/yaudit/summa-solvency-schneier/issues/6) by [zzzuhaibmohd](https://github.com/zzzuhaibmohd)
 
 ## 7. Informational: Summa.sol : Potential `Summa::submitCommitment()` Gas limits
 
-[`Summa::submitCommitment()`](https://github.com/electisec/summa-solvency/blob/main/contracts/src/Summa.sol#L144) takes in two arrays and loops once over them. [`rootBalances`](https://github.com/electisec/summa-solvency-schneier/blob/95d63fe1a55935542810138aa5d8de7f50f4e94b/contracts/src/Summa.sol#L146-L147) array contains the root balances of each cryptocurrency. [`cryptocurrencies`](https://github.com/electisec/summa-solvency/blob/95d63fe1a55935542810138aa5d8de7f50f4e94b/contracts/src/Summa.sol#L159-L171) array contains details of each cryptocurrency: `name`, `chain`. There could be practical limitations to the number of `rootBalances` and `cryptocurrencies` that could be submitted in a single txn, imposed by block gas limits
+[`Summa::submitCommitment()`](https://github.com/yaudit/summa-solvency/blob/main/contracts/src/Summa.sol#L144) takes in two arrays and loops once over them. [`rootBalances`](https://github.com/yaudit/summa-solvency-schneier/blob/95d63fe1a55935542810138aa5d8de7f50f4e94b/contracts/src/Summa.sol#L146-L147) array contains the root balances of each cryptocurrency. [`cryptocurrencies`](https://github.com/yaudit/summa-solvency/blob/95d63fe1a55935542810138aa5d8de7f50f4e94b/contracts/src/Summa.sol#L159-L171) array contains details of each cryptocurrency: `name`, `chain`. There could be practical limitations to the number of `rootBalances` and `cryptocurrencies` that could be submitted in a single txn, imposed by block gas limits
 
-According to [Coingecko](https://www.coingecko.com/en/exchanges/binance), Binance hosts 376 cryptocurrencies. After a stress test in [PR#5](https://github.com/electisec/summa-solvency-schneier/pull/5), it is known that 402 is the maximum number of cryptocurrencies before overflowing 30M block gas limit. To compute proof of solvency for the entire state of the exchange at a given time, it might be necessary to split the submission into multiple commitments for the same `timestamp`.
+According to [Coingecko](https://www.coingecko.com/en/exchanges/binance), Binance hosts 376 cryptocurrencies. After a stress test in [PR#5](https://github.com/yaudit/summa-solvency-schneier/pull/5), it is known that 402 is the maximum number of cryptocurrencies before overflowing 30M block gas limit. To compute proof of solvency for the entire state of the exchange at a given time, it might be necessary to split the submission into multiple commitments for the same `timestamp`.
 
 #### Refer
 
-- [Potential `Summa::submitCommitment()` Gas limits](https://github.com/electisec/summa-solvency-schneier/issues/4) by [sebastiantf](https://github.com/sebastiantf)
-- [test: submitting large no. of cryptocurrencies in single commitment](https://github.com/electisec/summa-solvency-schneier/pull/5) by [sebastiantf](https://github.com/sebastiantf)
+- [Potential `Summa::submitCommitment()` Gas limits](https://github.com/yaudit/summa-solvency-schneier/issues/4) by [sebastiantf](https://github.com/sebastiantf)
+- [test: submitting large no. of cryptocurrencies in single commitment](https://github.com/yaudit/summa-solvency-schneier/pull/5) by [sebastiantf](https://github.com/sebastiantf)
 
 ## 8. Informational: Use constants to denote magic numbers in PoseidonChip
 
@@ -383,7 +383,7 @@ The [Poseidon chip](https://github.com/summa-dev/summa-solvency/blob/master/zk_p
 
 #### Refer
 
-- [Magic numbers used in code of MST Circuit to create PoseidonChip](https://github.com/electisec/summa-solvency-diffie/issues/15) by [parsely](https://github.com/bbresearcher)
+- [Magic numbers used in code of MST Circuit to create PoseidonChip](https://github.com/yaudit/summa-solvency-diffie/issues/15) by [parsely](https://github.com/bbresearcher)
 
 ## 9. Informational: Missing validation for `timestamp`, `mstLevels` and `currenciesCount`
 
@@ -428,7 +428,7 @@ Likewise we would also need the following checks :
 
 #### Refer
 
-- [Review of the `Summa.sol` smart contract](https://github.com/electisec/summa-solvency-diffie/issues/12) by [hrishibhat](https://github.com/hrishibhat)
+- [Review of the `Summa.sol` smart contract](https://github.com/yaudit/summa-solvency-diffie/issues/12) by [hrishibhat](https://github.com/hrishibhat)
 
 # Final remarks
 
@@ -437,7 +437,7 @@ Likewise we would also need the following checks :
   - The Merkle Sum Tree is a cryptographic structure which inherits the security properties of the Poseidon hash function
 - Social engineering attacks are still a valid way to break the system. The custodian could omit a section of users who do not verify their inclusion proofs.
 - The library used for trusted setup - [halo2-kzg-srs](https://github.com/han0110/halo2-kzg-srs) is unaudited & it's contents are unreliable as there is no checksum available to validate its contents
-- Overall, the code demonstrates good implementation of mathematical operations and basic functionality. However, it could benefit from more extensive documentation, testing and additional tools such as [polyexen](https://github.com/electisec/summa-solvency-diffie/pull/5) to view cell data.
+- Overall, the code demonstrates good implementation of mathematical operations and basic functionality. However, it could benefit from more extensive documentation, testing and additional tools such as [polyexen](https://github.com/yaudit/summa-solvency-diffie/pull/5) to view cell data.
 
 # Appendix
 
@@ -516,7 +516,7 @@ Out of the `3566` unconstrained cells found, these are the common weaknesses poi
 
 - `unconstrained cell in "permute state"` is a false positive which arises from the `permute state` region of the Poseidon Chip.
 
-Here’s the complete [report](https://github.com/electisec/summa-audit-report/blob/main/appendix/V1/Halo2-Analyzer/output.md).
+Here’s the complete [report](https://github.com/yaudit/summa-audit-report/blob/main/appendix/V1/Halo2-Analyzer/output.md).
 
 ### 2. Polyexen-demo
 
@@ -530,30 +530,30 @@ Polyexen (Polynomial Expression Engine) transforms circuits designed with the Ha
 
 We used polyexen-demo to debug the assignments & double check the constraints. Here’s the output :
 
-- Fixed Columns - [CSV](https://github.com/electisec/summa-audit-report/blob/main/appendix/V1/Polyexen/mst_fixed.csv)
-- Lookup constraints - [mst_lookups.toml](https://github.com/electisec/summa-audit-report/blob/main/appendix/V1/Polyexen/mst_lookups.toml)
-- Gate constraints - [mst_polys.toml](https://github.com/electisec/summa-audit-report/blob/main/appendix/V1/Polyexen/mst_polys.toml)
-- Copy constraints - [mst.toml](https://github.com/electisec/summa-audit-report/blob/main/appendix/V1/Polyexen/mst.toml)
+- Fixed Columns - [CSV](https://github.com/yaudit/summa-audit-report/blob/main/appendix/V1/Polyexen/mst_fixed.csv)
+- Lookup constraints - [mst_lookups.toml](https://github.com/yaudit/summa-audit-report/blob/main/appendix/V1/Polyexen/mst_lookups.toml)
+- Gate constraints - [mst_polys.toml](https://github.com/yaudit/summa-audit-report/blob/main/appendix/V1/Polyexen/mst_polys.toml)
+- Copy constraints - [mst.toml](https://github.com/yaudit/summa-audit-report/blob/main/appendix/V1/Polyexen/mst.toml)
 
 ### 3. NPM Audit
 
-`npm audit` scans your project's dependencies for known security vulnerabilities, reports them with severity levels, and suggests fixes. It helps keep your Node.js application secure by identifying and addressing potential risks in your packages. View the complete report of security vulnerabilities in the `contracts` package [here](https://github.com/electisec/summa-audit-report/blob/main/appendix/V1/npm-audit/output.md)
+`npm audit` scans your project's dependencies for known security vulnerabilities, reports them with severity levels, and suggests fixes. It helps keep your Node.js application secure by identifying and addressing potential risks in your packages. View the complete report of security vulnerabilities in the `contracts` package [here](https://github.com/yaudit/summa-audit-report/blob/main/appendix/V1/npm-audit/output.md)
 
 ### 4. Cargo Audit
 
-`cargo audit` scans your Rust project's dependencies for known security vulnerabilities, reports them with severity levels, and suggests fixes. It helps keep your Rust application secure by identifying and addressing potential risks in your crates. View the complete report of security vulnerabilities in `zk-prover` and `backend` [here](https://github.com/electisec/summa-audit-report/blob/main/appendix/V1/cargo-audit/output.md).
+`cargo audit` scans your Rust project's dependencies for known security vulnerabilities, reports them with severity levels, and suggests fixes. It helps keep your Rust application secure by identifying and addressing potential risks in your crates. View the complete report of security vulnerabilities in `zk-prover` and `backend` [here](https://github.com/yaudit/summa-audit-report/blob/main/appendix/V1/cargo-audit/output.md).
 
 ### 5. Clippy
 
-`clippy` is a linter for Rust that checks your code for common mistakes and style issues. It provides helpful suggestions to improve your code quality and maintainability. Using `clippy` helps ensure your Rust code is clean, efficient, and follows best practices. Here's the [report](https://github.com/electisec/summa-audit-report/blob/main/appendix/V1/clippy/output.md).
+`clippy` is a linter for Rust that checks your code for common mistakes and style issues. It provides helpful suggestions to improve your code quality and maintainability. Using `clippy` helps ensure your Rust code is clean, efficient, and follows best practices. Here's the [report](https://github.com/yaudit/summa-audit-report/blob/main/appendix/V1/clippy/output.md).
 
 ## B - Fuzz Testing
 
 Fuzzing is a testing technique that tries to find bugs by repeatedly executing test cases and mutating them. Classically, it is used in C/C++ codebases to detect segmentation faults, buffer overflows, and other memory corruption vulnerabilities. In Rust, we can use it to find runtime errors.
 
-We set up a fuzz test suite using `cargo fuzz` (which uses `libfuzzer-sys`) for Merkle Sum Tree implementation, Range check & it’s utilities. We initialized a basic fuzz suite in [PR#18](https://github.com/electisec/summa-solvency-diffie/pull/18) and in [PR#3](https://github.com/electisec/summa-solvency-Turing/pull/3) with a [Setup Tutorial](https://github.com/electisec/summa-solvency-Turing/pull/3/files#diff-f91a5e0dcdf679d481a8eaf944ca24572fe682b1ca746dd39136b612c8dcaa55). Furthermore, fuzz tests for `merkle_sum_tree`, `utils`, `csv_parser` were included in [PR#6](https://github.com/electisec/summa-solvency-diffie/pull/6).
+We set up a fuzz test suite using `cargo fuzz` (which uses `libfuzzer-sys`) for Merkle Sum Tree implementation, Range check & it’s utilities. We initialized a basic fuzz suite in [PR#18](https://github.com/yaudit/summa-solvency-diffie/pull/18) and in [PR#3](https://github.com/yaudit/summa-solvency-Turing/pull/3) with a [Setup Tutorial](https://github.com/yaudit/summa-solvency-Turing/pull/3/files#diff-f91a5e0dcdf679d481a8eaf944ca24572fe682b1ca746dd39136b612c8dcaa55). Furthermore, fuzz tests for `merkle_sum_tree`, `utils`, `csv_parser` were included in [PR#6](https://github.com/yaudit/summa-solvency-diffie/pull/6).
 
-Upon fuzzing the `utils` in [PR#6](https://github.com/electisec/summa-solvency-diffie/pull/6/files#diff-9412e8e264746a8c097d218a1de08b4db7b899a6479e16486fced43f653cfee2), there seems to be a little discrepency in the bytes to Fp conversion cycle. An assertion fails when comparing an empty string's bytes ([]) to the result of converting that empty string to a `BigUint` and then back to bytes, which results in [0]. This happens because converting an empty string to a `BigUint` using `BigUint::from(0u8)` creates a `BigUint` representing 0, which converts back to [0] instead of an empty array. To fix this, we need to ensure that converting an empty string to a `BigUint` and back maintains consistency with the original input.
+Upon fuzzing the `utils` in [PR#6](https://github.com/yaudit/summa-solvency-diffie/pull/6/files#diff-9412e8e264746a8c097d218a1de08b4db7b899a6479e16486fced43f653cfee2), there seems to be a little discrepency in the bytes to Fp conversion cycle. An assertion fails when comparing an empty string's bytes ([]) to the result of converting that empty string to a `BigUint` and then back to bytes, which results in [0]. This happens because converting an empty string to a `BigUint` using `BigUint::from(0u8)` creates a `BigUint` representing 0, which converts back to [0] instead of an empty array. To fix this, we need to ensure that converting an empty string to a `BigUint` and back maintains consistency with the original input.
 
 ## C - Code Coverage
 
@@ -563,7 +563,7 @@ We used [cargo-llvm-cov](https://github.com/taiki-e/cargo-llvm-cov) to generate 
 
 We raised the following pull requests to increase code coverage & emphasize testing.
 
-- [PR#3](https://github.com/electisec/summa-solvency-diffie/pull/3) to increase code coverage for `merkle_sum_tree`
-- [PR#17](https://github.com/electisec/summa-solvency-schneier/pull/17) to add end-to-end testing with full prover and verifier (instead of mock prover).
-- [PR#8](https://github.com/electisec/summa-solvency-schneier/pull/8/files) to include cost estimation for circuits using `CircuitCost`
-- [PR#5](https://github.com/electisec/summa-solvency-schneier/pull/5) is a stress test to determine the potential gas limits of `Summa::submitCommitment()`
+- [PR#3](https://github.com/yaudit/summa-solvency-diffie/pull/3) to increase code coverage for `merkle_sum_tree`
+- [PR#17](https://github.com/yaudit/summa-solvency-schneier/pull/17) to add end-to-end testing with full prover and verifier (instead of mock prover).
+- [PR#8](https://github.com/yaudit/summa-solvency-schneier/pull/8/files) to include cost estimation for circuits using `CircuitCost`
+- [PR#5](https://github.com/yaudit/summa-solvency-schneier/pull/5) is a stress test to determine the potential gas limits of `Summa::submitCommitment()`

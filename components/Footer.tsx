@@ -104,14 +104,9 @@ const DATA = {
         url: "https://www.github.com/yaudit",
         icon: Icons.github,
       },
-      Telegram: {
-        name: "Telegram",
-        url: "https://t.me/yaudit",
-        icon: Icons.telegram,
-      },
       X: {
         name: "X",
-        url: "https://www.x.com/yaudit",
+        url: "https://www.x.com/yAuditDAO",
         icon: Icons.x,
       },
       youtube: {
