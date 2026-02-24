@@ -1,7 +1,7 @@
 ---
 tags: ["solidity", "Euler"]
 title: 2025-11-Euler-Securitize
-description: Euler - Securitize
+description: Euler - Securitize report
 ---
 
 <object data="pdf/2025-11-Euler-securitize-report" type="application/pdf" width="100%" height="1000px">
