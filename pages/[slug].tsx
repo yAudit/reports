@@ -242,7 +242,7 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
         date: matchedFile ? (extractDate(matchedFile) || fallbackDate) : extractDate(slug) || fallbackDate,
         tags: Array.isArray(frontMatter.tags) ? frontMatter.tags : [],
         hasPdf,
-        pdfPath: hasPdf ? `/pdf/${matchingPdf}` : null,
+        pdfPath: hasPdf && matchingPdf ? `/pdf/${encodeURIComponent(matchingPdf)}` : null,
         hasWebView,
       },
       revalidate: 3600, // Revalidate every hour
