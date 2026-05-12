@@ -10,16 +10,7 @@ const nextConfig: NextConfig = {
     "rc-pagination",
     "rc-picker",
   ],
-  webpack: (config) => {
-    // Handle ES modules correctly
-    config.module.rules.push({
-      test: /\.(js|mjs|jsx)$/,
-      resolve: {
-        fullySpecified: false,
-      },
-    });
-    return config;
-  },
+  turbopack: {},
   // Add redirects configuration
   async redirects() {
     return [
