@@ -1,7 +1,7 @@
 import { GetStaticProps, GetStaticPaths } from "next";
 import path from "path";
 import fs from "fs";
-import { extractDate, processMarkdown, getAllReportSlugs, findMatchingPdf } from "../lib/utils";
+import { extractDate, processMarkdown, getAllReportSlugs, findEmbeddedPdf, findMatchingPdf } from "../lib/utils";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -184,11 +184,13 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
     let content = "";
     let frontMatter: ReportFrontMatter = {};
     let hasWebView = false;
+    let embeddedPdf: string | null = null;
 
     // If markdown file exists, process it
     if (matchedFile) {
       const filePath = path.join(reportsDirectory, matchedFile);
       const fileContent = fs.readFileSync(filePath, "utf8");
+      embeddedPdf = findEmbeddedPdf(fileContent, pdfFiles);
       const processed = await processMarkdown(fileContent);
       frontMatter = processed.frontMatter;
       content = processed.content || "";
@@ -200,7 +202,7 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
     }
 
     // Check if PDF exists for this report
-    const matchingPdf = matchedFile
+    const matchingPdf = embeddedPdf || (matchedFile
       ? findMatchingPdf(matchedFile, pdfFiles)
       : pdfFiles.find(pdf => {
           // Try to match PDF filename with slug
@@ -216,7 +218,7 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
             }
           }
           return false;
-        });
+        }));
 
     const hasPdf = matchingPdf !== null && matchingPdf !== undefined;
 

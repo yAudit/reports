@@ -269,6 +269,39 @@ export function cn(...inputs: ClassValue[]) {
   }
 
   /**
+   * Given markdown content, find a PDF that is explicitly referenced in HTML.
+   * This lets PDF-only reports use their declared embed path instead of relying
+   * only on filename heuristics.
+   */
+  export function findEmbeddedPdf(content: string, pdfFiles: string[]): string | null {
+    const pdfAttributePattern = /\b(?:data|src|href)=["']([^"']+\.pdf)["']/gi;
+    const matches = content.matchAll(pdfAttributePattern);
+
+    for (const match of matches) {
+      const referencedPath = match[1].replace(/\\/g, "/");
+      const referencedFilename = referencedPath.split("/").pop();
+
+      if (!referencedFilename) {
+        continue;
+      }
+
+      const exactMatch = pdfFiles.find((pdf) => pdf === referencedFilename);
+      if (exactMatch) {
+        return exactMatch;
+      }
+
+      const caseInsensitiveMatch = pdfFiles.find(
+        (pdf) => pdf.toLowerCase() === referencedFilename.toLowerCase()
+      );
+      if (caseInsensitiveMatch) {
+        return caseInsensitiveMatch;
+      }
+    }
+
+    return null;
+  }
+
+  /**
    * Given a markdown filename, find the corresponding PDF file
    * Handles different naming conventions between markdown and PDF files
    */
