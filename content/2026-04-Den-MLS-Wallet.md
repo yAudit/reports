@@ -1,7 +1,7 @@
 ---
 tags: ["solidity", "wallet"]
-title: 2026-05-Yearn-stYFI-YBC
-description: Yearn stYFI YBC
+title: 2026-04-Den-MLS-Wallet
+description: Den MLS Wallet
 ---
 
 <object data="pdf/2026-04-Den-MLS-Wallet-report.pdf" type="application/pdf" width="100%" height="1000px">
