@@ -1,6 +1,6 @@
 ---
 tags: ["solidity"]
-title: 2026-05-VFAT-Sickle-Bridge-update-2
+title: 2026-05-Sickle-Bridge-Strategies-update-2
 description: Sickle Bridge Strategies update
 ---
 
