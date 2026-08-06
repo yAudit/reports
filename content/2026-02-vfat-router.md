@@ -1,7 +1,7 @@
 ---
-tags: ["solidity", "vfat", "sickle"]
-title: 2026-02-vFat-Multiswap-Router
-description: vFat Multiswap Router Report
+tags: ["solidity"]
+title: 2026-02-Sickle-Multiswap-Router
+description: Sickle Multiswap Router Report
 ---
 
 <object data="pdf/2026-02-vFat-router.pdf" type="application/pdf" width="100%" height="1000px">
