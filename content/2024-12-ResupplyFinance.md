@@ -1,6 +1,6 @@
 ---
 tags: ["solidity", "stablecoin", "lending"]
-title: 2024-12-Resupply Finance
+title: 2024-12-Resupply-Finance
 description: Resupply Finance Report
 ---
 

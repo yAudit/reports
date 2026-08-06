@@ -1,6 +1,6 @@
 ---
 tags: ["solidity", "layerzero", "berachain"]
-title: 2025-01-Royco-CCDM
+title: 2025-01-Royco-CCDM-MerkleVault
 description: Royco CCDM Merkle Vault yAudit Report
 ---
 

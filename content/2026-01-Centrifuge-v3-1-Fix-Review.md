@@ -1,6 +1,6 @@
 ---
 tags: ["solidity", "Centrifuge"]
-title: 2026-01-Centrifuge-v3.1-Fix
+title: 2026-01-Centrifuge-v3.1-Fix-Review
 description: Centrifuge v3.1 Competition Fix Report
 ---
 

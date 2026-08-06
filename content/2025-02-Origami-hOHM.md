@@ -1,6 +1,6 @@
 ---
 tags: ["solidity"]
-title: 02-205-Origami-hOHM
+title: 2025-02-Origami-hOHM
 description: Security review of Origami hOHM protocol
 ---
 

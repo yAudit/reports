@@ -1,6 +1,6 @@
 ---
 tags: ["solidity"]
-title: 2022-05-Yearn-STB
+title: 2024-05-Yearn-STB
 description: Yearn STB yAudit Report
 nav_order: 7
 image: assets/images/logo.png
