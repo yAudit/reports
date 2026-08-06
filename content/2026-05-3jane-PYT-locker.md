@@ -1,6 +1,6 @@
 ---
 tags: ["solidity"]
-title: 2026-05-3jane-PYTLocker
+title: 2026-05-3Jane-PYTLocker
 description: 3Jane PYTLocker
 ---
 

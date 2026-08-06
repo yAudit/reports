@@ -1,6 +1,6 @@
 ---
 tags: ["solidity"]
-title: 2026-05-Sickle-Bridge-Strategies-update
+title: 2026-05-Sickle-Bridge-Strategies-Update
 description: Sickle Bridge Strategies update
 ---
 

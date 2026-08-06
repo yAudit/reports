@@ -1,6 +1,6 @@
 ---
 tags: ["solidity", "berachain"]
-title: 2025-11-Goldilocks-goldilend-update
+title: 2025-11-Goldilocks-Goldilend-Update
 description: Goldilocks Goldilend Update Report
 ---
 

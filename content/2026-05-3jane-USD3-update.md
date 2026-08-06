@@ -1,6 +1,6 @@
 ---
 tags: ["solidity"]
-title: 2026-05-3jane-USD3-update
+title: 2026-05-3Jane-USD3-Update
 description: 3Jane USD3 update
 ---
 

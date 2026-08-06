@@ -2,8 +2,6 @@
 tags: ["solidity"]
 title: 2023-10-DopexV2-rDPX-upgrade
 description: Dopex V2 rDPX Upgrade yAudit Report
-nav_order: 37
-image: assets/images/logo.png
 ---
 
 # yAudit Dopex RDPX Token Review

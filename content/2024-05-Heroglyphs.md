@@ -2,8 +2,6 @@
 tags: ["solidity"]
 title: 2024-05-Heroglyphs
 description: Heroglyphs yAudit Report
-nav_order: 54
-image: assets/images/logo.png
 ---
 
 # yAudit Heroglyphs Review

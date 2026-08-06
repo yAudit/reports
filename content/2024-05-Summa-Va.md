@@ -2,8 +2,6 @@
 tags: ["zk", "halo2", "solidity"]
 title: 2024-05-Summa-Va
 description: Summa Va yAudit Report
-nav_order: 16
-image: assets/images/logo.png
 ---
 
 # yAudit Summa Review - MST-based Protocol

@@ -2,8 +2,6 @@
 tags: ["solidity"]
 title: 2022-12-RageTrade
 description: Rage Trade yAudit Report
-nav_order: 15
-image: assets/images/logo.png
 ---
 
 # yAudit Rage Trade Review

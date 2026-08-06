@@ -1,6 +1,6 @@
 ---
 tags: ["vyper", "yearn"]
-title: 2026-05-Yearn-stYFI-teams
+title: 2026-05-Yearn-stYFI-Teams
 description: Yearn stYFI teams
 ---
 

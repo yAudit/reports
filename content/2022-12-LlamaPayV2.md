@@ -2,8 +2,6 @@
 tags: ["solidity"]
 title: 2022-12-LlamaPay-V2
 description: LlamaPay V2 yAudit Report
-nav_order: 13
-image: assets/images/logo.png
 ---
 
 # yAudit Llamapay V2 Review

@@ -2,8 +2,6 @@
 tags: ["solidity"]
 title: 2022-12-GET-Protocol-Staking
 description: GET Protocol yAudit Report
-nav_order: 12
-image: assets/images/logo.png
 ---
 
 # yAudit GET Protocol Staking Review

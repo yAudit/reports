@@ -2,8 +2,6 @@
 tags: ["solidity"]
 title: 2024-11-MarginZero
 description: MarginZero
-nav_order: 73
-image: assets/images/logo.png
 ---
 
 # yAudit MarginZero Review <!-- omit in toc -->

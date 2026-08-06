@@ -1,5 +1,5 @@
 ---
-tags: ["solidity", "Euler"]
+tags: ["solidity", "euler"]
 title: 2025-11-Euler-Securitize
 description: Euler - Securitize report
 ---

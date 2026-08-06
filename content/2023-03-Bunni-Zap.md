@@ -2,8 +2,6 @@
 tags: ["solidity"]
 title: 2023-03-Bunni-Zap
 description: Bunni Zap yAudit Report
-nav_order: 20
-image: assets/images/logo.png
 ---
 
 # yAudit Bunni Zap Review

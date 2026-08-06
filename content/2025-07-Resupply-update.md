@@ -1,6 +1,6 @@
 ---
 tags: ["solidity"]
-title: 2025-07-Resupply-update
+title: 2025-07-Resupply-Update
 description: Resupply post hack fixes Report
 ---
 

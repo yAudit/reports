@@ -1,9 +1,7 @@
 ---
 tags: ["solidity"]
-title: 2023-10-Dopex-CLAMM
+title: 2023-10-DopexV2-CLAMM
 description: Dopex V2 CLAMM yAudit Report
-nav_order: 36
-image: assets/images/logo.png
 ---
 
 # yAudit Dopex V2 CLAMM Review <!-- omit in toc -->

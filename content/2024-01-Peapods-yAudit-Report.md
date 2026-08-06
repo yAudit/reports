@@ -2,8 +2,6 @@
 tags: ["solidity"]
 title: 2024-01-Peapods
 description: Peapods yAudit Report
-nav_order: 40
-image: assets/images/logo.png
 ---
 
 # yAudit Peapods Review

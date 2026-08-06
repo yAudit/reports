@@ -2,8 +2,6 @@
 tags: ["solidity"]
 title: 2022-05-OpenMEV
 description: OpenMEV yAudit Report
-nav_order: 5
-image: assets/images/logo.png
 ---
 
 # yAudit OpenMEV Review

@@ -2,8 +2,6 @@
 tags: ["solidity"]
 title: 2024-10-Euler-ERC20-Wrapper-Locked
 description: Euler ERC20 Wrapper Locked yAudit Report
-nav_order: 11
-image: assets/images/logo.png
 ---
 
 # yAudit Euler ERC20 Wrapper Locked - Review <!-- omit in toc -->

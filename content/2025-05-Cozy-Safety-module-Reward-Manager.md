@@ -1,6 +1,6 @@
 ---
 tags: ["solidity"]
-title: 2025-05-Cozy-safety-module-reward-manager
+title: 2025-05-Cozy-Safety-Module-Reward-Manager
 description: Cozy safety module reward manager report
 ---
 

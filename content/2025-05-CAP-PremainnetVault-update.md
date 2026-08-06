@@ -1,6 +1,6 @@
 ---
 tags: ["solidity", "layerzero", "cap"]
-title: 2025-05-CAP-PremainnetVault-update
+title: 2025-05-CAP-PremainnetVault-Update
 description: CAP Pre-mainnet vault update report
 ---
 

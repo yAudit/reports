@@ -2,8 +2,6 @@
 tags: ["solidity"]
 title: 2022-06-Yearn-BalancerLPFactory
 description: Yearn BalancerLPFactory Strategy yAudit Report
-nav_order: 9
-image: assets/images/logo.png
 ---
 
 # yAudit Yearn BalancerLpFactory Review

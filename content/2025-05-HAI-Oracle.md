@@ -1,6 +1,6 @@
 ---
 tags: ["solidity"]
-title: 2025-05-Pessimistic-Velodrome-LP-Oracle
+title: 2025-05-HAI-Pessimistic-Velodrome-LP-Oracle
 description: Security review of the Pessimistic Velodrome LP Oracle used in the HAI protocol
 ---
 

@@ -2,8 +2,6 @@
 tags: ["solidity"]
 title: 2024-10-GuessOurBlock
 description: Guess Our Block
-nav_order: 71
-image: assets/images/logo.png
 ---
 
 # yAudit GuessOurBlock Review <!-- omit in toc -->

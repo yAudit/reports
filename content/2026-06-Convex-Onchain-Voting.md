@@ -1,5 +1,5 @@
 ---
-tags: ["solidity", "Curve", "Resupply"]
+tags: ["solidity", "curve", "resupply"]
 title: 2026-06-Convex-Onchain-Voting
 description: Convex Onchain voting
 ---

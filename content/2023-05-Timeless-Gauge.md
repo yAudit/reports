@@ -2,8 +2,6 @@
 tags: ["vyper"]
 title: 2023-05-Timeless-Gauge
 description: Timeless Finance Gauge yAudit Report
-nav_order: 24
-image: assets/images/logo.png
 ---
 
 # yAudit Timeless Finance Gauge Review <!-- omit in toc -->

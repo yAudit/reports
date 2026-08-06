@@ -2,8 +2,6 @@
 tags: ["solidity"]
 title: 2024-12-OpenState
 description: OpenState
-nav_order: 76
-image: assets/images/logo.png
 ---
 
 # yAudit OpenState Review <!-- omit in toc -->

@@ -2,8 +2,6 @@
 tags: ["solidity"]
 title: 2022-11-Yearn-Stargate-Strategy
 description: Yearn Stargate Strategy yAudit Report
-nav_order: 11
-image: assets/images/logo.png
 ---
 
 # yAudit Yearn Stargate Strategy Review

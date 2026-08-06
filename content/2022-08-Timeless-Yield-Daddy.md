@@ -2,8 +2,6 @@
 tags: ["solidity"]
 title: 2022-08-Timeless-Yield-Daddy
 description: Timeless Yield Daddy yAudit Report
-nav_order: 10
-image: assets/images/logo.png
 ---
 
 # yAudit Timeless Yield Daddy Review

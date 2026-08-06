@@ -2,8 +2,6 @@
 tags: ["zk", "halo2", "solidity"]
 title: 2024-05-Summa-Vb
 description: Summa Vb yAudit Report
-nav_order: 16
-image: assets/images/logo.png
 ---
 
 # yAudit Summa Review - KZG-based Protocol

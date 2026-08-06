@@ -1,9 +1,7 @@
 ---
 tags: ["solidity"]
-title: 9-2024-Pendle-Oracle
+title: 2024-09-Euler-Pendle-Oracle
 description: Pendle Oracle yAudit Report
-nav_order: 71
-image: assets/images/logo.png
 ---
 
 # yAudit Euler PendleOracle Review <!-- omit in toc -->

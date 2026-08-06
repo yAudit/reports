@@ -2,8 +2,6 @@
 tags: ["solidity"]
 title: 2024-06-Asymmetry-veASF
 description: yAudit Asymmetry veASF Review
-nav_order: 6
-image: assets/images/logo.png
 ---
 
 # yAudit Asymmetry veASF Review <!-- omit in toc -->

@@ -2,8 +2,6 @@
 tags: ["solidity"]
 title: 2022-12-Gro-Protocol
 description: Gro Protocol yAudit Report
-nav_order: 14
-image: assets/images/logo.png
 ---
 
 # yAudit Gro Protocol Review

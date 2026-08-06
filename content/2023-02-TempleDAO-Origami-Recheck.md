@@ -1,9 +1,7 @@
 ---
 tags: ["solidity"]
-title: 2023-02-TempleDao-Origami-Recheck
+title: 2023-02-TempleDAO-Origami-Recheck
 description: Temple DAO Origami Recheck yAudit Report
-nav_order: 18
-image: assets/images/logo.png
 ---
 
 # yAudit Temple DAO Origami Recheck Review

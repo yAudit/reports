@@ -2,8 +2,6 @@
 tags: ["solidity"]
 title: 2024-01-Inverse-sDOLA
 description: Inverse Finance DOLA Savings yAudit Report
-nav_order: 46
-image: assets/images/logo.png
 ---
 
 # yAudit Inverse Finance DOLA Savings Review

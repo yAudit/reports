@@ -2,8 +2,6 @@
 tags: ["solidity"]
 title: 2023-01-LlamaLend-V2
 description: LlamaLend V2 yAudit Report
-nav_order: 16
-image: assets/images/logo.png
 ---
 
 # yAudit LlamaLend V2 Review

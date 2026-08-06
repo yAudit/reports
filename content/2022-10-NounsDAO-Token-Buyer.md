@@ -2,8 +2,6 @@
 tags: ["solidity"]
 title: 2022-10-NounsDAO-Token-Buyer
 description: NounsDAO Token Buyer yAudit Report
-nav_order: 10
-image: assets/images/logo.png
 ---
 
 # yAudit NounsDAO Token Buyer Review

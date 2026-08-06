@@ -2,8 +2,6 @@
 tags: ["solidity"]
 title: 2023-12-Dopex-v2-Automator
 description: Dopex v2 Automator yAudit Report
-nav_order: 39
-image: assets/images/logo.png
 ---
 
 # yAudit Orange Finance Dopex V2 Automator Review <!-- omit in toc -->

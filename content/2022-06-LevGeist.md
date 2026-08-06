@@ -2,8 +2,6 @@
 tags: ["solidity"]
 title: 2022-06-LevGeist
 description: LevGeist yAudit Report
-nav_order: 7
-image: assets/images/logo.png
 ---
 
 # yAudit LevGeist Review

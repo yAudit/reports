@@ -1,5 +1,5 @@
 ---
-tags: ["solidity", "Curve", "Oracle"]
+tags: ["solidity", "curve", "oracle"]
 title: 2026-02-HAI-CurveStableSwapNG-Oracle
 description: HAI CurveStableSwapNG Oracle Report
 ---

@@ -2,8 +2,6 @@
 tags: ["zk", "circom", "solidity"]
 title: 2023-06-Spartan-ECDSA
 description: Spartan ECDSA yAudit Report
-nav_order: 16
-image: assets/images/logo.png
 ---
 
 # yAudit Spartan-ecdsa Review

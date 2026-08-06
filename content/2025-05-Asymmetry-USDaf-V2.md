@@ -1,5 +1,5 @@
 ---
-tags: ["solidity", "Liquity"]
+tags: ["solidity", "liquity"]
 title: 2025-05-Asymmetry-USDaf-V2
 description: Asymmetry USDaf V2 Security Review
 ---

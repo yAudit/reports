@@ -2,8 +2,6 @@
 tags: ["solidity"]
 title: 2024-02-Obelisk
 description: Obelisk yAudit Report
-nav_order: 41
-image: assets/images/logo.png
 ---
 
 # yAudit Obelisk Review <!-- omit in toc -->

@@ -2,8 +2,6 @@
 tags: ["solidity"]
 title: 2022-04-Ohm-Bond
 description: Olympus Bond yAudit Report
-nav_order: 3
-image: assets/images/logo.png
 ---
 
 # yAudit Olympus Bond Review

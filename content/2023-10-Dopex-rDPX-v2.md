@@ -2,8 +2,6 @@
 tags: ["solidity"]
 title: 2023-10-Dopex-rDPX-v2
 description: Dopex rDPX v2 yAudit Report
-nav_order: 38
-image: assets/images/logo.png
 ---
 
 # yAudit Dopex rDPX v2 Review <!-- omit in toc -->

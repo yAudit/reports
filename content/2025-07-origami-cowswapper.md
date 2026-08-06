@@ -1,6 +1,6 @@
 ---
 tags: ["solidity", "cowswap"]
-title: 2025-07-Origami Cowswap
+title: 2025-07-Origami-Cowswapper
 description: The changes introduces a cowswap contract to the origami protocol
 ---
 

@@ -2,8 +2,6 @@
 tags: ["solidity"]
 title: 2024-10-Sickle-Strategies
 description: Sickle Strategies yAudit Report
-nav_order: 71
-image: assets/images/logo.png
 ---
 
 # yAudit Sickle Strategies Review <!-- omit in toc -->

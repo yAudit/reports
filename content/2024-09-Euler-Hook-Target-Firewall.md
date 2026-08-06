@@ -2,8 +2,6 @@
 tags: ["solidity"]
 title: 2024-09-Euler-Hook-Target-Firewall
 description: Euler Hook Target Firewall yAudit Report
-nav_order: 71
-image: assets/images/logo.png
 ---
 
 # yAudit Euler Hook Target Firewall Review <!-- omit in toc -->

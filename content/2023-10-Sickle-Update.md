@@ -2,8 +2,6 @@
 tags: ["solidity"]
 title: 2023-10-Sickle-Update
 description: Sickle Update yAudit Report
-nav_order: 38
-image: assets/images/logo.png
 ---
 
 # yAudit Sickle Update Review

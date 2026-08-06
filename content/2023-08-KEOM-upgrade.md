@@ -1,9 +1,7 @@
 ---
 tags: ["solidity"]
-title: 2023-08-KEOM-upgrade
+title: 2023-08-KEOM-Upgrade
 description: KEOM Upgrade yAudit Report
-nav_order: 33
-image: assets/images/logo.png
 ---
 
 # yAudit KEOM Upgrade Review

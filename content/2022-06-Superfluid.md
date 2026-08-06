@@ -2,8 +2,6 @@
 tags: ["solidity"]
 title: 2022-06-Superfluid
 description: Superfluid yAudit Report
-nav_order: 8
-image: assets/images/logo.png
 ---
 
 # yAudit Superfluid Review

@@ -2,8 +2,6 @@
 tags: ["solidity"]
 title: 2024-08-Goldilocks
 description: Goldilocks yAudit report
-nav_order: 64
-image: assets/images/logo.png
 ---
 
 # yAudit Goldilocks Review <!-- omit in toc -->

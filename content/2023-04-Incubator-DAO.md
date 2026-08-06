@@ -2,8 +2,6 @@
 tags: ["solidity"]
 title: 2023-04-Incubator-DAO
 description: Incubator DAO yAudit Report
-nav_order: 21
-image: assets/images/logo.png
 ---
 
 # yAudit Incubator DAO Review

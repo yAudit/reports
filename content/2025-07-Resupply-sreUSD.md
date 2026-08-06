@@ -1,7 +1,7 @@
 ---
 tags: ["solidity"]
-title: 2025-07-Resupply-sreusd
-description: Resupply sreusd Report
+title: 2025-07-Resupply-sreUSD
+description: Resupply sreUSD Report
 ---
 
 <object data="pdf/2025-07-Resupply-sreusd.pdf" type="application/pdf" width="100%" height="1000px">

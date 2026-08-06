@@ -2,8 +2,6 @@
 tags: ["solidity"]
 title: 2024-01-yPrisma
 description: yPrisma yAudit Report
-nav_order: 48
-image: assets/images/logo.png
 ---
 
 # yAudit yPrisma Review <!-- omit in toc -->

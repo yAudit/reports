@@ -1,6 +1,6 @@
 ---
 tags: ["solidity"]
-title: 2025-09-Resupply-curvelend
+title: 2025-09-Resupply-Curvelend
 description: Resupply curvelend Report
 ---
 

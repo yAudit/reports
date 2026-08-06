@@ -2,8 +2,6 @@
 tags: ["solidity"]
 title: 2024-06-Multiplier-Technologies-Recheck
 description: Multiplier Technologies Lending Base Layer Recheck yAudit report
-nav_order: 63
-image: assets/images/logo.png
 ---
 
 # yAudit Multiplier Technologies Lending Base Layer Recheck Review <!-- omit in toc -->

@@ -2,8 +2,6 @@
 tags: ["solidity"]
 title: 2022-06-Singularity
 description: Singularity yAudit Report
-nav_order: 6
-image: assets/images/logo.png
 ---
 
 # yAudit Singularity v2 Review

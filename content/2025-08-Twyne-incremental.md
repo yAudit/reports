@@ -1,6 +1,6 @@
 ---
 tags: ["solidity"]
-title: 2025-08-Twyne-incremental
+title: 2025-08-Twyne-Incremental
 description: yAudit Twyne incremental report
 ---
 

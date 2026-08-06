@@ -2,8 +2,6 @@
 tags: ["solidity"]
 title: 2024-11-Olympus-Emission-Manager
 description: Olympus Emission Manager yAudit report
-nav_order: 75
-image: assets/images/logo.png
 ---
 
 # yAudit Olympus Emission Manager Review <!-- omit in toc -->

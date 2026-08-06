@@ -2,8 +2,6 @@
 tags: ["solidity"]
 title: 2023-12-Euler-EVC
 description: Euler EVC yAudit Report
-nav_order: 39
-image: assets/images/logo.png
 ---
 
 # yAudit Euler EVC Review

@@ -1,6 +1,6 @@
 ---
-tags: ["solidity", "Cow", "Euler"]
-title: 2026-03-Cow-Euler-integration
+tags: ["solidity", "cowswap", "euler"]
+title: 2026-03-Cow-Euler-Integration
 description: Cow Euler integration Report
 ---
 

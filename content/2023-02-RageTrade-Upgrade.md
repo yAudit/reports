@@ -1,9 +1,7 @@
 ---
 tags: ["solidity"]
 title: 2023-02-RageTrade-Upgrade
-description: Rage Trade Upgrade yAudit Report
-nav_order: 19
-image: assets/images/logo.png
+description: RageTrade Upgrade yAudit Report
 ---
 
 # yAudit Rage Trade Upgrade Review

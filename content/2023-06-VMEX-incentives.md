@@ -1,9 +1,7 @@
 ---
 tags: ["solidity"]
-title: 2023-06-VMEX-incentives
+title: 2023-06-VMEX-Incentives
 description: VMEX Incentives yAudit Report
-nav_order: 26
-image: assets/images/logo.png
 ---
 
 # yAudit VMEX Incentives Review

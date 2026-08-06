@@ -1,5 +1,5 @@
 ---
-tags: ["solidity", "AAVE"]
+tags: ["solidity", "aave"]
 title: 2025-12-Twyne-AAVE-Operators
 description: Twyne-AAVE-Operators Report
 ---

@@ -2,8 +2,6 @@
 tags: ["solidity"]
 title: 2023-07-Bunni-Oracle
 description: Timeless Bunni Oracle yAudit Report
-nav_order: 30
-image: assets/images/logo.png
 ---
 
 # yAudit Timeless Bunni Oracle Review

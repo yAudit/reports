@@ -2,8 +2,6 @@
 tags: ["solidity"]
 title: 2024-01-yPrisma-Recheck
 description: yPrisma Recheck yAudit Report
-nav_order: 49
-image: assets/images/logo.png
 ---
 
 # yAudit YearnBoostedStaker Recheck Review

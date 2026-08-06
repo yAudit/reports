@@ -2,8 +2,6 @@
 tags: ["solidity"]
 title: 2023-07-TempleDAO-Lending
 description: TempleDAO Lending yAudit Report
-nav_order: 31
-image: assets/images/logo.png
 ---
 
 # yAudit TempleDAO Lending Review
