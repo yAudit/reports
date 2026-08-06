@@ -322,37 +322,51 @@ export function cn(...inputs: ClassValue[]) {
 
       const normalizedName = normalizeName(name);
 
-      // Try to find a matching PDF by comparing normalized names
-      const matchedPdf = pdfFiles.find(pdf => {
+      // Normalized name of a PDF sharing this report's date, or null otherwise
+      const normalizedPdfName = (pdf: string): string | null => {
         // Extract date and name from PDF filename
         const pdfBase = pdf.replace(/\.pdf$/i, '');
 
         // Try different patterns
         // Pattern 1: MM-YYYY-Name or YYYY-MM-Name
         const dateMatch = pdfBase.match(/^(\d{2}|\d{4})-(\d{2}|\d{4})-(.+)$/);
-        if (dateMatch) {
-          const [, part1, part2, pdfName] = dateMatch;
-          // Check if dates match (either YYYY-MM or MM-YYYY)
-          const datesMatch = (part1 === year && part2 === month) ||
-                           (part1 === month && part2 === year);
-
-          if (datesMatch) {
-            // Compare normalized names (ignoring suffixes like "yAudit-Report")
-            const normalizedPdfName = normalizeName(
-              pdfName.replace(/-?yaudit-?report$/i, '')
-                     .replace(/-?report$/i, '')
-            );
-
-            // Check if the PDF name contains the markdown name or vice versa
-            return normalizedPdfName.includes(normalizedName) ||
-                   normalizedName.includes(normalizedPdfName);
-          }
+        if (!dateMatch) {
+          return null;
         }
 
-        return false;
+        const [, part1, part2, pdfName] = dateMatch;
+        // Check if dates match (either YYYY-MM or MM-YYYY)
+        const datesMatch = (part1 === year && part2 === month) ||
+                         (part1 === month && part2 === year);
+
+        if (!datesMatch) {
+          return null;
+        }
+
+        // Normalize, ignoring suffixes like "yAudit-Report"
+        return normalizeName(
+          pdfName.replace(/-?yaudit-?report$/i, '')
+                 .replace(/-?report$/i, '')
+        );
+      };
+
+      // Try to find matching PDFs by comparing normalized names:
+      // the PDF name contains the markdown name or vice versa
+      const candidates = pdfFiles.filter(pdf => {
+        const candidateName = normalizedPdfName(pdf);
+        return candidateName !== null &&
+               (candidateName.includes(normalizedName) ||
+                normalizedName.includes(candidateName));
       });
 
-      return matchedPdf || null;
+      // Prefer an exact name match. When two reports share a date, substring
+      // matching alone is ambiguous and would hand, say, VMEX the PDF of
+      // VMEX-incentives depending on directory order.
+      const exactMatch = candidates.find(
+        pdf => normalizedPdfName(pdf) === normalizedName
+      );
+
+      return exactMatch || candidates[0] || null;
     }
 
     return null;
