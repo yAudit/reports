@@ -1,5 +1,5 @@
 ---
-tags: ["solidity", "centrifuge"]
+tags: ["solidity"]
 title: 2025-10-Centrifuge-v3.1-Upgrade
 description: Centrifuge v3.1 Report
 ---

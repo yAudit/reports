@@ -1,5 +1,5 @@
 ---
-tags: ["solidity", "asymmetry", "USA.d", "liquity"]
+tags: ["solidity", "liquity"]
 title: 2025-01-Asymmetry-USA.d
 description: Security review of the USA.d / USDaf v1
 ---
