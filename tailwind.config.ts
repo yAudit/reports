@@ -31,17 +31,6 @@ export default {
       },
     },
   },
-  safelist: [
-    "math",
-    "math-inline",
-    "math-display",
-    "katex",
-    "katex-display",
-    "katex-html",
-    "katex-mathml",
-    "dark",
-    "light",
-  ],
   plugins: [
     typography
   ],

@@ -7,7 +7,7 @@ import { CloseCircleOutlined, MenuOutlined } from "@ant-design/icons";
 // Button component for consistent styling
 function Button({ text }: { text: string }) {
   return (
-    <button className="px-6 py-3 text-sm text-zinc-400 hover:text-deepblue hover:bg-white hover:bg-opacity-5 duration-700">
+    <button className="px-6 py-3 text-sm text-zinc-400 hover:text-deepblue hover:bg-white/5 duration-700">
       {text}
     </button>
   );
@@ -20,7 +20,7 @@ const Navbar = () => {
     <>
       <nav className="w-full bg-white flex h-18 items-center justify-between top-0 py-6">
         {/* Logo section */}
-        <div className="flex-shrink-0 ml-4 lg:ml-[8vw] xl:ml-[14vw] 2xl:ml-[19vw]">
+        <div className="shrink-0 ml-4 lg:ml-[8vw] xl:ml-[14vw] 2xl:ml-[19vw]">
           <Link href="https://yaudit.dev/">
             <img alt="Logo" src="/logo.svg" className="h-10" />
           </Link>
@@ -76,24 +76,24 @@ const Navbar = () => {
             </button>
 
             <Link href="https://reports.yaudit.dev/">
-              <button className="p-6 w-full text-xl text-zinc-400 hover:text-deepblue hover:bg-white hover:bg-opacity-5 duration-700">
+              <button className="p-6 w-full text-xl text-zinc-400 hover:text-deepblue hover:bg-white/5 duration-700">
                 Reports
               </button>
             </Link>
             <Link href="https://blog.yaudit.dev/">
-              <button className="p-6 w-full text-xl text-deepblue hover:bg-white hover:bg-opacity-5 duration-700">
+              <button className="p-6 w-full text-xl text-deepblue hover:bg-white/5 duration-700">
                 Blog
               </button>
             </Link>
             <Link href="https://research.yaudit.dev/">
-              <button className="p-6 w-full text-xl text-deepblue hover:bg-white hover:bg-opacity-5 duration-700">
+              <button className="p-6 w-full text-xl text-deepblue hover:bg-white/5 duration-700">
                 Research
               </button>
             </Link>
             <Link href="https://yaudit.dev/fellowships">
               <button
                 onClick={() => setMenuOpen(false)}
-                className="p-6 w-full text-xl text-zinc-400 hover:text-deepblue hover:bg-white hover:bg-opacity-5 duration-700"
+                className="p-6 w-full text-xl text-zinc-400 hover:text-deepblue hover:bg-white/5 duration-700"
               >
                 Fellowships
               </button>
@@ -101,7 +101,7 @@ const Navbar = () => {
             <Link href="https://yaudit.dev/services">
               <button
                 onClick={() => setMenuOpen(false)}
-                className="p-6 w-full text-xl text-zinc-400 hover:text-deepblue hover:bg-white hover:bg-opacity-5 duration-700"
+                className="p-6 w-full text-xl text-zinc-400 hover:text-deepblue hover:bg-white/5 duration-700"
               >
                 Services
               </button>
@@ -109,7 +109,7 @@ const Navbar = () => {
             <Link href="https://yaudit.dev/team">
               <button
                 onClick={() => setMenuOpen(false)}
-                className="p-6 w-full text-xl text-zinc-400 hover:text-deepblue hover:bg-white hover:bg-opacity-5 duration-700"
+                className="p-6 w-full text-xl text-zinc-400 hover:text-deepblue hover:bg-white/5 duration-700"
               >
                 Team
               </button>
@@ -117,7 +117,7 @@ const Navbar = () => {
             <Link href="https://yaudit.dev/contact-us">
               <button
                 onClick={() => setMenuOpen(false)}
-                className="p-6 w-full text-xl text-deepblue text-bold hover:bg-white hover:bg-opacity-5 duration-700"
+                className="p-6 w-full text-xl text-deepblue text-bold hover:bg-white/5 duration-700"
               >
                 Contact
               </button>

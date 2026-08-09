@@ -45,6 +45,8 @@ export default function Home({ reports }: HomeProps) {
         .filter((tag) => tags.includes(tag));
 
       if (urlTags.length > 0) {
+        // This client-only effect hydrates state from the URL after SSR.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setSelectedTags(urlTags);
       }
     }
@@ -107,9 +109,9 @@ export default function Home({ reports }: HomeProps) {
               <button
                 key={index}
                 className={
-                  "inline-flex items-center px-2.5 py-0.5 text-md font-medium bg-deepblue bg-opacity-10 text-deepblue hover:bg-opacity-5 duration-700" +
+                  "inline-flex items-center px-2.5 py-0.5 text-md font-medium bg-deepblue/10 text-deepblue hover:bg-deepblue/5 duration-700" +
                   (selectedTags.includes(tag)
-                    ? " bg-deepblue bg-opacity-20 text-deepblue"
+                    ? " bg-deepblue/20 text-deepblue"
                     : "")
                 }
                 onClick={() => handleTagSelection(tag)}

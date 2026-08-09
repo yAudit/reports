@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 
 "use client";
 
@@ -41,7 +40,6 @@ const Dock = React.forwardRef<HTMLDivElement, DockProps>(
       return React.Children.map(children, (child) => {
         if (React.isValidElement(child) && child.type === DockIcon) {
           return React.cloneElement(child, {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             ...(child.props as any),
             mouseX: mouseX,
             magnification: magnification,
@@ -76,7 +74,6 @@ export interface DockIconProps {
   size?: number;
   magnification?: number;
   distance?: number;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   mouseX?: any;
   className?: string;
   children?: React.ReactNode;

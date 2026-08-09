@@ -39,7 +39,7 @@ export default function ReportPage({
           <h2 className="text-xl mb-4 text-black">← Back to Reports</h2>
         </Link>
 
-        <div className="bg-white shadow p-6 sm:px-6 main-content">
+        <div className="bg-white shadow-sm p-6 sm:px-6 main-content">
           <div className="flex lg:flex-row md:flex-row flex-col justify-between lg:items-center md:items-center gap-1 items-start mb-6 text-black no-print">
             <h1
               className="lg:text-3xl md:text-xl sm:text-md font-bold text-black"
@@ -56,7 +56,7 @@ export default function ReportPage({
               {tags.map((tag, index) => (
                 <span
                   key={index}
-                  className="inline-flex items-center px-3 py-1.5 text-md font-medium bg-deepblue bg-opacity-10 text-deepblue"
+                  className="inline-flex items-center px-3 py-1.5 text-md font-medium bg-deepblue/10 text-deepblue"
                 >
                   {tag}
                 </span>

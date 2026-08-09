@@ -1,10 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import matter from "gray-matter";
-// import { remark } from "remark";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
-// import { Node } from 'unist';
 import { visit } from "unist-util-visit";
 
 import { unified } from "unified";
@@ -92,7 +89,6 @@ function generateTableOfContents(content: string) {
         tocLines.push(
           `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#${h.id}">${h.text}</a>`
         );
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         currentLetterIndex++;
       }
     });
@@ -192,7 +188,6 @@ export function extractDate(filename: string): string | null {
   const match = filename.match(/^(\d{4})-(\d{2})/);
 
   if (match) {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [_, year, month] = match;
     // Create date object (using 1st of the month)
     const date = new Date(parseInt(year), parseInt(month) - 1, 15);
