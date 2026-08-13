@@ -1,8 +1,9 @@
 import { GetStaticProps, GetStaticPaths } from "next";
 import path from "path";
 import fs from "fs";
-import { extractDate, processMarkdown, getAllReportSlugs, findEmbeddedPdf, findMatchingPdf } from "../lib/utils";
+import { extractDate, processMarkdown, getAllReportSlugs, findEmbeddedPdf, findMatchingPdf, getCanonicalSlug, isoDateFromSlug, SITE_URL } from "../lib/utils";
 import Link from "next/link";
+import Head from "next/head";
 import { useState } from "react";
 
 interface ReportPageProps {
@@ -13,6 +14,9 @@ interface ReportPageProps {
   hasPdf: boolean;
   pdfPath?: string;
   hasWebView: boolean;
+  description: string;
+  canonicalSlug: string;
+  isoDate: string | null;
 }
 
 interface ReportFrontMatter {
@@ -29,10 +33,70 @@ export default function ReportPage({
   hasPdf,
   pdfPath,
   hasWebView,
+  description,
+  canonicalSlug,
+  isoDate,
 }: ReportPageProps) {
   const [viewMode, setViewMode] = useState<"html" | "pdf">(hasPdf ? "pdf" : "html");
+  const canonicalUrl = `${SITE_URL}/${canonicalSlug}`;
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "TechArticle",
+      headline: title,
+      description,
+      datePublished: isoDate,
+      dateModified: isoDate,
+      keywords: tags.join(", "),
+      author: { "@type": "Organization", name: "yAudit", url: "https://yaudit.dev" },
+      publisher: {
+        "@type": "Organization",
+        name: "yAudit",
+        url: "https://yaudit.dev",
+        logo: { "@type": "ImageObject", url: `${SITE_URL}/logo.svg` },
+      },
+      mainEntityOfPage: canonicalUrl,
+      url: canonicalUrl,
+      ...(pdfPath
+        ? { encoding: { "@type": "MediaObject", contentUrl: `${SITE_URL}${pdfPath}`, encodingFormat: "application/pdf" } }
+        : {}),
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Reports", item: SITE_URL },
+        { "@type": "ListItem", position: 2, name: title, item: canonicalUrl },
+      ],
+    },
+  ];
+
 
   return (
+    <>
+      <Head>
+        <title>{`${title} | yAudit Reports`}</title>
+        <meta name="description" content={description} />
+        <link rel="canonical" href={canonicalUrl} />
+        <meta property="og:type" content="article" />
+        <meta property="og:title" content={title} />
+        <meta property="og:description" content={description} />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta property="og:site_name" content="yAudit Reports" />
+        <meta property="og:image" content="https://yaudit.dev/twitter.png" />
+        {isoDate && <meta property="article:published_time" content={isoDate} />}
+        {tags.map((tag) => (
+          <meta key={`tag-${tag}`} property="article:tag" content={tag} />
+        ))}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={title} />
+        <meta name="twitter:description" content={description} />
+        <meta name="twitter:image" content="https://yaudit.dev/twitter.png" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </Head>
     <main className="min-h-screen bg-gray-50 main-content">
       <article className="max-w-6xl mx-auto px-4 py-10 main-content">
         <Link href="/" className="no-print">
@@ -63,6 +127,14 @@ export default function ReportPage({
               ))}
             </div>
           </div>
+            <p className="mb-6 text-gray-700 leading-relaxed">{description}</p>
+            {hasPdf && pdfPath && (
+              <p className="mb-6">
+                <a href={pdfPath} className="text-deepblue underline">
+                  Download {title} PDF
+                </a>
+              </p>
+            )}
 
           {hasPdf && (
             <div className="mb-6 flex gap-2 no-print">
@@ -119,6 +191,7 @@ export default function ReportPage({
         </div>
       </article>
     </main>
+    </>
   );
 }
 
@@ -236,6 +309,12 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
     const title = frontMatter.title?.split("-").slice(2).join(" ") ||
                   slug.split("-").slice(2).join(" ").replace(/-/g, " ") ||
                   "Untitled";
+    const description =
+      typeof frontMatter.description === "string" && frontMatter.description.trim()
+        ? frontMatter.description
+        : title;
+    const canonicalSlug = matchedFile ? getCanonicalSlug(matchedFile) : slug;
+    const isoDate = isoDateFromSlug(canonicalSlug);
 
     return {
       props: {
@@ -246,6 +325,9 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
         hasPdf,
         pdfPath: hasPdf ? `/pdf/${matchingPdf}` : null,
         hasWebView,
+        description,
+        canonicalSlug,
+        isoDate,
       },
       revalidate: 3600, // Revalidate every hour
     };

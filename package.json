@@ -5,8 +5,8 @@
   "type": "module",
   "packageManager": "pnpm@11.1.1",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "node scripts/generate-static-seo.mjs && next dev",
+    "build": "node scripts/generate-static-seo.mjs && next build",
     "start": "next start",
     "lint": "eslint ."
   },

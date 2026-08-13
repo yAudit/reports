@@ -7,35 +7,14 @@ export default function Document() {
       <Head>
         {/* Basic Metadata */}
         <meta charSet="utf-8" />
-        <meta name="title" content="yAudit Reports" />
-        <meta name="description" content="ZK & Smart Contract Security" />
-        <meta
-          name="keywords"
-          content="yAudit, Zero Knowledge, Smart Contract Security, Blockchain Security, Ethereum, Cryptography, DeFi"
-        />
+        {/* Per-page title, description, canonical, Open Graph and Twitter tags
+            are emitted by each page's <Head> (see pages/index.tsx, [slug].tsx).
+            Only site-wide identity/fallback metadata lives here. */}
         <meta name="referrer" content="origin" />
         <meta name="creator" content="yAudit Team" />
         <meta name="robots" content="follow, index" />
-
-        {/* Open Graph */}
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://reports.yaudit.dev" />
-        <meta property="og:title" content="yAudit" />
-        <meta
-          property="og:description"
-          content="ZK & Smart Contract Security"
-        />
-        <meta property="og:site_name" content="yAudit" />
-        <meta
-          property="og:image"
-          content="https://yaudit.dev/twitter.png"
-        />
-
-        {/* Twitter */}
-        <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:site" content="@yaudit" />
         <meta name="twitter:creator" content="@yaudit" />
-        <meta name="twitter:image" content="https://yaudit.dev/twitter.png" />
 
         {/* Favicon */}
         <link rel="icon" href="/favicon.ico" />

@@ -1,11 +1,12 @@
 import { useState, useMemo, useEffect } from "react";
 import { GetStaticProps } from "next";
+import Head from "next/head";
 import SearchBar from "../components/SearchBar";
 import ReportCard from "../components/ReportCard";
 import matter from "gray-matter";
 import path from "path";
 import fs from "fs";
-import { extractDate } from "@/lib/utils";
+import { extractDate, SITE_URL, getCanonicalSlug } from "@/lib/utils";
 
 interface Report {
   title: string;
@@ -99,7 +100,56 @@ export default function Home({ reports }: HomeProps) {
     });
   };
 
+  const homeDescription =
+    "Smart contract and zero-knowledge security audit reports by yAudit. Browse findings, severity ratings, and scope for DeFi and ZK protocol reviews.";
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: "yAudit Reports",
+      url: SITE_URL,
+      description: homeDescription,
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      name: "yAudit",
+      url: "https://yaudit.dev",
+      logo: `${SITE_URL}/logo.svg`,
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      itemListElement: reports.map((report, index) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        name: report.title,
+        url: `${SITE_URL}/${report.slug}`,
+      })),
+    },
+  ];
+
   return (
+    <>
+      <Head>
+        <title>{"yAudit Reports — Smart Contract & ZK Security Audits"}</title>
+        <meta name="description" content={homeDescription} />
+        <link rel="canonical" href={SITE_URL} />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="yAudit Reports — Smart Contract & ZK Security Audits" />
+        <meta property="og:description" content={homeDescription} />
+        <meta property="og:url" content={SITE_URL} />
+        <meta property="og:site_name" content="yAudit Reports" />
+        <meta property="og:image" content="https://yaudit.dev/twitter.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="yAudit Reports — Smart Contract & ZK Security Audits" />
+        <meta name="twitter:description" content={homeDescription} />
+        <meta name="twitter:image" content="https://yaudit.dev/twitter.png" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </Head>
     <div className="min-h-screen bg-gray-50">
       <main className="max-w-6xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 sm:px-0 mb-8 text-gray-400">
@@ -139,6 +189,7 @@ export default function Home({ reports }: HomeProps) {
         </div>
       </main>
     </div>
+    </>
   );
 }
 
@@ -159,7 +210,7 @@ export const getStaticProps: GetStaticProps = async () => {
         });
 
         return {
-          slug: filename.replace(".md", ""),
+          slug: getCanonicalSlug(filename),
           title:
             (frontmatter.title &&
               frontmatter.title?.split("-").slice(2).join(" ")) ||

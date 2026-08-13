@@ -42,3 +42,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# generated SEO/AIO artifacts (regenerated at build via scripts/generate-static-seo.mjs)
+/public/sitemap.xml
+/public/robots.txt
+/public/llms.txt
+/public/reports.json

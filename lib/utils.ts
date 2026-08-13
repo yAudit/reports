@@ -263,6 +263,25 @@ export function cn(...inputs: ClassValue[]) {
     return [base];
   }
 
+/** Canonical site origin used for SEO tags, sitemap, and structured data. */
+export const SITE_URL = "https://reports.yaudit.dev";
+
+/**
+ * Canonical slug for a report file. Report pages are served under two slug
+ * variants (YEAR-MONTH-NAME and MONTH-YEAR-NAME); this returns the
+ * YEAR-MONTH-NAME form so canonical URLs and the sitemap use a single shape.
+ */
+export function getCanonicalSlug(filename: string): string {
+  return getAllReportSlugs(filename)[0];
+}
+
+/** ISO date (YYYY-MM-15) for a slug beginning with YYYY-MM, else null. */
+export function isoDateFromSlug(slug: string): string | null {
+  const match = slug.match(/^(\d{4})-(\d{2})/);
+  if (!match) return null;
+  return `${match[1]}-${match[2]}-15`;
+}
+
   /**
    * Given markdown content, find a PDF that is explicitly referenced in HTML.
    * This lets PDF-only reports use their declared embed path instead of relying
