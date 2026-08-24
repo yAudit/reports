@@ -1,5 +1,5 @@
 ---
-tags: ["solidity"]
+tags: ["solidity", "yearn"]
 title: 2026-08-stYFI-Governance
 description: Yearn stYFI Governance Contracts
 ---
