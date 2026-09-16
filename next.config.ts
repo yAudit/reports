@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Every report is generated from repository content at build time. Exporting
+  // a static site keeps PDFs and Markdown out of Netlify's server function.
+  output: "export",
   reactStrictMode: true,
   transpilePackages: [
     "@ant-design/icons-svg",
@@ -11,16 +13,6 @@ const nextConfig: NextConfig = {
     "rc-picker",
   ],
   turbopack: {},
-  // Add redirects configuration
-  async redirects() {
-    return [
-      {
-        source: '/reports/:slug',
-        destination: '/:slug',
-        permanent: true, // This is a 308 status code (permanent redirect)
-      }
-    ];
-  },
 };
 
 export default nextConfig;

@@ -238,8 +238,6 @@ export const getStaticProps: GetStaticProps = async () => {
       props: {
         reports,
       },
-      // Revalidate every hour
-      revalidate: 3600,
     };
   } catch (error) {
     console.error("Error fetching reports:", error);
@@ -247,7 +245,6 @@ export const getStaticProps: GetStaticProps = async () => {
       props: {
         reports: [],
       },
-      revalidate: 3600,
     };
   }
 };

@@ -1,4 +1,8 @@
+[build]
+  command = "pnpm build"
+  publish = "out"
+
 [[redirects]]
-  from = "/*"
-  to = "/"
-  status = 200
+  from = "/reports/:slug"
+  to = "/:slug"
+  status = 301

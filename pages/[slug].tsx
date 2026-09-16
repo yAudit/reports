@@ -232,7 +232,9 @@ export const getStaticPaths: GetStaticPaths = async () => {
 
   return {
     paths,
-    fallback: "blocking",
+    // Reports only change when this repository is redeployed, so there is no
+    // need for a runtime fallback (and therefore no server function).
+    fallback: false,
   };
 };
 
@@ -329,7 +331,6 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
         canonicalSlug,
         isoDate,
       },
-      revalidate: 3600, // Revalidate every hour
     };
   } catch (error) {
     console.error("Error fetching report:", error);
