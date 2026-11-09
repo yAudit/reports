@@ -227,3 +227,16 @@ p:has(.katex-display) {
     text-shadow: none !important;
   }
 }
+
+/* Keep anchor targets (e.g. finding headings) clear of the sticky navbar. A
+   scroll-padding on html would also scroll the page whenever a navbar link
+   or button gets focus. */
+[id] {
+  scroll-margin-top: 5rem;
+}
+
+/* Always reserve the scrollbar's space, so the navbar sits in the same place
+   on short pages without a scrollbar as on every other page and site. */
+html {
+  scrollbar-gutter: stable;
+}
