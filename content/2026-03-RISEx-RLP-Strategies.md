@@ -1,6 +1,7 @@
 ---
 tags: ["solidity", "yearn"]
 title: 2026-03-RISEx-RLP-Strategies
+repo: yAudit/rise-report
 description: RISEx RLP Strategies Report
 ---
 

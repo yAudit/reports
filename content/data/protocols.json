@@ -1,0 +1,112 @@
+{
+  "1UP": ["2024-03-1upYFI"],
+  "3Jane": ["2025-10-3jane", "2026-05-3jane-PYT-locker", "2026-05-3jane-USD3-update"],
+  "Asymmetry": [
+    "2024-06-Asymmetry-veASF",
+    "2025-01-Asymmetry-USA-d",
+    "2025-04-Asymmetry-dASF",
+    "2025-05-Asymmetry-USDaf-V2",
+    "2025-06-usdaf-2-pr2"
+  ],
+  "Bearn": ["2025-03-Bearn-yBGT"],
+  "Beefy": ["2025-03-Beefy-Sonic"],
+  "Bunni": [
+    "2022-08-Bunni",
+    "2022-08-Timeless-Yield-Daddy",
+    "2023-03-Bunni-Zap",
+    "2023-05-Timeless-Gauge",
+    "2023-07-Bunni-Oracle"
+  ],
+  "CAP": ["2025-03-CAP-PremainnetVault", "2025-05-CAP-PremainnetVault-update"],
+  "Cove": ["2024-03-Cove"],
+  "Cozy": ["2025-05-Cozy-Safety-Module", "2025-05-Cozy-Safety-module-Reward-Manager"],
+  "Dopex": ["2023-10-Dopex-rDPX-v2", "2023-10-DopexV2-CLAMM", "2023-10-DopexV2-rDPX-upgrade"],
+  "Euler": [
+    "2023-12-Euler-EVC",
+    "2024-03-EulerV2",
+    "2024-08-Euler-Yield-Aggregator",
+    "2024-09-Euler-Hook-Target-Firewall",
+    "2024-09-Euler-PendleOracle",
+    "2024-09-Euler-price-oracles-update",
+    "2024-10-Euler-ERC20-Wrapper-Locked",
+    "2025-11-Euler-Securitize"
+  ],
+  "GET Protocol": ["2022-12-GET-Protocol-Staking"],
+  "Goldilocks": [
+    "2024-08-Goldilocks",
+    "2025-03-Goldilocks-ivault4626",
+    "2025-09-Goldilocks-goldilend",
+    "2025-11-goldilocks"
+  ],
+  "HAI": ["2025-05-HAI-Oracle", "2025-08-haiVELO-V2", "2026-02-HAI-CurveStableSwapNG-Oracle"],
+  "Inverse Finance": ["2024-01-Inverse-sDOLA"],
+  "KEOM": ["2023-08-KEOM-upgrade"],
+  "Llama": ["2022-12-LlamaPayV2", "2023-01-LlamaLendV2"],
+  "Multiplier Technologies": ["2024-06-Multiplier-Technologies-Recheck"],
+  "Napier": ["2024-11-napier"],
+  "NounsDAO": ["2022-10-NounsDAO-Token-Buyer"],
+  "Olympus": [
+    "2022-03-Ohm",
+    "2022-04-Ohm-Bond",
+    "2024-11-Olympus-Emission-Manager",
+    "2025-02-Olympus-CoolerV2",
+    "2025-03-Olympus-Cooler-Migrator-Composite",
+    "2025-05-Olympus-CCIP"
+  ],
+  "Orange Finance": ["2023-12-dopex-v2-automator"],
+  "Origami": [
+    "2024-06-Origami-Oracles-Adapters",
+    "2025-02-Origami-hOHM",
+    "2025-03-Origami-hOHM-Migrator",
+    "2025-07-Origami-Cowswapper"
+  ],
+  "Personae": ["2023-06-RLN", "2023-06-Spartan-ECDSA"],
+  "Qantura": ["2024-09-Qantura-rebalance"],
+  "Rage Trade": ["2022-12-RageTrade", "2023-02-RageTrade-Upgrade"],
+  "Resupply": [
+    "2024-12-ResupplyFinance",
+    "2025-07-Resupply-sreUSD",
+    "2025-07-Resupply-update",
+    "2025-09-Resupply-curvelend"
+  ],
+  "Royco": ["2025-01-Royco-CCDM", "2025-01-Royco-CCDM-MerkleVault"],
+  "Singularity": ["2022-06-Singularity"],
+  "Summa": ["2024-05-Summa-Va", "2024-05-Summa-Vb"],
+  "Superform": ["2024-10-Superform"],
+  "TempleDAO": [
+    "2023-01-TempleDAO-Origami",
+    "2023-02-TempleDAO-Origami-Recheck",
+    "2023-07-TempleDAO-Lending",
+    "2023-08-TempleDAO-Lending-Recheck"
+  ],
+  "VFAT": [
+    "2023-06-Sickle",
+    "2023-10-Sickle-Update",
+    "2024-05-Sickle-3",
+    "2024-06-Sickle-4",
+    "2024-10-Sickle-Strategies",
+    "2025-04-Sickle",
+    "2026-02-vfat-router",
+    "2026-04-VFAT-Sickle-Bridge",
+    "2026-05-VFAT-Sickle-Bridge-update-1",
+    "2026-05-VFAT-Sickle-Bridge-update-2",
+    "2026-08-VFAT-Sickle-Automation"
+  ],
+  "VMEX": ["2023-06-VMEX", "2023-06-VMEX-incentives"],
+  "Yearn": [
+    "2022-04-veYFI",
+    "2022-06-Yearn-BalancerLPFactory",
+    "2022-11-Yearn-Stargate-Strategy",
+    "2023-06-Yearn-v3",
+    "2024-01-yPrisma",
+    "2024-01-yPrisma-Recheck",
+    "2024-05-Yearn-STB",
+    "2026-04-Yearn-Lender-Borrower-Strategy",
+    "2026-05-Yearn-stYFI-YBC",
+    "2026-05-Yearn-stYFI-teams",
+    "2026-06-Yearn-Tokenized-Strategy-v3.1.0",
+    "2026-06-Yearn-Vaults-v3.1.0",
+    "2026-08-stYFI-Governance"
+  ],
+  "yFu": ["2022-09-yFu-NFT"]
+}

@@ -1,6 +1,7 @@
 ---
 tags: ["solidity", "morpho", "twyne"]
 title: 2026-08-Twyne-Morpho-Vault
+repo: yAudit/twyne-morpho-report
 description: Twyne morpho vault
 ---
 

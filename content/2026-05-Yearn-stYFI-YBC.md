@@ -1,6 +1,7 @@
 ---
 tags: ["vyper", "yearn"]
 title: 2026-05-Yearn-stYFI-YBC
+repo: yAudit/yearn-stYFI-YBC
 description: Yearn stYFI YBC
 ---
 

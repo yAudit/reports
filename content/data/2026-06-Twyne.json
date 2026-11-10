@@ -1,0 +1,64 @@
+{
+  "repo": "yAudit/twyne-106-update-report",
+  "githubUrl": "https://github.com/yAudit/twyne-106-update-report",
+  "title": "Twyne 1.0.6 Update",
+  "protocolName": "Twyne",
+  "protocolOverview": "Twyne is a credit delegation protocol that lets borrowers rent unused borrowing power from other lenders to boost their Liquidation LTV. Lenders earn additional yield while borrowers get to ramp up their leverage or insulate their debt.",
+  "auditScope": "This audit covers the changes between version 1.0.5 and 1.0.6 for the Twyne repository, and PR #9 for the aToken Wrapper repository, across half a day of review. The changeset in scope includes the addition of an admin for the Twyne contracts, and an admin and pause guardian for the aToken Wrapper contract.",
+  "overallAssessment": "The Twyne 1.0.6 update is a narrowly scoped administrative change that did not reveal any severe findings during the review. The two informational issues were promptly acknowledged by the Twyne team.",
+  "startDate": "2026-06-15",
+  "finishDate": "2026-06-15",
+  "auditors": [
+    "ret2basic",
+    "adriro"
+  ],
+  "commits": [
+    {
+      "label": "Twyne contracts",
+      "hash": "501185b00b83bf876a18aa875fcd099d366e0aa9",
+      "url": "https://github.com/0xTwyne/twyne-contracts/commit/501185b00b83bf876a18aa875fcd099d366e0aa9"
+    },
+    {
+      "label": "aToken wrapper",
+      "hash": "706aeac7fb8ad0fd4b03bca10fb3d5a93202c02a",
+      "url": "https://github.com/0xTwyne/aave-v3-aToken-wrapper/pull/9/changes/706aeac7fb8ad0fd4b03bca10fb3d5a93202c02a"
+    }
+  ],
+  "finalCommits": [
+    {
+      "label": "Twyne contracts (public repository)",
+      "hash": "0c1ff9db684bea4fc6bf6fd31a3c90f7c787a1e7",
+      "url": "https://github.com/0xTwyne/twyne-contracts-v1/commit/0c1ff9db684bea4fc6bf6fd31a3c90f7c787a1e7"
+    },
+    {
+      "label": "aToken wrapper",
+      "hash": "797be33e22cce033f6d9c66650d9604ee48fc60d",
+      "url": "https://github.com/0xTwyne/aave-v3-aToken-wrapper/commit/797be33e22cce033f6d9c66650d9604ee48fc60d"
+    }
+  ],
+  "repositories": [
+    "https://github.com/0xTwyne/twyne-contracts",
+    "https://github.com/0xTwyne/aave-v3-aToken-wrapper"
+  ],
+  "auditResources": [
+    "Code repositories and documentation"
+  ],
+  "treeOfAuditedFiles": "├── aave-v3-aToken-wrapper\n│   └── src\n│       └── AaveV3ATokenWrapper.sol\n└── twyne-contracts\n    └── src\n        ├── TwyneFactory\n        │   └── CollateralVaultFactory.sol\n        ├── interfaces\n        │   ├── IErrors.sol\n        │   └── IEvents.sol\n        └── twyne\n            └── VaultManager.sol",
+  "finalRemarks": null,
+  "nsloc": null,
+  "evaluations": [],
+  "issues": [
+    {
+      "number": 1,
+      "title": "Revert errors still refer to owner after admin split",
+      "severity": "Informational",
+      "body": "`VaultManager`, `CollateralVaultFactory`, and `AaveV3ATokenWrapper` gate calls with the operational `admin` role, but some custom errors still refer to `owner`. Failed access checks therefore report stale role names, which can confuse integrations, monitoring, and tests that use revert data to classify failures.\n\n#### Technical Details\n\nIn `VaultManager.sol`, `onlyCollateralVaultFactoryOrAdmin()` allows `admin` or `collateralVaultFactory`, but it reverts with `CallerNotOwnerOrCollateralVaultFactory()`. The `owner` role is now distinct from `admin`, since `setAdmin()` lets the owner delegate operational permissions to another account.\n\nIn `CollateralVaultFactory.sol`, `pause()` allows `admin` or `pauseGuardian`, but it reverts with `CallerNotOwnerOrPauseGuardian()`. This has the same stale owner terminology after the admin split.\n\nIn `AaveV3ATokenWrapper.sol`, `pause()` also allows `admin` or `pauseGuardian`, but it reverts with `CallerNotOwnerOrPauseGuardian()`. The wrapper initializes `admin` and `pauseGuardian` to the owner, but `setAdmin()` can later move operational permissions away from the owner.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nRename the errors to match the enforced roles, such as `CallerNotAdminOrCollateralVaultFactory()` and `CallerNotAdminOrPauseGuardian()`. Changing a custom error name changes its 4 byte selector, so make the rename only if selector compatibility is acceptable across the Twyne contracts and the aToken wrapper, or keep the existing selectors and document the legacy names until a coordinated breaking release.\n\n#### Developer Response\n\nAcknowledged."
+    },
+    {
+      "number": 2,
+      "title": "VaultManager admin checks do not resolve EVC senders",
+      "severity": "Informational",
+      "body": "`VaultManager.onlyCollateralVaultFactoryOrAdmin()` compares raw `msg.sender` against `admin` and `collateralVaultFactory`. Calls routed through the EVC on behalf of an authenticated account will therefore fail, in particular for the admin case, as the factory is expected to direct call.\n\n#### Technical Details\n\n`CollateralVaultFactory` inherits `EVCUtil` and overrides `_msgSender()` to resolve the current EVC account. This makes the factory EVC-aware, but the new `VaultManager.onlyCollateralVaultFactoryOrAdmin()` modifier uses `msg.sender` instead of resolving the caller with the EVC helper.\n\nThe result is inconsistent caller handling between the factory and the manager. When a privileged call reaches `VaultManager` through EVC context, the raw sender is the EVC rather than the authenticated account.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nConsider using `_msgSender()` instead of `msg.sender` in `onlyCollateralVaultFactoryOrAdmin()`.\n\n#### Developer Response\n\nAcknowledged. VaultManager isn't needed or expected to be called from EVC."
+    }
+  ]
+}

@@ -1,0 +1,125 @@
+{
+  "repo": "yAudit/blueberry-protocol-report",
+  "githubUrl": "https://github.com/yAudit/blueberry-protocol-report",
+  "title": "Curvance Lender Strategy",
+  "protocolName": "Blueberry",
+  "protocolOverview": "Curvance Lender strategy is a set of Yearn V3 tokenized strategies that deploy a single asset into Curvance borrowable markets and lending optimizers on Monad. CurvanceLender targets one destination, identified at construction as either a direct borrowable cToken or a LendingOptimizer vault. CurvanceOptimizer allocates across up to sixteen destinations of either kind according to management-set asset targets. Both strategies sell Merkl reward emissions through Yearn auctions or, optionally, configured Uniswap V3 routes.",
+  "auditScope": "This audit covers 5 smart contracts totaling approximately 665~ lines of code across 1 day of review.",
+  "overallAssessment": "The reviewed contracts are well constructed and supported by an unusually thorough test suite, with no critical or high severity issues identified. The most significant finding concerns reward sales, which execute with no minimum output and are therefore sandwichable. The remaining findings are low severity or informational and cluster around operational robustness rather than fund safety.",
+  "startDate": "2026-09-10",
+  "finishDate": "2026-09-11",
+  "auditors": [
+    "Watermelon",
+    "HHK"
+  ],
+  "commits": [
+    {
+      "label": null,
+      "hash": "b912aa446e2f478a701013cc37a82854851545c2",
+      "url": "https://github.com/Blueberryfi/curvance-lender/tree/b912aa446e2f478a701013cc37a82854851545c2"
+    }
+  ],
+  "finalCommits": [],
+  "repositories": [
+    "https://github.com/Blueberryfi/curvance-lender"
+  ],
+  "auditResources": [
+    "Code repositories and documentation"
+  ],
+  "treeOfAuditedFiles": "src\n├── BlueberryProtocolAddressProvider.sol\n├── CurvanceOptimizer.sol\n├── CurvanceOptimizerFactory.sol\n├── Strategy.sol\n└── StrategyFactory.sol",
+  "finalRemarks": null,
+  "nsloc": null,
+  "evaluations": [
+    {
+      "category": "access_control",
+      "score": "Good",
+      "description": "Roles are cleanly separated across management, keeper and emergency admin, with strategy management transferred through a two-step handover."
+    },
+    {
+      "category": "mathematics",
+      "score": "Good",
+      "description": "There are no bespoke formulas; arithmetic is limited to min and max clamps over ERC-4626 conversions delegated to audited libraries."
+    },
+    {
+      "category": "complexity",
+      "score": "Average",
+      "description": "Both strategies are short and simple, built from small single-purpose functions with a clear split between the single-target and multi-market designs."
+    },
+    {
+      "category": "libraries",
+      "score": "Good",
+      "description": null
+    },
+    {
+      "category": "decentralization",
+      "score": "Low",
+      "description": "Management registers destinations, sets allocation targets and can enable the direct swap route, all effective immediately and without an on-chain timelock."
+    },
+    {
+      "category": "documentation",
+      "score": "Good",
+      "description": "README and the operational documents are thorough and pre-disclose several genuine limitations. NatSpec coverage is uneven between the two strategies."
+    },
+    {
+      "category": "testing",
+      "score": "Good",
+      "description": "Strong coverage, combining pinned-block fork integration with randomized action sequences and targeted regression tests."
+    }
+  ],
+  "issues": [
+    {
+      "number": 1,
+      "title": "Missing event emission in factory `setAddresses` methods",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nBoth `StrategyFactory.setAddresses` and `CurvanceOptimizerFactory.setAddresses` allow the current management address to update the management, performance fee recipient, and keeper addresses assigned to future deployments.\n\nHowever, neither function emits an event when these privileged configuration values are modified. Consequently, off-chain monitoring systems cannot reliably track these changes without inspecting contract storage or transaction calldata.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nDefine an `AddressesUpdated` event in both factories and emit it within each external `setAddresses` method:\n\n```diff\n+event AddressesUpdated(\n+    address indexed management,\n+    address indexed performanceFeeRecipient,\n+    address indexed keeper\n+);\n```\n\n```diff\n function setAddresses(address _management, address _performanceFeeRecipient, address _keeper) external {\n     require(msg.sender == management, \"!management\");\n     management = _management;\n     performanceFeeRecipient = _performanceFeeRecipient;\n     keeper = _keeper;\n+    emit AddressesUpdated(_management, _performanceFeeRecipient, _keeper);\n }\n```\n\nFor `CurvanceOptimizerFactory`, which delegates the storage updates to `_setAddresses`, emit the event only from the external method so construction does not produce a misleading configuration-update event:\n\n```diff\n function setAddresses(address _management, address _performanceFeeRecipient, address _keeper) external {\n     require(msg.sender == management, \"!management\");\n     _setAddresses(_management, _performanceFeeRecipient, _keeper);\n+    emit AddressesUpdated(_management, _performanceFeeRecipient, _keeper);\n }\n```\n\n#### Developer Response\n\nAgreed. Fix in [PR#6](https://github.com/Blueberryfi/curvance-lender/pull/6)"
+    },
+    {
+      "number": 2,
+      "title": "Factory `newStrategy` methods perform redundant external calls",
+      "severity": "Gas",
+      "body": "#### Technical Details\n\nAfter deploying a new strategy, both `StrategyFactory.newStrategy` and `CurvanceOptimizerFactory.newStrategy` execute four sequential external calls to configure the deployed contract's privileged roles:\n\n```solidity\nstrategy.setPerformanceFeeRecipient(performanceFeeRecipient);\nstrategy.setKeeper(keeper);\nstrategy.setPendingManagement(management);\nstrategy.setEmergencyAdmin(emergencyAdmin);\n```\n\nEach call introduces an additional external call, calldata handling, fallback dispatch, and delegatecall overhead. Since these values are always configured together during deployment, performing four separate calls unnecessarily increases the gas cost of every strategy and optimizer deployment.\n\n#### Impact\n\nGas optimization.\n\n#### Recommendation\n\nImplement a single management-restricted method on each strategy implementation that configures the performance fee recipient, keeper, pending management, and emergency administrator while preserving the existing validation and event emission behavior. Both factories can then initialize all four roles through one external call:\n\n```diff\n-        strategy.setPerformanceFeeRecipient(performanceFeeRecipient);\n-        strategy.setKeeper(keeper);\n-        strategy.setPendingManagement(management);\n-        strategy.setEmergencyAdmin(emergencyAdmin);\n+        strategy.initializeFactoryAddresses(\n+            management,\n+            performanceFeeRecipient,\n+            keeper,\n+            emergencyAdmin\n+        );\n```\n\n#### Developer Response\n\nAgreed. Fixed in [PR#6](https://github.com/Blueberryfi/curvance-lender/pull/6)."
+    },
+    {
+      "number": 3,
+      "title": "`StrategyFactory.isDeployedStrategy` only recognizes the latest strategy for each vault",
+      "severity": "Low",
+      "body": "#### Technical Details\n\n`StrategyFactory.newStrategy` records each deployed strategy using its underlying vault as the mapping key:\n\n```solidity\ndeployments[_vault] = address(_newStrategy);\n```\n\nIf another strategy is subsequently deployed for the same vault, this assignment overwrites the address of the previously deployed strategy. `StrategyFactory.isDeployedStrategy` retrieves the vault associated with the supplied strategy and compares the strategy against the single address currently stored for that vault.\n\nConsequently, the function returns `false` for valid strategies deployed by the factory as soon as a newer strategy is deployed for the same vault. This makes the factory registry an incomplete record of its deployments and may cause integrations relying on `isDeployedStrategy` to reject legitimate strategies.\n\n#### Impact\n\nLow.\n\n#### Recommendation\n\nTrack every strategy deployed for each vault using OpenZeppelin's `EnumerableSet.AddressSet`:\n\n```diff\n+import {EnumerableSet} from \"@openzeppelin/contracts/utils/structs/EnumerableSet.sol\";\n\n contract StrategyFactory {\n+    using EnumerableSet for EnumerableSet.AddressSet;\n\n-    mapping(address => address) public deployments;\n+    mapping(address => EnumerableSet.AddressSet) private deployments;\n\n     function newStrategy(\n         address _asset,\n         string calldata _name,\n         address _vault,\n         address _router\n     ) external virtual returns (address) {\n         // Strategy deployment and configuration omitted.\n\n-        deployments[_vault] = address(_newStrategy);\n+        deployments[_vault].add(address(_newStrategy));\n         return address(_newStrategy);\n     }\n\n     function isDeployedStrategy(address _strategy) external view returns (bool) {\n         address _vault = IStrategyInterface(_strategy).vault();\n-        return deployments[_vault] == _strategy;\n+        return deployments[_vault].contains(_strategy);\n     }\n }\n```\n\nConsider also exposing getter methods for the number of strategies and the strategy at a given index so that integrations can enumerate all deployments associated with a vault.\n\n#### Developer Response\n\nAgreed. Fixed in [PR#6](https://github.com/Blueberryfi/curvance-lender/pull/6)."
+    },
+    {
+      "number": 4,
+      "title": "Reward swaps lack slippage protection and can be sandwiched",
+      "severity": "Low",
+      "body": "#### Technical Details\n\n`CurvanceLender._claimAndSellRewards` swaps the strategy's entire balance of each configured reward token into the underlying asset when auctions are disabled. However, it calls `_swapFrom` with `_minAmountOut` set to zero:\n\n```solidity\n_swapFrom(\n    rewardToken,\n    address(asset),\n    ERC20(rewardToken).balanceOf(address(this)),\n    0\n);\n```\n\n`CurvanceLender.manualSellRewards` similarly passes a zero minimum output when keepers sell rewards manually.\n\nThe value is forwarded to the Uniswap router as `amountOutMinimum`. Consequently, these swaps will accept any amount of the underlying asset, regardless of the current exchange rate.\n\nAn MEV bot can observe a pending reward sale, front-run it to manipulate the pool price, allow the strategy to execute at the unfavorable price, and back-run the transaction to restore the price. Since no minimum output is enforced, the strategy cannot revert when the execution price deviates significantly from the expected price. For sufficiently large reward balances or illiquid pools, an attacker may extract most of the rewards' economic value.\n\n#### Impact\n\nLow. MEV bots can sandwich direct reward sales and capture up to nearly the entire value of the strategy's accrued rewards. The resulting loss is borne by strategy depositors through reduced reported profits. However the strategy being on Monad and sales being permissioned the likelihood of sandwich is low.\n\n#### Recommendation\n\nGiven that reward tokens are provided in the form of receipt tokens, rather than the direct underlying, it seems unlikely such assets would have an oracle price feed. As a consequence, the most sensible path seems to remove synchronous swaps and favour using auctions instead.\n\nFor `manualSellRewards`, a `minAmountOut` calldata parameter may be added, in order to use such value within the `_swapFrom` call.\n\n#### Developer Response\n\nAgreed. Fixed in [PR#6](https://github.com/Blueberryfi/curvance-lender/pull/6)."
+    },
+    {
+      "number": 5,
+      "title": "`removeMarket` can be blocked by donating dust shares to the optimizer",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\n`CurvanceOptimizer.removeMarket` requires the strategy's raw share balance in a destination to be exactly zero:\n\n```solidity\nrequire(ICurvanceVault(market).balanceOf(address(this)) == 0, \"position remains\");\n```\n\nDestination shares are ordinary ERC-20 tokens, so anyone can transfer them to the optimizer without calling any of its functions. A donated share worth zero underlying assets cannot then be burned: `_tend` exits only positions whose `positionValue` exceeds the allocation target, `_withdraw` skips any market whose `marketMaxWithdraw` is zero, and no management function redeems raw shares independently of their asset value. Because removal is a public transaction, an observer can also front-run each attempt with another dust transfer.\n\n**Precondition.** A share is worth zero assets only while the destination's exchange rate is below 1:1. `BaseCToken` and `LendingOptimizer` both disable virtual shares and use a zero decimals offset, and `_initialConvertToShares` mints 1:1, so `convertToAssets(1)` reduces to `floor(totalAssets / totalSupply)` — zero only when `totalAssets < totalSupply`, meaning the destination has been impaired. At or above 1:1 a donated share is worth at least one asset unit, `tend()` clears it as surplus over a zero target, and removal succeeds.\n\n#### Impact\n\nInformational. Requires an already-impaired destination, and the condition resolves on its own once accrual restores the exchange rate.\n\nWhile it holds, management cannot retire the affected market: it remains part of `_accrue`, `_positionAssets`, withdrawal-limit computation and reporting, and at the 16-market cap a blocked removal also prevents registering a replacement. No user funds can be stolen or lost.\n\n#### Recommendation\n\nTest value rather than raw share count:\n\n```diff\n-        require(ICurvanceVault(market).balanceOf(address(this)) == 0, \"position remains\");\n+        uint256 shares = ICurvanceVault(market).balanceOf(address(this));\n+        require(ICurvanceVault(market).previewRedeem(shares) == 0, \"position remains\");\n```\n\nThe stated invariant — that removal must not hide remaining value — is preserved, since a position worth zero assets hides nothing. This still leaves a front-run window for donations that do carry value; closing that would require an atomic exit-and-remove, which is likely disproportionate given the precondition.\n\n#### Developer Response\n\nAgreed. Fixed in [PR#6](https://github.com/Blueberryfi/curvance-lender/pull/6)."
+    },
+    {
+      "number": 6,
+      "title": "`CurvanceOptimizer.emergencyWithdraw` can revert when destinations share underlying liquidity",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\n`CurvanceOptimizer._emergencyWithdraw` sizes its unwind from `availableWithdrawLimit`, which sums `marketMaxWithdraw` over every registered market:\n\n```solidity\nuint256 liquid = availableWithdrawLimit(address(this)) - asset.balanceOf(address(this));\n_withdraw(Math.min(amount, liquid));\n```\n\n`_withdraw` then requires the full amount to be freed, reverting with `\"insufficient liquidity\"` otherwise.\n\nWhen a direct market and a `LendingOptimizer` that allocates into that same market are both registered, the two quotes draw on the same underlying cash and the sum double-counts it. The README notes this for `maxWithdraw`, but the same quote also drives the emergency path — so `emergencyWithdraw(type(uint256).max)`, the natural way to request a full unwind, reverts. The recorded AUSD deployment is this configuration: the cAUSD market alongside the hyAUSD `LendingOptimizer`, which itself allocates into cAUSD.\n\n#### Impact\n\nInformational. Only a `type(uint256).max` request reverts. `_withdraw` re-reads `marketMaxWithdraw` per market inside the loop, so any amount at or below true joint liquidity succeeds and partial exits can be repeated, and RELEASE.md already directs operators to simulate and pass an explicit amount.\n\nThe residual cost is that the contract cannot report a workable amount — `availableWithdrawLimit` is itself the overstated quote — so it must be derived from off-chain Curvance state or by trial during incident response.\n\n#### Recommendation\n\nDocument this case in the function natspec.\n\n#### Developer Response\n\nValid. Fixed in [PR#6](https://github.com/Blueberryfi/curvance-lender/pull/6)"
+    },
+    {
+      "number": 8,
+      "title": "`addRewardToken` accepts duplicates, which `removeRewardToken` then fails to remove",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\n`CurvanceLender.addRewardToken` validates only that the token is neither the underlying asset nor the vault:\n\n```solidity\nfunction addRewardToken(address _rewardToken) external onlyManagement {\n    require(_rewardToken != address(asset) && _rewardToken != address(vault), \"Invalid reward token\");\n    rewardTokens.push(_rewardToken);\n}\n```\n\nBecause duplicates are reachable, `removeRewardToken` fails to remove them all. It swap-and-pops without a `break` and without re-checking index `i`, so the element moved into that slot is skipped:\n\n```solidity\nfunction removeRewardToken(address _rewardToken) external onlyManagement {\n    for (uint256 i = 0; i < rewardTokens.length; i++) {\n        if (rewardTokens[i] == _rewardToken) {\n            rewardTokens[i] = rewardTokens[rewardTokens.length - 1];\n            rewardTokens.pop();\n        }\n    }\n}\n```\n\nAdding `[r1, r2, r1]` and then calling `removeRewardToken(r1)` leaves `rewardTokens` at length 2 with `r1` still at index 0.\n\nNote that `CurvanceOptimizer._addMarket`'s `!_registered(market)` check does not apply here: it is a different function on a different contract, guarding markets rather than reward tokens, and `CurvanceLender` has no markets.\n\n#### Impact\n\nInformational. Both functions are `onlyManagement`, and a stale entry causes one additional `_swapFrom` on a zero balance, which is a no-op. The concern is that the function silently fails its stated purpose, so management may believe a token has been delisted when it has not.\n\n#### Recommendation\n\nBlock duplicates on `addRewardToken()`.\n\n#### Developer Response\n\nValid. Fixed in [PR#6](https://github.com/Blueberryfi/curvance-lender/pull/6)."
+    },
+    {
+      "number": 9,
+      "title": "`CurvanceOptimizer` does not override `availableDepositLimit`",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\n`CurvanceOptimizer` inherits `BaseHealthCheck.availableDepositLimit`, which returns `type(uint256).max` once a depositor is allowlisted. Deposits are therefore accepted well beyond the sum of configured `allocationTargets`; `_invest` fills each market only up to its target and the remainder stays idle.\n\nIdle assets are still counted by `_harvestAndReport`, so they participate in price-per-share while earning nothing, diluting the yield of existing holders until management raises targets or the excess is withdrawn.\n\nThis also differs from the sibling strategy: `Base4626Compounder.availableDepositLimit` caps deposits at `vault.maxDeposit(address(this))`, so `CurvanceLender` cannot take in more than its destination will accept.\n\n#### Impact\n\nInformational. Deposit access is closed by default and the allowlist is expected to contain only the parent vault, so the condition requires management to over-fund the strategy relative to its own targets.\n\n#### Recommendation\n\nOverride `availableDepositLimit` to return the remaining aggregate capacity, so the limit reflects what the strategy can actually deploy or document if unbounded deposits are intentional.\n\n#### Developer Response\n\nThis is intentional, where the behavior is documented in the README and covered by `test_depositsAboveTargetsRemainIdle`. Deployments are intended to restrict deposit recipients to the parent vault, with management coordinating funding and allocation targets."
+    },
+    {
+      "number": 10,
+      "title": "`positionValue` accepts unregistered markets while `marketMaxWithdraw` rejects them",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\n`CurvanceOptimizer` exposes two public per-market read functions that validate their input inconsistently:\n\n```solidity\nfunction positionValue(address market) public view returns (uint256) {\n    ICurvanceVault target = ICurvanceVault(market);\n    return target.convertToAssets(target.balanceOf(address(this)));\n}\n\nfunction marketMaxWithdraw(address market) public view returns (uint256) {\n    address manager = marketManagers[market];\n    require(_registered(market), \"unknown market\");\n    ...\n}\n```\n\n`positionValue` accepts any address. Passed an arbitrary ERC-4626 vault it returns `convertToAssets(balanceOf(strategy))` for a destination the strategy does not manage — a well-formed number carrying no meaning for the strategy's accounting.\n\nThe two disagree about the same address after a market is retired: following `removeMarket`, `marketMaxWithdraw(removed)` reverts with `\"unknown market\"` while `positionValue(removed)` still returns a value for any shares the strategy holds, including dust.\n\nAll six internal call sites pass `markets[i]` from the registered array, so no internal path is affected.\n\n#### Impact\n\nInformational. Both functions are `view`, no internal caller can pass an unregistered address, and no funds are at risk. The concern is that an integrator may reasonably assume `positionValue` validates its input as its sibling does, and act on a value not tied to a registered destination.\n\n#### Recommendation\n\nValidate on the public function, keeping an unchecked internal path so the registration `SLOAD` is not paid on every loop iteration — `positionValue` is called up to twice per market inside `_withdrawMarket` alone:\n\n```diff\n-    function positionValue(address market) public view returns (uint256) {\n+    function positionValue(address market) public view returns (uint256) {\n+        require(_registered(market), \"unknown market\");\n+        return _positionValue(market);\n+    }\n+\n+    function _positionValue(address market) private view returns (uint256) {\n         ICurvanceVault target = ICurvanceVault(market);\n         return target.convertToAssets(target.balanceOf(address(this)));\n     }\n```\n\nInternal callers in `_invest`, `_positionAssets`, `_withdrawMarket` and `_tend` then use `_positionValue`.\n\n#### Developer Response\n\nAgreed. Fixed in [PR#6](https://github.com/Blueberryfi/curvance-lender/pull/6)."
+    }
+  ]
+}

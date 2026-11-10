@@ -1,6 +1,7 @@
 ---
 tags: ["solidity"]
 title: 2026-07-Promis-Smart-Contracts
+repo: yAudit/promis-report
 description: Promis Smart Contracts
 ---
 

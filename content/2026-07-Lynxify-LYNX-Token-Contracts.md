@@ -1,6 +1,7 @@
 ---
 tags: ["solidity", "hedera"]
 title: 2026-07-Lynxify-LYNX-Token-Contracts
+repo: yAudit/linxify-report
 description: LYNX Token Contracts
 ---
 

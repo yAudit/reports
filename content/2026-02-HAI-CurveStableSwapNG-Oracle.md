@@ -1,6 +1,7 @@
 ---
 tags: ["solidity", "curve", "oracle"]
 title: 2026-02-HAI-CurveStableSwapNG-Oracle
+repo: yAudit/hai-curve-oracle-report
 description: HAI CurveStableSwapNG Oracle Report
 ---
 

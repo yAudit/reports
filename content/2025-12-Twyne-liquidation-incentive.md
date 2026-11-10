@@ -1,6 +1,7 @@
 ---
 tags: ["solidity"]
 title: 2025-12-Twyne-Liquidation-Incentive
+repo: yAudit/twyne-liquidation-incentive
 description: Twyne-liquidation-incentive Report
 ---
 

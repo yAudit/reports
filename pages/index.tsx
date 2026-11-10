@@ -1,103 +1,148 @@
-import { useState, useMemo, useEffect } from "react";
+import { useMemo } from "react";
 import { GetStaticProps } from "next";
 import Head from "next/head";
-import SearchBar from "../components/SearchBar";
-import ReportCard from "../components/ReportCard";
-import matter from "gray-matter";
-import path from "path";
-import fs from "fs";
-import { extractDate, SITE_URL, getCanonicalSlug } from "@/lib/utils";
+import Link from "next/link";
+import { useRouter } from "next/router";
+import FilterSelect from "@/components/FilterSelect";
+import HeroIcon from "@/components/HeroIcon";
+import { PAGE_GUTTER } from "@/lib/layout";
+import { SITE_URL } from "@/lib/utils";
+import { getReportSummaries } from "@/lib/reports";
+import {
+  ReportSummary,
+  SEVERITIES,
+  Severity,
+  severityAccentClass,
+  severityClass,
+} from "@/lib/reportTypes";
 
-interface Report {
-  title: string;
-  description: string;
-  date: string;
-  slug: string;
-  tags: string[];
-}
+// Tailwind's sm, md and lg are ranges on this site (tailwind.config.ts), so
+// the breakpoints of these pages are written min-[640px]:, min-[768px]: and
+// min-[1024px]:.
 
 interface HomeProps {
-  reports: Report[];
+  reports: ReportSummary[];
+  clients: string[];
+  years: number[];
 }
 
-export default function Home({ reports }: HomeProps) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+// "tag" is not in the form: it keeps the old ?tag= links working.
+type FilterKey = "q" | "client" | "year" | "severity" | "tag";
+type Filters = Record<FilterKey, string>;
 
-  const tags = reports
-    .map((report) => report.tags)
-    .flat()
-    .filter((tag) => tag.trim() !== "")
-    .reduce((unique, tag) => {
-      if (!unique.includes(tag)) unique.push(tag);
-      return unique;
-    }, [] as string[]);
+const FILTER_KEYS: FilterKey[] = ["q", "client", "year", "severity", "tag"];
 
-  // Enhanced useEffect to handle multiple URL tags
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const tagParam = params.get("tag");
+const chipClass =
+  "inline-flex items-center border border-zinc-200 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700";
 
-    if (tagParam) {
-      // Split the tag parameter by commas and filter out any invalid tags
-      const urlTags = tagParam
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter((tag) => tags.includes(tag));
+// 3078 -> "3,078"
+const formatCount = (count: number) => count.toLocaleString("en-US");
 
-      if (urlTags.length > 0) {
-        // This client-only effect hydrates state from the URL after SSR.
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setSelectedTags(urlTags);
-      }
-    }
-  }, [tags]);
+function matches(report: ReportSummary, filters: Filters): boolean {
+  const query = filters.q.toLowerCase();
+  if (query && !report.search.includes(query)) return false;
+  if (filters.client && report.client !== filters.client) return false;
+  if (filters.year && String(report.year) !== filters.year) return false;
+  if (filters.severity && !(report.severityCounts[filters.severity as Severity] ?? 0)) return false;
+  // ?tag= may list several tags, separated by commas.
+  const tags = filters.tag.split(",").map((tag) => tag.trim()).filter(Boolean);
+  if (tags.length && !report.tags.some((tag) => tags.includes(tag))) return false;
+  return true;
+}
 
-  const filteredReports = useMemo(() => {
-    const query = searchQuery?.toLowerCase();
-    return reports
-      .filter(
-        (report) =>
-          report?.title?.toLowerCase().includes(query) ||
-          report?.description?.toLowerCase().includes(query) ||
-          report?.tags?.some((tag) => tag.toLowerCase().includes(query))
-      )
-      .filter((report) => {
-        if (selectedTags.length === 0) return true;
-        return report.tags.some((tag) => selectedTags.includes(tag));
-      });
-  }, [searchQuery, reports, selectedTags]);
+function ReportCard({ report }: { report: ReportSummary }) {
+  return (
+    <Link
+      href={`/${report.slug}`}
+      id={`report-card-${report.slug}`}
+      className="group block border border-zinc-200 bg-white transition hover:-translate-y-0.5 hover:border-zinc-950 hover:shadow-[0_22px_50px_rgba(24,24,27,0.10)]"
+    >
+      <article className="relative flex min-h-48 flex-col overflow-hidden">
+        <div className="absolute inset-x-0 top-0 h-1 bg-[#0657F9]" />
+        <div className="flex flex-1 flex-col p-4 min-[640px]:p-5">
+          <div className="min-w-0">
+            <div className="flex min-w-0 items-center gap-2 text-[0.68rem] uppercase tracking-[0.16em] text-zinc-500">
+              <span>{report.date}</span>
+              <span className="h-1 w-1 rounded-full bg-zinc-300" />
+              <span className="truncate">{report.client}</span>
+            </div>
+            <h2 className="mt-3 line-clamp-2 text-2xl font-semibold tracking-normal text-zinc-950 group-hover:text-[#0657F9] min-[640px]:text-[1.7rem]">
+              {report.title}
+            </h2>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {report.nsloc !== null && (
+                <span className={chipClass}>
+                  <span className="font-mono text-zinc-950">{formatCount(report.nsloc)}</span>
+                  <span className="ml-1.5 tracking-[0.12em]">nSLOC</span>
+                </span>
+              )}
+              {report.days !== null && (
+                <span className={chipClass}>
+                  <span className="font-mono text-zinc-950">{report.days}</span>
+                  <span className="ml-1.5 uppercase tracking-[0.12em]">
+                    {report.days === 1 ? "Day" : "Days"}
+                  </span>
+                </span>
+              )}
+              {report.issueCount !== null && (
+                <span className={chipClass}>
+                  <span className="font-mono text-zinc-950">{report.issueCount}</span>
+                  <span className="ml-1.5 uppercase tracking-[0.12em]">
+                    {report.issueCount === 1 ? "Issue" : "Issues"}
+                  </span>
+                </span>
+              )}
+            </div>
+          </div>
 
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-  };
+          <div className="mt-auto flex flex-wrap items-center gap-2 pt-5">
+            {SEVERITIES.filter((severity) => (report.severityCounts[severity] ?? 0) > 0).map(
+              (severity) => (
+                <span
+                  key={severity}
+                  className={`inline-flex items-center gap-1.5 border px-2 py-1 text-xs font-medium ${severityClass(severity)}`}
+                >
+                  <span className={`h-1.5 w-1.5 rounded-full ${severityAccentClass(severity)}`} />
+                  {report.severityCounts[severity]} {severity}
+                </span>
+              )
+            )}
+          </div>
+        </div>
+      </article>
+    </Link>
+  );
+}
 
-  // Enhanced tag selection handler for multiple tags
-  const handleTagSelection = (tag: string) => {
-    setSelectedTags((prevTags) => {
-      const newTags = prevTags.includes(tag)
-        ? prevTags.filter((t) => t !== tag)
-        : [...prevTags, tag];
+export default function Home({ reports, clients, years }: HomeProps) {
+  const router = useRouter();
 
-      // Update URL with all selected tags
-      const params = new URLSearchParams(window.location.search);
-      if (newTags.length > 0) {
-        params.set("tag", newTags.join(","));
-      } else {
-        params.delete("tag");
-      }
+  // The filters live in the query string, so a filtered list can be shared.
+  const filters = useMemo<Filters>(() => {
+    const value = (key: FilterKey) => {
+      const raw = router.query[key];
+      return ((Array.isArray(raw) ? raw[0] : raw) ?? "").trim();
+    };
+    return {
+      q: value("q"),
+      client: value("client"),
+      year: value("year"),
+      severity: value("severity"),
+      tag: value("tag"),
+    };
+  }, [router.query]);
 
-      // Update URL without refreshing the page
-      window.history.replaceState(
-        {},
-        "",
-        `${window.location.pathname}${
-          newTags.length ? `?${params.toString()}` : ""
-        }`
-      );
+  const filteredReports = useMemo(
+    () => reports.filter((report) => matches(report, filters)),
+    [reports, filters]
+  );
 
-      return newTags;
-    });
+  const setFilter = (key: FilterKey, value: string) => {
+    const next = { ...filters, [key]: value };
+    const query = Object.fromEntries(
+      FILTER_KEYS.filter((name) => next[name].trim() !== "").map((name) => [name, next[name]])
+    );
+    router.replace({ pathname: "/", query }, undefined, { shallow: true, scroll: false });
   };
 
   const homeDescription =
@@ -150,101 +195,87 @@ export default function Home({ reports }: HomeProps) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </Head>
-    <div className="min-h-screen bg-gray-50">
-      <main className="max-w-6xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 sm:px-0 mb-8 text-gray-400">
-          <SearchBar onSearch={handleSearch} />
-          <div className="flex flex-wrap gap-2 mx-auto mt-4 justify-center">
-            {tags.map((tag, index) => (
-              <button
-                key={index}
-                className={
-                  "inline-flex items-center px-2.5 py-0.5 text-md font-medium bg-deepblue/10 text-deepblue hover:bg-deepblue/5 duration-700" +
-                  (selectedTags.includes(tag)
-                    ? " bg-deepblue/20 text-deepblue"
-                    : "")
-                }
-                onClick={() => handleTagSelection(tag)}
-              >
-                {tag} {selectedTags.includes(tag) && "x"}
-              </button>
-            ))}
-          </div>
-        </div>
+      <div className="min-h-screen bg-white text-zinc-950">
+        <section className={`${PAGE_GUTTER} py-8`}>
+          <h1 className="sr-only">Security audit reports</h1>
+          <form
+            id="report-search"
+            role="search"
+            onSubmit={(event) => event.preventDefault()}
+            className="grid gap-3 border border-zinc-200 bg-white p-4 shadow-[0_20px_50px_rgba(24,24,27,0.05)] min-[768px]:grid-cols-[minmax(0,1fr)_12rem_10rem_12rem]"
+          >
+            <div className="relative">
+              <HeroIcon
+                name="magnifying-glass"
+                className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-zinc-400"
+              />
+              <input
+                id="report-search-q"
+                // Typed text stays in the field while the URL catches up.
+                key={router.isReady ? "ready" : "loading"}
+                type="search"
+                aria-label="Search reports"
+                defaultValue={filters.q}
+                onChange={(event) => setFilter("q", event.target.value)}
+                placeholder="Search"
+                autoComplete="off"
+                className="h-12 w-full border border-zinc-300 bg-white pl-12 pr-4 text-base text-zinc-950 outline-none transition focus:border-[#0657F9]"
+              />
+            </div>
+            <FilterSelect
+              id="report-search-client"
+              label="Client"
+              value={filters.client}
+              onChange={(value) => setFilter("client", value)}
+              options={[
+                { value: "", label: "All clients" },
+                ...clients.map((client) => ({ value: client, label: client })),
+              ]}
+            />
+            <FilterSelect
+              id="report-search-year"
+              label="Year"
+              value={filters.year}
+              onChange={(value) => setFilter("year", value)}
+              options={[
+                { value: "", label: "All years" },
+                ...years.map((year) => ({ value: String(year), label: String(year) })),
+              ]}
+            />
+            <FilterSelect
+              id="report-search-severity"
+              label="Severity"
+              value={filters.severity}
+              onChange={(value) => setFilter("severity", value)}
+              options={[
+                { value: "", label: "All severity" },
+                ...SEVERITIES.map((severity) => ({ value: severity, label: severity })),
+              ]}
+            />
+          </form>
 
-        <div className="mt-8 grid gap-6 px-4 sm:px-0 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredReports.length > 0 ? (
-            filteredReports.map((report, index) => (
-              <ReportCard key={index} {...report} />
-            ))
-          ) : (
-            <div className="col-span-full text-center py-12">
-              <p className="text-gray-500">
-                {searchQuery
-                  ? "No reports found matching your search."
-                  : "No reports available."}
-              </p>
+          {filteredReports.length === 0 && (
+            <div className="mt-10 border border-zinc-200 bg-white p-8">
+              <p className="text-sm font-medium text-zinc-950">No reports found.</p>
             </div>
           )}
-        </div>
-      </main>
-    </div>
+
+          <div className="mt-8 grid grid-cols-1 gap-4 min-[768px]:grid-cols-2">
+            {filteredReports.map((report) => (
+              <ReportCard key={report.slug} report={report} />
+            ))}
+          </div>
+        </section>
+      </div>
     </>
   );
 }
 
-export const getStaticProps: GetStaticProps = async () => {
-  try {
-    const reportsDirectory = path.join(process.cwd(), "content");
-    const filenames = fs.readdirSync(reportsDirectory);
-
-    const reports = filenames
-      .filter((filename) => filename.endsWith(".md"))
-      .map((filename) => {
-        const filePath = path.join(reportsDirectory, filename);
-        const fileContent = fs.readFileSync(filePath, "utf8");
-        const { data: frontmatter } = matter(fileContent);
-        const fallbackDate = new Date().toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "long",
-        });
-
-        return {
-          slug: getCanonicalSlug(filename),
-          title:
-            (frontmatter.title &&
-              frontmatter.title?.split("-").slice(2).join(" ")) ||
-            filename,
-          date: extractDate(filename.replace(".md", "")) || fallbackDate,
-          description:
-            typeof frontmatter.description === "string"
-              ? frontmatter.description
-              : "",
-          tags: Array.isArray(frontmatter.tags)
-            ? frontmatter.tags.filter(
-                (tag: unknown): tag is string =>
-                  typeof tag === "string" && tag.trim().length > 0
-              )
-            : [],
-        };
-      })
-      .sort((a, b) => {
-        const dateA = new Date(a.date);
-        const dateB = new Date(b.date);
-        return dateB.getTime() - dateA.getTime();
-      });
-
-    return {
-      props: {
-        reports,
-      },
-    };
-  } catch (error) {
-    console.error("Error fetching reports:", error);
-    return {
-      props: {
-        reports: [],
-      },
-    };
-  }
+export const getStaticProps: GetStaticProps<HomeProps> = async () => {
+  const reports = getReportSummaries();
+  const clients = [...new Set(reports.map((report) => report.client).filter(Boolean))].sort();
+  const years = [
+    ...new Set(reports.map((report) => report.year).filter((year): year is number => year !== null)),
+  ].sort((a, b) => b - a);
+  return { props: { reports, clients, years } };
 };

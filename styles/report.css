@@ -1,0 +1,304 @@
+/* Report pages. */
+
+.report-markdown {
+  color: #3f3f46;
+  font-size: 1rem;
+  line-height: 1.85;
+  overflow-wrap: anywhere;
+}
+
+/* Text shown as a plain paragraph (protocol overview, scope, final
+   remarks...): the size and the color come from the element around it. */
+.report-markdown.report-prose {
+  color: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.report-markdown > * + * {
+  margin-top: 1rem;
+}
+
+.report-markdown h1,
+.report-markdown h2,
+.report-markdown h3,
+.report-markdown h4 {
+  color: #18181b;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.report-markdown h1 {
+  font-size: 1.6rem;
+}
+
+.report-markdown h2 {
+  font-size: 1.35rem;
+}
+
+.report-markdown h3 {
+  font-size: 1.12rem;
+}
+
+.report-markdown a {
+  color: #0657f9;
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.report-markdown ul,
+.report-markdown ol {
+  padding-left: 1.35rem;
+}
+
+.report-markdown ul {
+  list-style: disc;
+}
+
+.report-markdown ol {
+  list-style: decimal;
+}
+
+.report-markdown li + li {
+  margin-top: 0.35rem;
+}
+
+.report-markdown code {
+  border: 1px solid #d4d4d8;
+  background: #f7f6f2;
+  color: #18181b;
+  font-size: 0.84em;
+  padding: 0.14rem 0.34rem;
+}
+
+.report-markdown pre {
+  overflow-x: auto;
+  border: 1px solid #18181b;
+  background: #18181b;
+  padding: 1rem;
+}
+
+.report-markdown pre code {
+  border: 0;
+  background: transparent;
+  color: #f6f3ff;
+  font-size: 0.82rem;
+  line-height: 1.65;
+  padding: 0;
+}
+
+.report-markdown .code-snippet-frame {
+  overflow: hidden;
+  border: 1px solid #18181b;
+  background: #18181b;
+  box-shadow: 0 18px 40px rgba(24, 24, 27, 0.16);
+}
+
+.report-markdown .code-snippet-header {
+  display: flex;
+  min-height: 2.5rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid #27272a;
+  background: #18181b;
+  padding: 0.55rem 1rem;
+}
+
+.report-markdown .code-snippet-language {
+  background: #0657f9;
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  padding: 0.28rem 0.55rem;
+  text-transform: uppercase;
+}
+
+.report-markdown .code-snippet-copy {
+  border: 1px solid #52525b;
+  background: #27272a;
+  color: #f6f3ff;
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 650;
+  line-height: 1;
+  padding: 0.42rem 0.6rem;
+}
+
+.report-markdown .code-snippet-copy:hover {
+  border-color: #0657f9;
+  color: #fff;
+}
+
+.report-markdown .code-snippet-copy.copied {
+  border-color: #86efac;
+  color: #166534;
+}
+
+.report-markdown .code-snippet-frame pre {
+  margin: 0;
+  border: 0;
+  background: #202024;
+  padding: 0;
+}
+
+.report-markdown .code-snippet-frame pre code {
+  display: block;
+  min-width: max-content;
+  color: #f4f4f5;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.82rem;
+  line-height: 1.7;
+}
+
+.report-markdown .code-line {
+  display: grid;
+  grid-template-columns: 3.5rem minmax(0, 1fr);
+  min-height: 1.45rem;
+}
+
+.report-markdown .code-line:hover {
+  background: #27272a;
+}
+
+.report-markdown .line-number {
+  border-right: 1px solid #3f3f46;
+  background: #202024;
+  color: #71717a;
+  padding-right: 0.75rem;
+  text-align: right;
+  user-select: none;
+}
+
+.report-markdown .line-content {
+  padding-right: 1rem;
+  padding-left: 0.85rem;
+  white-space: pre;
+}
+
+.report-markdown .hljs-comment,
+.report-markdown .hljs-quote {
+  color: #8b8d9d;
+  font-style: italic;
+}
+
+.report-markdown .hljs-keyword,
+.report-markdown .hljs-selector-tag {
+  color: #a78bfa;
+  font-weight: 650;
+}
+
+.report-markdown .hljs-built_in,
+.report-markdown .hljs-type {
+  color: #67e8f9;
+}
+
+.report-markdown .hljs-title,
+.report-markdown .hljs-section,
+.report-markdown .hljs-name {
+  color: #93c5fd;
+  font-weight: 650;
+}
+
+.report-markdown .hljs-string,
+.report-markdown .hljs-regexp {
+  color: #f472b6;
+}
+
+.report-markdown .hljs-number,
+.report-markdown .hljs-literal {
+  color: #fbbf24;
+}
+
+.report-markdown .hljs-variable,
+.report-markdown .hljs-template-variable,
+.report-markdown .hljs-params {
+  color: #e5e7eb;
+}
+
+.report-markdown .hljs-meta {
+  color: #c4b5fd;
+}
+
+.report-markdown .hljs-attr,
+.report-markdown .hljs-attribute,
+.report-markdown .hljs-symbol,
+.report-markdown .hljs-bullet {
+  color: #fcd34d;
+}
+
+.report-markdown .hljs-addition {
+  background: #14532d;
+  color: #bbf7d0;
+}
+
+.report-markdown .hljs-deletion {
+  background: #7f1d1d;
+  color: #fecaca;
+}
+
+.report-markdown blockquote {
+  border-left: 3px solid #0657f9;
+  background: #eff6ff;
+  color: #1e3a8a;
+  padding: 0.75rem 1rem;
+}
+
+.report-markdown table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.report-markdown th,
+.report-markdown td {
+  border: 1px solid #e4e4e7;
+  padding: 0.55rem 0.7rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.report-markdown th {
+  background: #f4f4f5;
+  color: #18181b;
+  font-weight: 650;
+}
+
+article:target {
+  border-color: #0657f9;
+  box-shadow: 0 0 0 1px #0657f9, 0 24px 70px rgba(6, 87, 249, 0.12);
+}
+
+.report-nav-link[aria-current="true"] {
+  border-color: #0657f9;
+  background: #f7f6f2;
+  color: #18181b;
+}
+
+/* Long identifiers and URLs in titles and text wrap instead of making the
+   page wider than a phone screen. */
+main :is(h1, h2, h3, p, li) {
+  overflow-wrap: anywhere;
+}
+
+
+.report-markdown img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* On phones, wide tables scroll sideways instead of widening the page. */
+@media (max-width: 767px) {
+  .report-markdown table {
+    display: block;
+    overflow-x: auto;
+  }
+}
+
+/* "anywhere" would let table columns shrink to one letter wide; table cells
+   only break words that cannot fit otherwise. */
+.report-markdown :is(th, td) {
+  overflow-wrap: break-word;
+}

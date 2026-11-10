@@ -1,0 +1,59 @@
+{
+  "repo": "yAudit/resupply-update-report",
+  "githubUrl": "https://github.com/yAudit/resupply-update-report",
+  "title": "Resupply Update Report",
+  "protocolName": "Resupply",
+  "protocolOverview": "Resupply Finance is a CDP-based lending protocol that allows simple, low-risk, leveraged yield farming while encouraging the use of value-added ecosystem protocols' underlying stables like Curve's crvUSD and Frax's FRAX.",
+  "auditScope": "This audit covers the changes made to the ResupplyPairCore and ResupplyPairDeployer contracts, along with the new BorrowLimitController.",
+  "overallAssessment": "This update includes post-exchange rate issue fixes, an updated deployer, and a new contract called BorrowLimitController used to slowly increase pairs' borrowing caps over time.",
+  "startDate": "2025-07-14",
+  "finishDate": "2025-07-15",
+  "auditors": [
+    "Adriro",
+    "HHK"
+  ],
+  "commits": [
+    {
+      "label": null,
+      "hash": "52bf837c24720a3095146a0214a111465bd23c0e",
+      "url": "https://github.com/resupplyfi/resupply/commit/52bf837c24720a3095146a0214a111465bd23c0e"
+    }
+  ],
+  "finalCommits": [],
+  "repositories": [
+    "https://github.com/resupplyfi/resupply"
+  ],
+  "auditResources": [
+    "[Update overview](https://hackmd.io/ff4gSn23RyCaPpGbT9BpNw)"
+  ],
+  "treeOfAuditedFiles": "src/\n  ├── dao\n  │   └── operators\n  │   │   └── BorrowLimitController.sol\n  └── protocol\n      ├── pair\n      │   └── ResupplyPairCore.sol\n      └── ResupplyPairDeployer.sol",
+  "finalRemarks": "Overall, the protocol demonstrates good security practices and code quality.\nThe team has been responsive to feedback and has implemented most recommendations.\nWe recommend addressing the identified issues before mainnet deployment.",
+  "nsloc": null,
+  "evaluations": [],
+  "issues": [
+    {
+      "number": 1,
+      "title": "Missing burn amount checks in `updateSupportedProtocol()`",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nThe sanity checks over `amountToBurn` and `minShareBurnAmount` applied in [`addSupportedProtocol()`](https://github.com/resupplyfi/resupply/blob/52bf837c24720a3095146a0214a111465bd23c0e/src/protocol/ResupplyPairDeployer.sol#L307) are missing while config is updated in [`updateSupportedProtocol()`](https://github.com/resupplyfi/resupply/blob/52bf837c24720a3095146a0214a111465bd23c0e/src/protocol/ResupplyPairDeployer.sol#L346).\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nAdd the sanity checks to `updateSupportedProtocol()`.\n\n#### Developer Response\n\nFixed in [f6da20f](https://github.com/resupplyfi/resupply/commit/f6da20f77fe8eff3a3d699312023041510b0ef2d)."
+    },
+    {
+      "number": 2,
+      "title": "Current deployer is not registered in ResupplyRegistry",
+      "severity": "Informational",
+      "body": "The current deployer contract isn't registered in the main registry, skipping the migration logic in the new deployer.\n\n#### Technical Details\n\nThe new [ResupplyPairDeployer](https://github.com/resupplyfi/resupply/blob/52bf837c24720a3095146a0214a111465bd23c0e/src/protocol/ResupplyPairDeployer.sol#L139-L142) contract performs a state migration from the previous deployer during construction.\n\n```solidity\n139:         address _previousPairDeployer = IResupplyRegistry(registry).getAddress(\"DEPLOYER\");\n140:         if(_previousPairDeployer != address(0)) {\n141:             _migrateState(_previousPairDeployer);\n142:         }\n```\n\nCurrently, the registry ([`0x10101010E0C3171D894B71B3400668aF311e7D94`](https://etherscan.io/address/0x10101010E0C3171D894B71B3400668aF311e7D94#readContract#F13)) doesn't contain the \"DEPLOYER\" key, causing the migration logic to be skipped.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nEnsure the current deployer contract is registered to enable the migration mechanism when the new deployer contract is created.\n\n#### Developer Response\n\nPair deployer registry check updated to look for `PAIR_DEPLOYER` key: [7445002](https://github.com/resupplyfi/resupply/pull/118/commits/7445002ebf90303f4aea572d94d2f02006ee0938#diff-5e4d9a4f9a9f1db89f569862f8a4422c69a5a96e27f314409d45d2d3d613e213R143).\n\n`PAIR_DEPLOYER` key set on registry via this transaction: [0xe644dc0e44ec6d4f51ccf9d8966d63f0bcc3edfe26ab93e499d87169d63331f7](https://etherscan.io/tx/0xe644dc0e44ec6d4f51ccf9d8966d63f0bcc3edfe26ab93e499d87169d63331f7)."
+    },
+    {
+      "number": 3,
+      "title": "`_migrateState()` could assign the wrong protocol id",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nInside [`_migrateState()`](https://github.com/resupplyfi/resupply/blob/fbed0ca5475c685e8193780edc281e29c2e98bb9/src/protocol/ResupplyPairDeployer.sol#L305-L305) the function loops through `supportedProtocols` and run `getBorrowAndCollateralTokens()` to find which protocol id was used for that pair, then it sets the storage mapping to `_deployer.collateralId()`.\n\nHowever if two `supportedProtocols` have the same methods to query the `_borrowToken` and `_collateralToken` then the loop will exit early and use the first matching protocol's id to get `_deployer.collateralId()` and store it.\n\nCurrently only Frax and Curve are being used and their methods are different so this will happen only if new protocols are supported in the future.\n\n#### Impact\n\nInformational. If the deployer is migrated again with new supported protocols then the mapping may be incorrectly migrated.\n\n#### Recommendation\n\nCheck that `_deployer.collateralId() > 0` inside the `if(_borrowToken != address(0) && _collateralToken != address(0))` condition.\n\n#### Developer Response\n\nAgree, this could be an issue if a future supported protocol was added with conflicting selectors. That will not happen before we upgrade the deployer, but nonetheless have re-worked the `_migrateState()` flow a bit: [7445002](https://github.com/resupplyfi/resupply/pull/118/commits/7445002ebf90303f4aea572d94d2f02006ee0938)."
+    },
+    {
+      "number": 4,
+      "title": "Delegate exchange rate threshold to the Oracle implementation",
+      "severity": "Informational",
+      "body": "Instead of hardcoding an arbitrary limit in the pair implementation, it could be more flexible to delegate this logic to the Oracle implementation.\n\n#### Technical Details\n\nThe updated implementation of [`_updateExchangeRate()`](https://github.com/resupplyfi/resupply/blob/52bf837c24720a3095146a0214a111465bd23c0e/src/protocol/pair/ResupplyPairCore.sol#L564) implements a hardcoded limit to detect Oracle manipulation attempts.\n\n```solidity\n571:         // Get the latest exchange rate from the oracle\n572:         uint256 priceFromOracle = IOracle(_exchangeRateInfo.oracle).getPrices(address(collateral));\n573:         //all prices should *normally* be within the 1e18 (or 1e15 for curvelend) range\n574:         //reject any prices that are well beyond that\n575:         if(priceFromOracle > 1e22){\n576:             revert InvalidOraclePrice();\n577:         }\n```\n\nWhile this threshold has been acknowledged by the team as a reasonable limit for the share price, moving this check to the Oracle would improve flexibility as this implementation can be eventually updated in the pair.\n\nNote that this check is not present in other occurrences in the codebase where `getPrices()` is used, such as [`previewRedeem()`](https://github.com/resupplyfi/resupply/blob/52bf837c24720a3095146a0214a111465bd23c0e/src/protocol/RedemptionHandler.sol#L284) in RedemptionHandler or [`isSolvent()`](https://github.com/resupplyfi/resupply/blob/52bf837c24720a3095146a0214a111465bd23c0e/src/protocol/Utilities.sol#L140) in the Utilities contract.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nDelegating this logic to the Oracle would allow different strategies, for example:\n\n- Create an Oracle with a configurable limit.\n- Define an Oracle for each protocol to adapt to potential pricing particularities (e.g. account for the 1e15 / 1e18 difference in Curve and Frax).\n- Implement more advance strategies such a time-weighted Oracle or a dual Oracle.\n\n#### Developer Response\n\nUpdated Core and Basic Vault Oracle here: [c6a80f0](\nhttps://github.com/resupplyfi/resupply/commit/c6a80f0720a6f0c9f3aea75ab8f983f62619a13c)."
+    }
+  ]
+}

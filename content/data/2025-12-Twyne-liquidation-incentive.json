@@ -1,0 +1,52 @@
+{
+  "repo": "yAudit/twyne-liquidation-incentive",
+  "githubUrl": "https://github.com/yAudit/twyne-liquidation-incentive",
+  "title": "Twyne liquidation incentive",
+  "protocolName": "Twyne",
+  "protocolOverview": "Twyne is a credit delegation protocol that lets borrowers rent unused borrowing power from other lenders to boost their Liquidation LTV. Lenders earn additional yield while borrowers get to ramp up their leverage or insulate their debt.",
+  "auditScope": "This audit covers 2 pull requests totaling approximately 250~ lines of code across 1 day of review.",
+  "overallAssessment": null,
+  "startDate": "2025-12-15",
+  "finishDate": "2025-12-15",
+  "auditors": [
+    "Adriro",
+    "HHK"
+  ],
+  "commits": [
+    {
+      "label": null,
+      "hash": "PR#187",
+      "url": "[PR#187](https://github.com/0xTwyne/twyne-contracts/pull/187)"
+    },
+    {
+      "label": null,
+      "hash": "PR#220",
+      "url": "[PR#220](https://github.com/0xTwyne/twyne-contracts/pull/220)"
+    }
+  ],
+  "finalCommits": [],
+  "repositories": [
+    "https://github.com/0xTwyne/twyne-contracts"
+  ],
+  "auditResources": [
+    "Code repositories and documentation"
+  ],
+  "treeOfAuditedFiles": "0xTwyne/twyne-contracts/src\n└── twyne\n    ├── AaveV3CollateralVault.sol\n    ├── CollateralVaultBase.sol\n    └── EulerCollateralVault.sol",
+  "finalRemarks": "This review focused on PR#187 of the Twyne codebase. The PR updates the collateral vaults to modify the incentive for liquidators: instead of receiving the full collateral of the borrower, they now receive an amount based on how dangerous the state of the vault is. The closer to external liquidation, the higher the reward following a specific equation described inside the whitepaper. The review did not result in any medium or above severity findings, highlighting the seriousness of the Twyne team.",
+  "nsloc": null,
+  "evaluations": [],
+  "issues": [
+    {
+      "number": 4,
+      "title": "Use `_getExtLiqLTV()` in `EulerCollateralVault::_invariantCollateralAmount()`",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nThe implementation of [`_invariantCollateralAmount()`](https://github.com/0xTwyne/twyne-contracts/blob/16d3f470c169ab37b622ec5630693e5a9bda503a/src/twyne/EulerCollateralVault.sol#L92) can call `_getExtLiqLTV()` instead of repeating the expression.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nUse `_getExtLiqLTV()` to retrieve the liquidation LTV of Euler's target vault.\n\n#### Developer Response\n\nAcknowledged."
+    },
+    {
+      "number": 6,
+      "title": "Missing slippage protection for liquidators",
+      "severity": "Low",
+      "body": "#### Technical Details\n\n[PR#187](https://github.com/0xTwyne/twyne-contracts/pull/187/files) introduces partial refunds for borrowers during liquidation. The refund amount depends on position health: closer to external liquidation means lower refunds, while liquidator incentives increase as positions become riskier for intermediate vault LPs.\n\nLiquidators must now refund borrowers part of the collateral, but there is no function argument allowing liquidators to set a maximum acceptable refund amount.\n\n#### Impact\n\nLow. Liquidators cannot protect against potentially unfavourable refund amounts.\n\n#### Recommendation\n\nAdd a `uint256 maxBorrowerRefund` argument to `liquidate()` and revert if the computed refund exceeds it.\n\n#### Developer Response\n\nAcknowledged. We expect the liquidator to do these checks outside Twyne core protocol."
+    }
+  ]
+}

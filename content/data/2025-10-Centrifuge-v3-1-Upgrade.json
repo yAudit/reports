@@ -1,0 +1,95 @@
+{
+  "repo": "yAudit/centrifuge-v31-report",
+  "githubUrl": "https://github.com/yAudit/centrifuge-v31-report",
+  "title": "Centrifuge v3.1 Upgrade",
+  "protocolName": "Centrifuge",
+  "protocolOverview": "Centrifuge v3 implements a decentralized protocol for on-chain asset management. It provides foundations for permissionless deployment and management of highly customizable tokenization solutions.",
+  "auditScope": "This audit covers the v3.1 upgrade, which comprises changes to previously reviewed contracts and entirely new ones, across 7 days of review.",
+  "overallAssessment": "Centrifuge's v3.1 represents a mature, incrementally evolving protocol with a keen focus on its security stance. The protocol demonstrates strong foundations and a commitment to being secured through continuous auditing, conservative refactoring practices, and controlled feature deployment that prioritizes code quality and readability alongside functionality.",
+  "startDate": "2025-10-06",
+  "finishDate": "2025-10-14",
+  "auditors": [
+    "adriro",
+    "watermelon"
+  ],
+  "commits": [
+    {
+      "label": null,
+      "hash": "6b95a7aa94704e1c6c1cc03c0f614d599c735a71",
+      "url": "[6b95a7a](https://github.com/centrifuge/protocol/tree/6b95a7aa94704e1c6c1cc03c0f614d599c735a71)"
+    }
+  ],
+  "finalCommits": [],
+  "repositories": [
+    "https://github.com/centrifuge/protocol"
+  ],
+  "auditResources": [
+    "Code repositories and documentation"
+  ],
+  "treeOfAuditedFiles": "src\n├── core\n│   ├── hub\n│   │   ├── Hub.sol\n│   │   ├── HubHandler.sol\n│   │   ├── HubRegistry.sol\n│   │   └── ShareClassManager.sol\n│   └── spoke\n│       ├── Spoke.sol\n│       └── VaultRegistry.sol\n├── hooks\n│   ├── BaseTransferHook.sol\n│   ├── FreelyTransferable.sol\n│   ├── FreezeOnly.sol\n│   ├── FullRestrictions.sol\n│   ├── interfaces\n│   │   ├── IFreezable.sol\n│   │   └── IMemberlist.sol\n│   ├── libraries\n│   │   └── UpdateRestrictionMessageLib.sol\n│   └── RedemptionRestrictions.sol\n├── managers\n│   ├── hub\n│   │   ├── interfaces\n│   │   │   ├── INAVManager.sol\n│   │   │   └── ISimplePriceManager.sol\n│   │   ├── NAVManager.sol\n│   │   └── SimplePriceManager.sol\n│   └── spoke\n│       └── QueueManager.sol\n├── valuations\n│   ├── interfaces\n│   │   └── IOracleValuation.sol\n│   ├── IdentityValuation.sol\n│   └── OracleValuation.sol\n└── vaults\n    ├── BatchRequestManager.sol\n    └── SyncManager.sol",
+  "finalRemarks": "The audited focused on both incremental updates to core and hook related contracts from version 3.0.1, along with new contracts introduced with version 3.1. \n\nUpdates to pre-existing contracts imply no major change in the system's business logic, rather they pose a refactor to significantly improve the codebases's readability and simplicity. Within the refactor, one minor issue was identified causing an incorrect epoch to be used within calculations for the maximum claimable redeem epoch for a given investor.\n\nThe contracts introduced to the system in version 3.1 intend to implement pool net asset value (NAV) calculations fully on-chain, via a new `IValuation` implementation which accepts asset price submissions from authorized accounts and two new `ISnapshotHook` implementations. Within these contracts, one medium severity issue was identified: net asset value calculations could trigger and uncaught negative overflow, which would result in failures within transactions that would submit snapshot updates to the Hub.",
+  "nsloc": null,
+  "evaluations": [],
+  "issues": [
+    {
+      "number": 1,
+      "title": "The `approveRedeems()` function can be non-payable",
+      "severity": "Low",
+      "body": "#### Technical Details\n\nThe [`approveRedeems()`](https://github.com/centrifuge/protocol-v3/blob/6b95a7aa94704e1c6c1cc03c0f614d599c735a71/src/vaults/BatchRequestManager.sol#L241) function doesn't need to be payable since it doesn't dispatch a message.\n\n#### Impact\n\nLow.\n\n#### Recommendation\n\nRemove the `payable` modifier.\n\n#### Developer Response\n\nFixed in [PR#721](https://github.com/centrifuge/protocol/pull/721)."
+    },
+    {
+      "number": 2,
+      "title": "`maxRedeemClaims()` should depend on the last `redeem` epoch",
+      "severity": "Low",
+      "body": "#### Technical Details\n\nThe refactored `maxRedeemClaims()` function in BatchRequestManager uses the `revoke` field from the stored EpochId struct, but it should take the `redeem` value instead.\n\n#### Impact\n\nLow.\n\n#### Recommendation\n\nChange the `revoke` field for the `redeem` field.\n\n#### Developer Response\n\nFixed by [PR#720](https://github.com/centrifuge/protocol/pull/720) which actually changes `maxDepositClaims` to use `epochId[..].issue` instead of `*.deposit` because otherwise `maxDepositClaims` returns 1 claimable epoch after `approveDeposits` while `notifyDeposit` fails with `IssuanceRequired` as long as the issuance is missing (i.e. `epochId.issue < epochId.deposit`). So before this fix, it incorrectly signals a possible deposit claim."
+    },
+    {
+      "number": 3,
+      "title": "`BaseTransferHook.isDepositRequestOrIssuance()` returns `true` for mints to `crosschainSource`",
+      "severity": "Informational",
+      "body": "[`BaseTransferHook.isDepositRequestOrIssuance()`](https://github.com/centrifuge/protocol/blob/6b95a7aa94704e1c6c1cc03c0f614d599c735a71/src/hooks/BaseTransferHook.sol#L111-L113) may be used within a `ITransferHook` implementation to capture and execute arbitrary logic when vault share tokens are minted to an address different than `BaseTransferHook.depositTarget`.\n\n#### Technical Details\n\nDuring a cross chain transfer's delivery on the target chain, share tokens are first minted into the `Spoke` contract and then transferred to the recipient: [link](https://github.com/centrifuge/protocol/blob/6b95a7aa94704e1c6c1cc03c0f614d599c735a71/src/core/spoke/Spoke.sol#L255-L256).\n\nGiven that the `Spoke` contract is assigned to `BaseTransferHook.crosschainSource`, which is know to be different `BaseTransferHook.depositTarget`, the mentioned predicate will return `true` during the share token mint.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nModify the mentioned function to not return `true` when `to == crosschainSource`:\n\n```diff\n @@ -109,23 +109,29 @@ abstract contract BaseTransferHook is Auth, IMemberlist, IFreezable, ITransferHo\n     ) public view virtual returns (bool);\n \n     function isDepositRequestOrIssuance(address from, address to) public view returns (bool) {\n-        return from == address(0) && to != depositTarget;\n+        return from == address(0) && to != depositTarget && to != crosschainSource;\n     }\n```\n\n#### Developer Response\n\nFixed in [PR#725](https://github.com/centrifuge/protocol/pull/725)."
+    },
+    {
+      "number": 4,
+      "title": "`BaseTransferHook.trustedCall()` ignores inner kind switch",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nThe implementation of [`trustedCall()`](https://github.com/centrifuge/protocol-v3/blob/6b95a7aa94704e1c6c1cc03c0f614d599c735a71/src/hooks/BaseTransferHook.sol#L161) in BaseTransferHook doesn't switch on the `kind` field of the `UpdateContractUpdateAddress` struct, treating all messages as updates to the manager.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nCheck if `kind` equals some constant and revert if not.\n\n```solidity\nUpdateContractMessageLib.UpdateContractUpdateAddress memory m =\n    UpdateContractMessageLib.deserializeUpdateContractUpdateAddress(payload);\n    \nif (m.kind == \"manager\") {\n    address token = address(spoke.shareToken(poolId, scId));\n    require(token != address(0), ShareTokenDoesNotExist());\n\n    manager[token][m.what.toAddress()] = m.isEnabled;\n} else {\n    revert UnknownUpdateContractKind();\n}\n```\n\n#### Developer Response\n\nFixed in [PR#715](https://github.com/centrifuge/protocol/pull/715)."
+    },
+    {
+      "number": 5,
+      "title": "Incorrect Nastspec documentation in `OracleValuation`",
+      "severity": "Informational",
+      "body": "[OracleValuation.sol](https://github.com/centrifuge/protocol/blob/6b95a7aa94704e1c6c1cc03c0f614d599c735a71/src/valuations/OracleValuation.sol) provides an implementation for trusted price oracles to update asset prices.\n\n#### Technical Details\n\nThe comments at [OracleValuation.sol#L20-L22](https://github.com/centrifuge/protocol/blob/6b95a7aa94704e1c6c1cc03c0f614d599c735a71/src/valuations/OracleValuation.sol#L20-L22) indicate that, to utilize the highlighted contract developers must use `hub.updateFeeder()`. While Hub.sol doesn't implement such method, the correct way to integrate such contract is by using [`Holdings.updateValuation`](https://github.com/centrifuge/protocol/blob/6b95a7aa94704e1c6c1cc03c0f614d599c735a71/src/core/hub/Holdings.sol#L81-L90).\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nCorrect the documentation as shown.\n\n#### Developer Response\n\nFixed in [PR#725](https://github.com/centrifuge/protocol/pull/725)."
+    },
+    {
+      "number": 6,
+      "title": "`SyncManager.maxDeposit()` uses incorrect denomination in `_canTransfer()` call",
+      "severity": "Low",
+      "body": "[PR#675](https://github.com/centrifuge/protocol/pull/675) introduces changes for [`SyncManager.maxMint()`](https://github.com/centrifuge/protocol/blob/727c8e97ed4efbefd982bfb8bc7ddcc761f90657/src/vaults/SyncManager.sol#L142-L149) and [`SyncManager.maxDeposit()`](https://github.com/centrifuge/protocol/blob/727c8e97ed4efbefd982bfb8bc7ddcc761f90657/src/vaults/SyncManager.sol#L151-L156) functions to take into account potential transfer restrictions imposed by a vault's share token's hooks.\n\n#### Technical Details\n\nThe current `SyncManager.maxDeposit()` implementation passes the result of [`SyncManager._maxDeposit`](https://github.com/centrifuge/protocol/blob/727c8e97ed4efbefd982bfb8bc7ddcc761f90657/src/vaults/SyncManager.sol#L215-L230), which is an amount denominated in a vault's asset, as a parameter in a call to [`SyncManager._canTransfer()`](https://github.com/centrifuge/protocol/blob/727c8e97ed4efbefd982bfb8bc7ddcc761f90657/src/vaults/SyncManager.sol#L257-L260) which expects an amount of vault shares.\n\n#### Impact\n\nLow. While current `ITransferHook` implementations do not impose transfer restrictions based on the amount of share tokens being transferred, passing an asset amount instead of a share amount may hinder correct functionality in future implementations.\n\n#### Recommendation\n\nCalculate the amount of corresponding shares using `convertToShares(vault_, amount)` as is done within `SyncManager.maxMint()`.\n\n#### Developer Response\n\nFixed by [PR#723](https://github.com/centrifuge/protocol/pull/723)."
+    },
+    {
+      "number": 7,
+      "title": "`HubRegistry.updateCurrency()` allows assiging non-regsitered currency to an existing pool",
+      "severity": "Informational",
+      "body": "[`HubRegistry.updateCurrency`](https://github.com/centrifuge/protocol/blob/6b95a7aa94704e1c6c1cc03c0f614d599c735a71/src/core/hub/HubRegistry.sol#L87-L94) may be used by an authorized address to update the [`HubRegistry.currency`](https://github.com/centrifuge/protocol/blob/6b95a7aa94704e1c6c1cc03c0f614d599c735a71/src/core/hub/HubRegistry.sol#L22) mapping.\n\n#### Technical Details\n\nThe method fails to ensure that the new `currency_` being linked to a given `poolId_` has been previously registered via [`HubRegistry.registerAsset`](https://github.com/centrifuge/protocol/blob/6b95a7aa94704e1c6c1cc03c0f614d599c735a71/src/core/hub/HubRegistry.sol#L34-L40).\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nEnsure `currency_` has been registered:\n\n```diff\n@@ -87,6 +89,7 @@ contract HubRegistry is Auth, IHubRegistry {\n     function updateCurrency(PoolId poolId_, AssetId currency_) external auth {\n         require(exists(poolId_), NonExistingPool(poolId_));\n         require(!currency_.isNull(), EmptyCurrency());\n+        require(isRegistered(currency_));\n \n         currency[poolId_] = currency_;\n```\n\n#### Developer Response\n\nFixed as recommended in [PR#724](https://github.com/centrifuge/protocol/pull/724)."
+    },
+    {
+      "number": 8,
+      "title": "Gas savings in QueueManager",
+      "severity": "Gas",
+      "body": "#### Technical Details\n\nThe expression to check if the delay has elapsed can be simplified to the third sub-expression.\n\n```solidity\n74:         require(\n75:             sc.lastSync == 0 || sc.minDelay == 0 || block.timestamp >= sc.lastSync + sc.minDelay, MinDelayNotElapsed()\n76:         );\n```\n\nFor the duplicate check in the `assetIds` array, the `scId` argument can be removed, as this is constant for all elements. The validation can be simplified by ensuring asset IDs are in ascending order instead of using temporal storage. The check can also be removed because calling `submitQueuedAssets()` would blank deposits and withdrawals, causing the same asset ID to be skipped if repeated.\n\n```solidity\n80:         for (uint256 i = 0; i < assetIds.length; i++) {\n81:             bytes32 key = keccak256(abi.encode(scId.raw(), assetIds[i].raw()));\n82:             if (TransientStorageLib.tloadBool(key)) continue; // Skip duplicate\n83:             TransientStorageLib.tstore(key, true);\n84: \n85:             // Check if valid\n86:             (uint128 deposits, uint128 withdrawals) = balanceSheet.queuedAssets(poolId, scId, assetIds[i]);\n87:             if (deposits > 0 || withdrawals > 0) {\n88:                 balanceSheet.submitQueuedAssets(poolId, scId, assetIds[i], sc.extraGasLimit, address(0));\n89:                 validCount++;\n90:             }\n91:         }\n```\n\nAdditionally, the call to `queuedShares()` can be moved below the assets loop to fetch the updated value of `queuedAssetCounter` instead of tracking the `validCount` and then comparing it against the cached value of `queuedAssetCounter`.\n\n#### Impact\n\nGas savings.\n\n#### Recommendation\n\nConsider implementing the recommended suggestions.\n\n#### Developer Response\n\nFixed in [PR#726](https://github.com/centrifuge/protocol/pull/726)."
+    },
+    {
+      "number": 9,
+      "title": "Prevent overflow in NAV accounting",
+      "severity": "Medium",
+      "body": "#### Technical Details\n\nThe calculation of the NAV is given by the [`netAssetValue()`](https://github.com/centrifuge/protocol-v3/blob/6b95a7aa94704e1c6c1cc03c0f614d599c735a71/src/managers/hub/NAVManager.sol#L205) function.\n\n```solidity\n213:         return equity + gain - loss - liability;\n```\n\nIf the liabilities are eventually greater than the adjusted equity, the calculation would overflow since these are unsigned integers. This can cause a revert in the path that submits snapshots to the Hub, which are hooked to the NAVManager.\n\n#### Impact\n\nMedium. The issue can block updates to the Hub for as long as the calculation overflows.\n\n#### Recommendation\n\nConsider clamping the calculation to zero to avoid the revert.\n\nNote that this could also skew the final NAV after being aggregated in the SimplePriceManager contract.\n\n#### Developer Response\n\nFixed by [PR#708](https://github.com/centrifuge/protocol/pull/708)."
+    },
+    {
+      "number": 10,
+      "title": "Check accounts are positive in `closeGainLoss()`",
+      "severity": "Low",
+      "body": "#### Technical Details\n\nThe implementation of [`closeGainLoss()`](https://github.com/centrifuge/protocol-v3/blob/6b95a7aa94704e1c6c1cc03c0f614d599c735a71/src/managers/hub/NAVManager.sol#L169) ignores the `isPositive` return value when fetching the current state of the gain and loss accounts.\n\n```solidity\n176:         (, uint128 gainValue) = accounting.accountValue(poolId, gainAccount_);\n177:         (, uint128 lossValue) = accounting.accountValue(poolId, lossAccount_);\n```\n\nThe function then proceeds to adjust the equity account based on these values. If there are gains, it debits the gain account and credits the equity. If there are losses, it credits the loss account (debit normal) and debits the equity.\n\n#### Impact\n\nLow. The accounting would be incorrect if the returned values are not positive.\n\n#### Recommendation\n\nGiven the implementation assumptions, consider checking that the returned values are indeed positive.\n\n#### Developer Response\n\nFixed in [PR#728](https://github.com/centrifuge/protocol/pull/728)."
+    }
+  ]
+}

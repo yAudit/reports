@@ -27,7 +27,7 @@ export default function Document() {
           crossOrigin="anonymous"
         />
       </Head>
-      <body>
+      <body className="bg-white text-zinc-950 antialiased">
         <Main />
 
         <NextScript />

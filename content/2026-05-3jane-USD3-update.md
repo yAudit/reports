@@ -1,6 +1,7 @@
 ---
 tags: ["solidity"]
 title: 2026-05-3Jane-USD3-Update
+repo: yAudit/moneymarket-update-report
 description: 3Jane USD3 update
 ---
 

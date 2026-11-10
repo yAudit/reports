@@ -1,15 +1,10 @@
 import "@/styles/globals.css";
 import "katex/dist/katex.min.css";
+import "@/styles/report.css";
 import type { AppProps } from "next/app";
-import Navbar from "../components/Navbar";
-import { Space_Grotesk } from "next/font/google";
 import Head from "next/head";
+import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  display: "swap",
-});
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
@@ -18,14 +13,14 @@ export default function App({ Component, pageProps }: AppProps) {
         <title>yAudit Reports</title>
       </Head>
 
-      {/* The footer stays at the bottom of the window on short pages. */}
-      <main className={`${spaceGrotesk.className} flex min-h-screen flex-col`}>
+      <div className="flex min-h-screen flex-col bg-white text-zinc-950">
         <Navbar />
-        <div className="flex-1">
+        {/* flex-1 keeps the footer at the bottom of the window on short pages. */}
+        <main className="flex-1">
           <Component {...pageProps} />
-        </div>
+        </main>
         <Footer />
-      </main>
+      </div>
     </>
   );
 }

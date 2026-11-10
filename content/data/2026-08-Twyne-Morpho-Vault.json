@@ -1,0 +1,105 @@
+{
+  "repo": "yAudit/twyne-morpho-report",
+  "githubUrl": "https://github.com/yAudit/twyne-morpho-report",
+  "title": "Twyne - Morpho Vault",
+  "protocolName": "Twyne",
+  "protocolOverview": "Twyne is a credit delegation protocol that lets borrowers rent unused borrowing power from other lenders to boost their Liquidation LTV. Lenders earn additional yield while borrowers get to ramp up their leverage or insulate their debt.",
+  "auditScope": "This audit covers protocol updates since version 1.0.6, including the new integration with Morpho, across 3 days of review.",
+  "overallAssessment": "The review of Twyne's Morpho integration and broader protocol updates identified no critical or high-severity vulnerabilities, supporting the overall soundness of the codebase. One medium-severity issue in the Morpho leverage flow allowed user collateral to mask insufficient swap output, while the low-severity findings centered on emergency pause behavior, integration configuration assumptions, and accounting for unused swap inputs. The team promptly addressed the issues raised during the engagement, demonstrating strong responsiveness throughout the review.",
+  "startDate": "2026-08-17",
+  "finishDate": "2026-08-19",
+  "auditors": [
+    "ret2basic",
+    "HHK",
+    "adriro"
+  ],
+  "commits": [
+    {
+      "label": "Initial revision",
+      "hash": "d3cee306a9018ea0f405c8da9db79ed34487ae9e",
+      "url": "https://github.com/0xTwyne/twyne-contracts/commit/d3cee306a9018ea0f405c8da9db79ed34487ae9e"
+    },
+    {
+      "label": "Borrower EVC only owner fix",
+      "hash": "55cfe26aae63be54f9e58196bcbac7b1a2672b59",
+      "url": "https://github.com/0xTwyne/twyne-contracts/commit/55cfe26aae63be54f9e58196bcbac7b1a2672b59"
+    },
+    {
+      "label": "PR #297",
+      "hash": "21c25f45fd1a04f0fac6904f09decbed5e5decb7",
+      "url": "https://github.com/0xTwyne/twyne-contracts/commit/21c25f45fd1a04f0fac6904f09decbed5e5decb7"
+    }
+  ],
+  "finalCommits": [
+    {
+      "label": "Private repository",
+      "hash": "307c5b9ad74b6cc922e78a473e7ec8e28f5e9a84",
+      "url": "https://github.com/0xTwyne/twyne-contracts/commit/307c5b9ad74b6cc922e78a473e7ec8e28f5e9a84"
+    },
+    {
+      "label": "Public repository",
+      "hash": "beb4bf15a70b1a8abcf7e17e8a08f556ee5f84ab",
+      "url": "https://github.com/0xTwyne/twyne-contracts-v1/commit/beb4bf15a70b1a8abcf7e17e8a08f556ee5f84ab"
+    }
+  ],
+  "repositories": [
+    "https://github.com/0xTwyne/twyne-contracts"
+  ],
+  "auditResources": [
+    "Code repositories and documentation"
+  ],
+  "treeOfAuditedFiles": "src\n├── Periphery\n│   └── AssetZap.sol\n├── TwyneFactory\n│   └── CollateralVaultFactory.sol\n├── operators\n│   ├── MorphoDeleverageOperator.sol\n│   ├── MorphoLeverageOperator.sol\n│   ├── MorphoTeleportOperator.sol\n│   ├── AaveV3LeverageOperator.sol\n│   ├── LeverageOperator.sol.sol\n│   └── handlers\n│       └── WstethHandler.sol\n└── twyne\n    ├── AaveV3CollateralVault.sol\n    ├── CollateralVaultBase.sol\n    ├── EulerCollateralVault.sol\n    ├── MorphoCollateralVault.sol\n    └── VaultManager.sol",
+  "finalRemarks": null,
+  "nsloc": null,
+  "evaluations": [],
+  "issues": [
+    {
+      "number": 1,
+      "title": "Duplicate intermediate vault validation",
+      "severity": "Gas",
+      "body": "Each collateral vault creation function validates the intermediate vault before `_deployVault()` repeats the same check. Successful vault deployments therefore pay for an unnecessary external call to `VaultManager`.\n\n#### Technical Details\n\n`createEulerCollateralVault()`, `createAaveV3CollateralVault()`, and `createMorphoCollateralVault()` each call `vaultManager.isIntermediateVault(_intermediateVault)` and revert when it returns false. After their protocol-specific validation, all three functions invoke `_deployVault()`.\n\n`_deployVault()` performs the identical `isIntermediateVault()` call again before deploying the beacon proxy. Since every caller reaches the shared helper and the relevant state cannot change between these synchronous checks, the second validation does not provide additional protection. It only adds the gas cost of another external view call and associated return-data handling to every successful collateral vault deployment.\n\n#### Impact\n\nGas Savings.\n\n#### Recommendation\n\nKeep the intermediate vault validation in `_deployVault()` as the shared enforcement point and remove the duplicate check from each of the three creation functions.\n\n#### Developer Response\n\nFixed in [PR #294](https://github.com/0xTwyne/twyne-contracts/pull/294)"
+    },
+    {
+      "number": 3,
+      "title": "Upgrading a paused factory silently restores the Active state",
+      "severity": "Low",
+      "body": "Upgrading a paused `CollateralVaultFactory` resets its effective pause state to `PauseState.Active`. Operations that governance intended to keep disabled can therefore resume after the upgrade.\n\n#### Technical Details\n\nThe previous factory implementation inherits `PausableUpgradeable`, which stores its `_paused` boolean in OpenZeppelin's ERC-7201 namespaced storage. The new implementation removes this inheritance and instead declares `PauseState public pauseState` in the factory's linear storage.\n\nNo reinitializer or migration translates the legacy `_paused` value into the new enum. Consequently, `pauseState` reads its default value of zero, `PauseState.Active`, even when the proxy was paused before the upgrade. The documented upgrade payload invokes `setAdmin()` through `upgradeToAndCall()`, but does not preserve or reapply the pause state. After the collateral vault beacons are upgraded to implementations that query `pauseState()`, functions protected by `whenNotPaused()` become available without an explicit unpause action.\n\n#### Impact\n\nLow. The issue requires governance to upgrade the factory while it is paused, and the admin can restore the intended state with another transaction. However, the unexpected activation creates a window in which operations disabled as part of an emergency response can resume.\n\n#### Recommendation\n\nAdd a one-time upgrade migration that reads the legacy namespaced `_paused` value and initializes `pauseState` accordingly. Preserve the legacy storage definition until migration is complete, and make the migration callable within the owner-authorized `upgradeToAndCall` payload. At minimum, the deployment transaction must atomically call `setPauseState(PauseState.Paused)` whenever the pre-upgrade factory was paused, or ensure the pause is not enabled.\n\n#### Developer Response\n\nAcknowledged. The upgrade will be done in a normal state."
+    },
+    {
+      "number": 5,
+      "title": "User collateral masks insufficient swap output in Morpho leverage",
+      "severity": "Medium",
+      "body": "`MorphoLeverageOperator` includes the user's collateral contribution when validating the minimum swap output. A swap can therefore return less collateral than the user requires while the operation succeeds and leaves the user with the full flash-loan-sized debt.\n\n#### Technical Details\n\n`executeLeverage()` transfers `userCollateralAmount` from the borrower to the operator before requesting the Morpho flash loan. After the loan token is swapped, `onMorphoFlashLoan()` validates `minAmountOut` against the operator's entire collateral-token balance:\n\n```solidity\nuint collateralBalance = IERC20(collateralToken).balanceOf(address(this));\nrequire(collateralBalance >= minAmountOut, T_SlippageCheckFailed());\n```\n\nThe checked balance includes the user's contribution and the current swap output. It does not isolate the amount produced by the swap, even though `minAmountOut` is documented as the minimum collateral token amount expected from the swap. For example, if the user contributes 10 collateral tokens, requires 10 tokens from the swap, and the swap returns only 1 token, the check passes against the aggregate balance of 11 tokens.\n\nThe operator then transfers the aggregate collateral balance to the vault and borrows the flash-loan amount to repay Morpho. If the user's contribution is sufficient to keep the final position within its borrow limit, an adversely executed swap can bypass the user's minimum and leave the user with debt backed primarily by their original collateral. This issue exists even when the swap consumes the entire flash-loan input because the defect is how collateral output is validated.\n\n#### Impact\n\nMedium. A stale, malformed, or manipulated swap can execute below the user's operator-level minimum without reverting. The borrower can incur debt equal to the flash-loan amount while receiving little or no collateral from the swap, with the loss bounded by the debt their contributed collateral can support.\n\n#### Recommendation\n\nSnapshot the collateral balance immediately before executing the swap and validate only the balance increase:\n\n```solidity\nuint collateralBefore = IERC20(collateralToken).balanceOf(address(this));\nISwapper(SWAPPER).multicall(swapData);\nuint swapOutput = IERC20(collateralToken).balanceOf(address(this)) - collateralBefore;\nrequire(swapOutput >= minAmountOut, T_SlippageCheckFailed());\n```\n\nAlternatively, collect the user's collateral only after validating swap output, following the Aave operator's ordering.\n\n#### Developer Response\n\nFixed in [PR #294](https://github.com/0xTwyne/twyne-contracts/pull/294)"
+    },
+    {
+      "number": 6,
+      "title": "Morpho leverage over-borrows when swaps return unused loan tokens",
+      "severity": "Low",
+      "body": "`MorphoLeverageOperator` always borrows the full flash-loan amount after a leverage swap, even when the swap returns unused loan tokens to the operator. The borrower can incur unnecessary debt while tokens from their operation remain stranded in the shared operator.\n\n#### Technical Details\n\n`onMorphoFlashLoan()` transfers the full flash-loan amount to the Swapper and executes the caller-provided route. An exact-output, partially filled, or refunding route can return unconsumed loan tokens to `MorphoLeverageOperator` together with collateral output that satisfies `minAmountOut`. The defect is therefore independent of collateral-output validation and instead concerns how much the vault borrows after the swap.\n\nThe callback does not measure returned loan tokens. It always requests the original flash-loan amount from the collateral vault:\n\n```solidity\ndata: abi.encodeCall(CollateralVaultBase.borrow, (amount, address(this)))\n```\n\nIf a 100-token flash loan uses only 70 tokens and returns 30, the operator still borrows 100 tokens from the vault. Morpho then pulls 100 tokens to settle the flash loan, leaving the returned 30 tokens in the operator while the borrower owes the full 100-token debt. These tokens were produced by the current operation rather than being a preexisting donation.\n\n#### Impact\n\nLow. A refunding or partial-fill route can leave the borrower with debt exceeding the amount required to complete the leverage operation. The unused portion remains in the operator and can subsequently be treated as a donation, causing a loss to the borrower who originated it.\n\n#### Recommendation\n\nSnapshot the operator's loan-token balance immediately before executing the swap and measure the current call's returned amount. Apply returned loan tokens toward flash-loan repayment and borrow only the remaining shortfall. After Morpho repayment, sweep the operator's entire remaining loan-token balance to the authenticated borrower, mirroring the deleverage operator.\n\nFor example:\n\n```diff\n function executeLeverage(...) external nonReentrant {\n     ...\n     MORPHO.flashLoan(...);\n     \n+    uint loanTokenBalance = IERC20(mp.loanToken).balanceOf(address(this));\n+    if (loanTokenBalance > 0) {\n+        IERC20(mp.loanToken).safeTransfer(msgSender, loanTokenBalance);\n+    }\n }\n\n function onMorphoFlashLoan(uint amount, bytes calldata data) external {\n     ...\n     IERC20(loanToken).safeTransfer(SWAPPER, amount);\n+    uint loanBalanceBeforeSwap = IERC20(loanToken).balanceOf(address(this));\n     ISwapper(SWAPPER).multicall(swapData);\n+    uint returnedLoan = IERC20(loanToken).balanceOf(address(this)) - loanBalanceBeforeSwap;\n+    uint borrowAmount = returnedLoan >= amount ? 0 : amount - returnedLoan;\n     ...\n-    data: abi.encodeCall(CollateralVaultBase.borrow, (amount, address(this)))\n+    data: abi.encodeCall(CollateralVaultBase.borrow, (borrowAmount, address(this)))\n }\n```\n\n#### Developer Response\n\nFixed in [PR #294](https://github.com/0xTwyne/twyne-contracts/pull/294)"
+    },
+    {
+      "number": 7,
+      "title": "`withdraw()` can use external visibility",
+      "severity": "Informational",
+      "body": "`CollateralVaultBase.withdraw()` is declared `public`, although production contracts only reach it through external calls. Using `external` would align the function visibility with its actual usage and may reduce generated bytecode.\n\n#### Technical Details\n\nNeither `CollateralVaultBase` nor any of its derived vault implementations calls `withdraw()` internally. The production call site in `MorphoDeleverageOperator` encodes `CollateralVaultBase.withdraw()` into an EVC batch, which invokes the function externally.\n\nThe `public` visibility therefore exposes an unused internal entry point. Declaring the function `external` preserves its current ABI and all existing external call paths while expressing the intended interface more precisely.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nChange the visibility of `CollateralVaultBase.withdraw()` from `public` to `external`.\n\n#### Developer Response\n\nFixed in [PR #294](https://github.com/0xTwyne/twyne-contracts/pull/294)"
+    },
+    {
+      "number": 11,
+      "title": "Zero-value withdrawals reserve fresh CLP liquidity while Frozen",
+      "severity": "Low",
+      "body": "#### Technical Details\n\nThe `PauseState.Frozen` state permits borrowers to call `repay()`, `withdraw()`, and `redeemUnderlying()` to wind down their positions. Each of these functions passes the `whenNotPaused(PauseState.Paused)` guard and unconditionally invokes `_handleExcessCredit(_invariantCollateralAmount())` after completing its nominal operation. The `_handleExcessCredit` implementations in `AaveV3CollateralVault.sol:135-150`, `EulerCollateralVault.sol:84-105`, and `MorphoCollateralVault.sol:101-125` are bidirectional: when tracked collateral is below the computed invariant target, the function calls `intermediateVault.borrow()` to reserve additional credit and places that credit into the external integration.\n\nThe invariant calculation in `_collateralScaledByLiqLTV1e8` includes `intermediateVault.cash()` when `isRebalancing` is true. A position can be under-reserved when the intermediate vault previously had limited cash, constraining the dynamic reservation leg. If new CLP deposits subsequently make cash available, the borrower's next unwind call recomputes a higher invariant target. Since no parameter or state check prevents the reserve branch from executing while Frozen, the bidirectional hook borrows the difference from the intermediate vault. In Euler, this leaves the borrowed eWETH in the collateral vault's balance; in Aave, `rebalanceATokens_CV` transfers the assets into aTokens; in Morpho, `__supplyCollateral` deploys them as market collateral.\n\nA borrower can trigger this behavior with a zero-value `withdraw(0)` call, which completes without requiring additional capital or external-debt repayment. The pause check only gates the entry function; it does not constrain the internal reserve operation. As a result, the freeze does not reliably cap protocol exposure at the moment of the emergency action.\n\n#### Impact\n\nLow. The verified call consumes previously withdrawable intermediate-vault cash, creates new debt for the collateral vault, and deploys the CLP assets as external collateral. This impairs CLP withdrawal capacity and increases the principal exposed to the condition that prompted the freeze. While the reserved assets remain protocol-accounted collateral and an immediate token loss was not demonstrated, the behavior defeats the intended emergency exposure containment. If the incident develops into an external liquidation or integration loss, the newly reserved CLP collateral can be seized to satisfy the borrower's pre-existing external debt, transferring fresh CLP capital into the frozen integration after governance has acted to prevent new exposure.\n\n\n#### Recommendation\nMake excess-credit handling release-only whenever the factory is Frozen. Permit repayment of existing intermediate-vault debt but skip the `intermediateVault.borrow` branch. Keep bidirectional reservation only in Active, and let unwind calls revert on final health checks if they cannot proceed without fresh credit. This retains wind-down functionality without allowing fresh CLP exposure.\n\n```diff\n  function _handleExcessCredit(uint __invariantCollateralAmount) internal override {\n      uint vaultAssets = totalAssetsDepositedOrReserved;\n      if (vaultAssets > __invariantCollateralAmount) {\n          uint excess = Math.min(vaultAssets - __invariantCollateralAmount, intermediateVault.debtOf(address(this)));\n          totalAssetsDepositedOrReserved = vaultAssets - intermediateVault.repay(excess, address(this));\n-     } else if (vaultAssets < __invariantCollateralAmount) {\n+     } else if (vaultAssets < __invariantCollateralAmount && collateralVaultFactory.pauseState() == PauseState.Active) {\n          totalAssetsDepositedOrReserved = vaultAssets + intermediateVault.borrow(__invariantCollateralAmount - vaultAssets, address(this));\n      }\n  }\n```\n\nApply the same guard to the corresponding `_handleExcessCredit` implementations in Aave and Morpho collateral vaults.\n\n#### Developer Response\n\nAcknowledged."
+    },
+    {
+      "number": 18,
+      "title": "Cache `maxTwyneLTV` during external liquidation splitting",
+      "severity": "Gas",
+      "body": "The external liquidation paths redundantly fetch the effective max Twyne LTV while splitting the remaining collateral.\n\n#### Technical Details\n\n`AaveV3CollateralVault.splitCollateralAfterExtLiq()`, `EulerCollateralVault.splitCollateralAfterExtLiq()`, and `MorphoCollateralVault.splitCollateralAfterExtLiq()` each call `twyneVaultManager.maxTwyneLTVs(...)` to calculate `userCollateral`. That manager lookup reads the configured max-LTV and ramp metadata before evaluating the current ramped value.\n\nEach corresponding `handleExternalLiquidation()` calls `createVaultSnapshot()` before invoking `splitCollateralAfterExtLiq()`. The snapshot already stores the effective liquidation parameters, including max Twyne LTV, in transient `_maxTwyneLiqLTV`, and `_liqParams()` returns the cached values while the snapshot is active.\n\n#### Impact\n\nGas Savings.\n\n#### Recommendation\n\nUse the already-cached `_maxTwyneLiqLTV` in all three `splitCollateralAfterExtLiq()` implementations, or pass that cached value into the helper explicitly.\n\n#### Developer Response\n\nFixed in [PR #299](https://github.com/0xTwyne/twyne-contracts/pull/299)."
+    },
+    {
+      "number": 19,
+      "title": "Update the `_checkLiqLTV()` initialization dependency comment",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\n[`__CollateralVaultBase_init()`](https://github.com/0xTwyne/twyne-contracts/blob/21c25f45fd1a04f0fac6904f09decbed5e5decb7/src/twyne/CollateralVaultBase.sol#L108) initializes common state and then invokes `_checkLiqLTV()`. That validation obtains VaultManager parameters through `__targetAsset()` and reads the external protocol liquidation LTV through `_getExtLiqLTV()`. Both are virtual hooks whose implementations depend on concrete-vault state in addition to the common `asset`, `intermediateVault`, and `targetVault` values.\n\nThe comment currently located immediately before the validation reads:\n\n```solidity\n// checkLiqLTV must happen after targetVault() and asset return meaningful values\n```\n\nFor example, Aave uses `targetAsset`, `underlyingAsset`, and `categoryId`, while Morpho uses `targetAsset` and `mo_lltv`. Euler uses its immutable `targetAsset` and the common `asset` and `targetVault` values. The current concrete initializers establish these dependencies before calling the base initializer, so this is a documentation issue rather than a behavior defect.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nUpdate the comment to state that all fields read by the concrete implementations of `__targetAsset()` and `_getExtLiqLTV()` must be initialized before `_checkLiqLTV()` executes. Preserve this ordering in every concrete vault initializer.\n\n#### Developer Response\n\nFixed in [PR #299](https://github.com/0xTwyne/twyne-contracts/pull/299)."
+    }
+  ]
+}

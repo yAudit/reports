@@ -1,0 +1,41 @@
+{
+  "repo": "yAudit/yearn-vaults-v310-report",
+  "githubUrl": "https://github.com/yAudit/yearn-vaults-v310-report",
+  "title": "Yearn Vaults v3.1.0",
+  "protocolName": "Yearn",
+  "protocolOverview": "Yearn V3 Vaults is an ERC-4626 compliant vault system for accepting ERC-20 deposits, issuing yield-bearing shares, and allocating funds across external strategies. The vault acts as a flexible accounting and allocation layer, tracking strategy debt, reported gains and losses, profit unlocking, and user withdrawals.",
+  "auditScope": "This audit covers the changes introduced by PR #235 across one day of review.",
+  "overallAssessment": "Changes are minimal, the audit didn't identify any issues.",
+  "startDate": "2026-06-08",
+  "finishDate": "2026-06-08",
+  "auditors": [
+    "panda",
+    "adriro"
+  ],
+  "commits": [
+    {
+      "label": null,
+      "hash": "cc7d10d218e2dd3dea7df8ad604798cefbab6d2d",
+      "url": "https://github.com/yearn/yearn-vaults-v3/commit/cc7d10d218e2dd3dea7df8ad604798cefbab6d2d"
+    }
+  ],
+  "finalCommits": [],
+  "repositories": [
+    "https://github.com/yearn/yearn-vaults-v3"
+  ],
+  "auditResources": [
+    "Code repositories and documentation"
+  ],
+  "treeOfAuditedFiles": "contracts/\n└── VaultV3.vy",
+  "finalRemarks": null,
+  "nsloc": null,
+  "evaluations": [],
+  "issues": [
+    {
+      "number": 1,
+      "title": "TECH_SPEC incorrectly states withdrawals cannot be paused",
+      "severity": "Informational",
+      "body": "`TECH_SPEC.md` states that withdrawals cannot be paused, but the updated `VaultV3.vy` implementation blocks withdrawals and redemptions when `paused` is set.\n\n#### Technical Details\n\nThe emergency operation section of `TECH_SPEC.md` says `Withdrawals can't be paused under any circumstance`. The contract now exposes `setPaused()` and `isPaused()`, and the pause state affects both deposit and withdrawal flows. The specification therefore describes older behavior and no longer matches the contract.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nUpdate `TECH_SPEC.md` to describe the new pause semantics.\n\n#### Developer Response\n\nFixed."
+    }
+  ]
+}

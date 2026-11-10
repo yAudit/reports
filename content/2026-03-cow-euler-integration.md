@@ -1,6 +1,7 @@
 ---
 tags: ["solidity", "cowswap", "euler"]
 title: 2026-03-Cow-Euler-Integration
+repo: yAudit/cow-euler-integration
 description: Cow Euler integration Report
 ---
 

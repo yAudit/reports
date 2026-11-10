@@ -1,6 +1,7 @@
 ---
 tags: ["solidity", "hedera"]
 title: 2026-10-LYNX-LP-Range-Manager
+repo: yAudit/lynxify-lp-range-manager-report
 description: LYNX LP Range Manager
 ---
 

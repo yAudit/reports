@@ -1,6 +1,7 @@
 ---
 tags: ["solidity"]
 title: 2026-06-Centrifuge
+repo: yAudit/centrifuge-v3.3-report
 description: Centrifuge v3.3 Upgrade
 ---
 
