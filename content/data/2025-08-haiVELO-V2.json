@@ -1,0 +1,117 @@
+{
+  "repo": "yAudit/hai-velo-v2-report",
+  "githubUrl": "https://github.com/yAudit/hai-velo-v2-report",
+  "title": "haiVELO V2 review",
+  "protocolName": "HAI",
+  "protocolOverview": "haiVELO V2 allows users to use veVELO NFT to mint haiVELO token, while the V1 only allowed VELO tokens. User from haiVELO V1 can easily migrate to the new version.",
+  "auditScope": "This audit covers one smart contract totaling approximately 120 lines of code across 1.5 days of review.",
+  "overallAssessment": "The contract is simple and well organized, the team was prompt in fixing all issues. Some concerns were raised regarding the usage of haiVELO as collateral and if the peg to VELO always holds.",
+  "startDate": "2025-08-15",
+  "finishDate": "2025-07-16",
+  "auditors": [
+    "Adriro",
+    "HHK"
+  ],
+  "commits": [
+    {
+      "label": null,
+      "hash": "25f3a1a571d71a1e49599b6f07521517ad146ecb",
+      "url": "https://github.com/hai-on-op/core/commit/25f3a1a571d71a1e49599b6f07521517ad146ecb"
+    }
+  ],
+  "finalCommits": [],
+  "repositories": [
+    "https://github.com/hai-on-op/core/"
+  ],
+  "auditResources": [
+    "Code repositories and a Hackmd describing the v2."
+  ],
+  "treeOfAuditedFiles": "core/src/contracts/tokens/WrappedTokenV2.sol",
+  "finalRemarks": "The contract is simple and well organized, the team was prompt in fixing all issues. Some concerns were raised regarding the usage of haiVELO as a collateral and if the peg to VELO always hold.",
+  "nsloc": 120,
+  "evaluations": [
+    {
+      "category": "access_control",
+      "score": "Good",
+      "description": "No access control mechanisms are needed for this protocol's design."
+    },
+    {
+      "category": "mathematics",
+      "score": "Good",
+      "description": "The protocol uses only basic mathematical operations."
+    },
+    {
+      "category": "complexity",
+      "score": "Good",
+      "description": "The codebase is straightforward and easy to understand."
+    },
+    {
+      "category": "libraries",
+      "score": "Good",
+      "description": "The project uses battle-tested OpenZeppelin libraries."
+    },
+    {
+      "category": "decentralization",
+      "score": "Low",
+      "description": "The backing of haiVELO is stored on a Safe multisig, introducing centralization risks."
+    },
+    {
+      "category": "code_stability",
+      "score": "Good",
+      "description": "The codebase remained stable throughout the audit period."
+    },
+    {
+      "category": "documentation",
+      "score": "Good",
+      "description": "NatSpec documentation is present along with existing developer documentation available on the website."
+    },
+    {
+      "category": "monitoring",
+      "score": "Average",
+      "description": "Events are emitted when needed, though a few minor gaps were identified."
+    },
+    {
+      "category": "testing",
+      "score": "Good",
+      "description": "Comprehensive test coverage is implemented."
+    }
+  ],
+  "issues": [
+    {
+      "number": 1,
+      "title": "Burn address can be constant",
+      "severity": "Gas",
+      "body": "The `BURN_ADDRESS` is known at compilation time and can be defined as constant.\n\n#### Technical Details\n\n- [WrappedTokenV2.sol#L51](https://github.com/hai-on-op/core/blob/54a4b9f695d655e3ffc1c16c68b2299a78460c91/src/contracts/tokens/WrappedTokenV2.sol#L51)\n\n#### Impact\n\nGas savings.\n\n#### Recommendation\n\nChange the variable to constant.\n\n#### Developer Response\n\nFixed in https://github.com/hai-on-op/core/commit/be1e037bd0b571bcb940d789ecbbe471e073b363."
+    },
+    {
+      "number": 2,
+      "title": "V1 total supply isn't adjusted when migrating",
+      "severity": "Informational",
+      "body": "The implementation of `migrateV1toV2()` transfers V1 tokens to a burn address without adjusting the supply, while new V2 tokens are minted.\n\n#### Technical Details\n\n[WrappedTokenV2.sol#L130](https://github.com/hai-on-op/core/blob/54a4b9f695d655e3ffc1c16c68b2299a78460c91/src/contracts/tokens/WrappedTokenV2.sol#L130)\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nEnsure no component depends on the total supply of the old token, and that the burn address balance is accounted for when calculating the circulating supply.\n\n#### Developer Response\n\nAcknowledged. No fix needed."
+    },
+    {
+      "number": 3,
+      "title": "Validate duplicates in tokens array",
+      "severity": "Informational",
+      "body": "Even though the implementation should fail on transferring a duplicate token ID, the `depositNFTs()` function could validate that there are no repeated IDs in the `_tokenIds` array.\n\n#### Technical Details\n\n[WrappedTokenV2.sol#L104](https://github.com/hai-on-op/core/blob/54a4b9f695d655e3ffc1c16c68b2299a78460c91/src/contracts/tokens/WrappedTokenV2.sol#L104)\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nValidate token IDs are not repeated in the `_tokenIds` array.\n\n```diff\n    uint256 _balance = 0;\n    for (uint256 i = 0; i < _tokenIds.length; i++) {\n      _balance += uint256(uint128(BASE_TOKEN_NFT.locked(_tokenIds[i]).amount));\n+     if (i > 0 && _tokenIds[i-1] >= _tokenIds[i]) {\n+       revert WrappedTokenV2_DuplicateTokenId();\n+     }\n    }\n```\n\n\n#### Developer Response\n\nFixed in https://github.com/hai-on-op/core/commit/74b2ffcfbc3e9ceda0a63fc5e21a707676bc60ca."
+    },
+    {
+      "number": 4,
+      "title": "HaiVelo backing relies on trusted multisig custody",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nHaiVelo tokens maintain a 1:1 backing with VELO tokens through either pure VELO tokens or veVELO NFTs. However, during the minting process, the backing VELO tokens are transferred to the `baseTokenManager`, which is a Safe multisig controlled by the Hai team. \n\nThis introduces a trust assumption where any party with access to the Safe could mint additional HaiVelo tokens without proper backing, breaking the 1:1 peg.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nStore the backing VELO tokens and veVELO NFTs in an immutable smart contract that enforces the 1:1 backing mechanically, removing the need for trusted custodians.\n\n#### Developer Response\n\nAcknowledged. We are in the process of writing a contract to handle this."
+    },
+    {
+      "number": 5,
+      "title": "Inaccurate supply on NFT transfer callback",
+      "severity": "Informational",
+      "body": "The `depositNFTs()` function transfers the tokens before minting haiVELO, potentially leading to an incorrect supply if read from the NFT transfer callback.\n\n#### Technical Details\n\n[WrappedTokenV2.sol#L104](https://github.com/hai-on-op/core/blob/54a4b9f695d655e3ffc1c16c68b2299a78460c91/src/contracts/tokens/WrappedTokenV2.sol#L104)\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nTake into account this desynchronization in future manager implementations. Another alternative would be to follow a CEI approach and mint before transferring.\n\n#### Developer Response\n\nFixed in https://github.com/hai-on-op/core/commit/64d57eb84b67bb088e221a6158a54740e64ef6ca."
+    },
+    {
+      "number": 6,
+      "title": "Incorrect account argument in events",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nThe events should notify about the user depositing or migrating, but are instead emitted with the receiver.\n\nAs an example, in the `WrappedTokenV2Deposit` event, the `_account` argument refers to the _user depositing the base tokens_.\n\n```solidity\n20:   /**\n21:    * @notice Emitted when a user deposits tokens and mints wrapped tokens\n22:    * @param _account Address of the user depositing the base tokens\n23:    * @param _wad Amount of tokens deposited\n24:    */\n25:   event WrappedTokenV2Deposit(address indexed _account, uint256 _wad);\n```\n\nHowever, the event is then emitted with the `_account` parameter, the receiver, which may differ from the caller.\n\n```solidity\n100:     emit WrappedTokenV2Deposit(_account, _wad);\n```\n\nA second event should be emitting the amount of Velo per NFT locked but is emitting the sum of all Velo locked instead.\n\nThe interface:\n\n```solidity\n27:  /**\n28:   * @notice Emitted when a user deposits a veNFT and mints wrapped tokens\n29:   * @param _account Address of the user depositing the base tokens\n30:   * @param _tokenId ID of the veNFT being deposited\n31:   * @param _wad Amount of locked velo in veNFT being deposited\n32:   */\n33:  event WrappedTokenV2NFTDeposit(address indexed _account, uint256 _tokenId, uint256 _wad);\n```\n\nHowever inside the function, it uses the sum of all NFTs locked instead of the amount per tokenId.\n\n```solidity\n110: _balance += uint256(uint128(BASE_TOKEN_NFT.locked(_tokenIds[i]).amount));\n...\n119: emit WrappedTokenV2NFTDeposit(_account, _tokenIds[i], _balance);\n```\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nChange event arguments to `msg.sender`, or change the associated documentation to note that this address is the token recipient and not the originator of the action.\n\n#### Developer Response\n\nFixed in https://github.com/hai-on-op/core/commit/0fde26277968341029a57ac77fb8596153996312 & https://github.com/hai-on-op/core/commit/757e12b42236c4f8859853fee113f1f22780c25e & https://github.com/hai-on-op/core/commit/937ab3752c43f08ab6ae1d173b78b04d7732f7f2."
+    }
+  ]
+}

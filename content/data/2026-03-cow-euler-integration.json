@@ -1,0 +1,116 @@
+{
+  "repo": "yAudit/cow-euler-integration",
+  "githubUrl": "https://github.com/yAudit/cow-euler-integration",
+  "title": "CoW-Euler Integration",
+  "protocolName": "CoW",
+  "protocolOverview": "The CoW-Euler Integration contracts enable atomic leveraged position management (open, close, collateral swap) by coordinating CoW Protocol settlements with Euler Vault Kit (EVK) operations through the Ethereum Vault Connector (EVC). The system uses a chained wrapper pattern where authenticated solvers call `wrappedSettle()`, which executes custom EVC batch operations atomically around a CoW Protocol settlement. Users authorize operations via either EVC permit signatures or on-chain pre-approved hashes.",
+  "auditScope": "This audit covers 10 smart contracts totaling approximately 929 lines of code across 5 days of review.",
+  "overallAssessment": "The reviewed CoW-Euler integration is a well-structured and well-documented codebase that handles a non-trivial settlement and position-management flow with good architectural clarity. No major issues were identified during the engagement. The main risk area observed relates to solver-dependent settlement assumptions and missing wrapper-level post-settlement validation, which could enable low-severity griefing scenarios under a malicious or compromised solver.",
+  "startDate": "2026-03-10",
+  "finishDate": "2026-03-16",
+  "auditors": [
+    "HHK",
+    "adriro"
+  ],
+  "commits": [
+    {
+      "label": "Review commit",
+      "hash": "beb87e836e3876f4b6cfc47176f14d86278f7263",
+      "url": "https://github.com/cowprotocol/euler-integration-contracts/commit/beb87e836e3876f4b6cfc47176f14d86278f7263"
+    },
+    {
+      "label": "Final commit",
+      "hash": "bfed0b21ce0b0212193d9dbf79e878b936fb63ea",
+      "url": "https://github.com/cowprotocol/euler-integration-contracts/commit/bfed0b21ce0b0212193d9dbf79e878b936fb63ea"
+    }
+  ],
+  "finalCommits": [],
+  "repositories": [
+    "https://github.com/cowprotocol/euler-integration-contracts"
+  ],
+  "auditResources": [
+    "Code repositories, documentation and previous audit report by Cantina"
+  ],
+  "treeOfAuditedFiles": "src/\n├── CowEvcBaseWrapper.sol\n├── CowEvcClosePositionWrapper.sol\n├── CowEvcCollateralSwapWrapper.sol\n├── CowEvcOpenPositionWrapper.sol\n├── CowWrapper.sol\n├── CowWrapperHelpers.sol\n├── Errors.sol\n├── Inbox.sol\n├── InboxFactory.sol\n└── PreApprovedHashes.sol",
+  "finalRemarks": null,
+  "nsloc": 929,
+  "evaluations": [
+    {
+      "category": "access_control",
+      "score": "Good",
+      "description": "Proper access control is in place. Wrappers are intended to be executed by authorized solvers."
+    },
+    {
+      "category": "mathematics",
+      "score": "Good",
+      "description": "Correct use of mathematical operations."
+    },
+    {
+      "category": "complexity",
+      "score": "Good",
+      "description": "The contracts are well-architected given the complex integration with CoW, EVC, and EVK."
+    },
+    {
+      "category": "libraries",
+      "score": "Good",
+      "description": "The codebase is self-contained with minimal use of external dependencies."
+    },
+    {
+      "category": "decentralization",
+      "score": "Average",
+      "description": "Solvers are trusted to behave correctly when performing on-chain actions. However, this trust assumption is acknowledged in the protocol's threat model, which includes penalties for misbehavior."
+    },
+    {
+      "category": "code_stability",
+      "score": "Good",
+      "description": "The codebase remained stable during the review."
+    },
+    {
+      "category": "documentation",
+      "score": "Good",
+      "description": "The contracts are well-documented, and detailed high-level documentation was provided to the auditors."
+    },
+    {
+      "category": "monitoring",
+      "score": "Good",
+      "description": "Monitoring mechanisms are in place to track key events and changes within the system."
+    },
+    {
+      "category": "testing",
+      "score": "Good",
+      "description": "The codebase features a rich test suite with unit and end-to-end tests."
+    }
+  ],
+  "issues": [
+    {
+      "number": 1,
+      "title": "Wrappers lack sufficient post-settlement validation",
+      "severity": "Low",
+      "body": "All three wrappers lack adequate verification that the CoW settlement actually executed the user's trade. A compromised or malicious solver can manipulate the settlement to bypass existing checks, consuming wrapper-level authorization and degrading the user's position.\n\n#### Technical Details\n\nSince `settleData` is fully solver-controlled, a solver can call `settle()` with empty `trades` (or trades that exclude the user's order), or use the settlement's `interactions` to send trivial token amounts that bypass existing checks.\n\n**Close position**: The existing `NoSwapOutput` check ([CowEvcClosePositionWrapper.sol#L222-L224](https://github.com/cowprotocol/euler-integration-contracts/blob/beb87e836e3876f4b6cfc47176f14d86278f7263/src/CowEvcClosePositionWrapper.sol#L222-L224)) is trivially bypassed — a solver can send 1 wei of the borrow asset to the Inbox via settlement `interactions`. The check passes, the wrapper repays 1 wei of debt, and the unused collateral vault tokens are returned to the user's account (L248-252). Since the collateral vault remains enabled, the health check passes with the position essentially unchanged, but the wrapper authorization is consumed.\n\n**Open position**: No post-settlement check exists in `_evcInternalSettle`. The batch items before settlement execute (enableCollateral, enableController, deposit collateral, borrow tokens). Without the swap converting borrowed tokens to additional collateral, the EVC health check will likely revert the batch due to undercollateralization. However, if the user's initial `collateralAmount` is large relative to `borrowAmount`, the health check could pass — leaving the user with an open debt position and unswapped borrowed tokens. The wrapper's pre-approved hash or permit nonce is consumed.\n\n**Collateral swap**: No post-settlement check exists in `_evcInternalSettle`. When `owner == account` and `disableSourceCollateral == false`, the only pre-settlement action is `enableCollateral(toVault)`. A no-op settlement means nothing changes, the health check passes trivially, and the wrapper-level authorization is consumed for nothing.\n\nIn all cases, the CoW order itself is not invalidated on the settlement contract (`filledAmount` is not updated), but the wrapper-level authorization is burned, forcing the user to sign a new permit or submit a new pre-approved hash.\n\n#### Impact\n\nLow. Requires a compromised or malicious solver (bonded actors subject to slashing). No direct fund loss — users retain their assets in all scenarios (close position collateral is recoverable from the Inbox). The impact is limited to griefing: consuming wrapper-level authorizations, forcing users to re-authorize on-chain, and potentially degrading health factors.\n\n#### Recommendation\n\nAdd a user-specified minimum output field to each wrapper's params struct. Since params are included in both the pre-approved hash and the EVC permit signature, the minimum is automatically authenticated without any changes to the authorization flows.\n\n**Close position** — add `minDebtAssetOut` to `ClosePositionParams` and replace the existing `NoSwapOutput` check in `_evcInternalSettle`:\n\n```solidity\nstruct ClosePositionParams {\n    // ... existing fields ...\n    uint256 minDebtAssetOut; // minimum borrow asset received from swap\n}\n\n// In _evcInternalSettle, replace the NoSwapOutput check:\nuint256 swapOutput = swapResultBalance - swapBeforeResultBalance;\nrequire(\n    swapOutput >= params.minDebtAssetOut,\n    InsufficientSwapOutput(swapOutput, params.minDebtAssetOut)\n);\n```\n\n**Open position** — add `minCollateral` to `OpenPositionParams` and check in `_evcInternalSettle`:\n\n```solidity\nstruct OpenPositionParams {\n    // ... existing fields ...\n    uint256 minCollateral; // minimum collateral vault token balance after settlement\n}\n\n// In _evcInternalSettle:\n_next(settleData, remainingWrapperData);\nrequire(\n    IERC20(collateralVault).balanceOf(params.account) >= params.minCollateral,\n    InsufficientCollateral(params.account)\n);\n```\n\n**Collateral swap** — add `minCollateral` to `CollateralSwapParams` and check in `_evcInternalSettle`:\n\n```solidity\nstruct CollateralSwapParams {\n    // ... existing fields ...\n    uint256 minCollateral; // minimum destination vault token balance after settlement\n}\n\n// In _evcInternalSettle:\n_next(settleData, remainingWrapperData);\nrequire(\n    IERC20(params.toVault).balanceOf(params.account) >= params.minCollateral,\n    InsufficientCollateral(params.account)\n);\n```\n\nThis provides explicit wrapper-level slippage protection, prevents no-op and trivial-amount settlement griefing, and is automatically covered by both authorization flows since the new fields are part of the hashed/signed params struct.\n\n#### Developer Response\n\nAcknowledged."
+    },
+    {
+      "number": 3,
+      "title": "`evcInternalSettle()` caller check could additionally verify `onBehalfOfAccount`",
+      "severity": "Informational",
+      "body": "The [`evcInternalSettle()`](https://github.com/cowprotocol/euler-integration-contracts/blob/beb87e836e3876f4b6cfc47176f14d86278f7263/src/CowEvcBaseWrapper.sol#L136) function in `CowEvcBaseWrapper` only checks that `msg.sender == address(EVC)`. Since anyone can initiate an `EVC.batch()` call, and the EVC forwards calls on behalf of the specified `onBehalfOfAccount`, the check could be strengthened by also verifying that `EVC.getCurrentOnBehalfOfAccount() == address(this)`.\n\n#### Technical Details\n\nThe batch item that triggers `evcInternalSettle()` is constructed with `onBehalfOfAccount: address(this)`, meaning the EVC should be executing the callback on behalf of the wrapper contract itself. However, the current check only validates the caller is the EVC — it does not confirm that the EVC is acting on behalf of `address(this)`.\n\nThe `expectedEvcInternalSettleCallHash` transient storage check already ensures that the callback data matches what the wrapper expected, which provides strong protection against unauthorized invocations. Adding the `onBehalfOfAccount` check would provide defense-in-depth by also validating the execution context matches expectations, consistent with how the batch item is configured.\n\n#### Impact\n\nInformational. \n\n#### Recommendation\n\nAdd `require(EVC.getCurrentOnBehalfOfAccount(address(0)) == address(this))` alongside the existing `msg.sender == address(EVC)` check in `evcInternalSettle()`.\n\n#### Developer Response\n\nFixed in [5e41bb0](https://github.com/cowprotocol/euler-integration-contracts/commit/5e41bb0)."
+    },
+    {
+      "number": 4,
+      "title": "Misleading comments about `remainingWrapperData` in `_evcInternalSettle()`",
+      "severity": "Informational",
+      "body": "In both [`CowEvcClosePositionWrapper._evcInternalSettle()`](https://github.com/cowprotocol/euler-integration-contracts/blob/beb87e836e3876f4b6cfc47176f14d86278f7263/src/CowEvcClosePositionWrapper.sol#L194) and [`CowEvcCollateralSwapWrapper._evcInternalSettle()`](https://github.com/cowprotocol/euler-integration-contracts/blob/beb87e836e3876f4b6cfc47176f14d86278f7263/src/CowEvcCollateralSwapWrapper.sol#L215), the inline comment states that `wrapperData` is \"empty since we've already processed it in `_wrap`\". This is misleading as `remainingWrapperData` can be empty (when this is the last wrapper in the chain) or non-empty (when additional wrappers are chained after this one).\n\n#### Technical Details\n\nThe comment in both wrappers reads: \"Use CowWrapper's `_next` to call the settlement contract / wrapperData is empty since we've already processed it in `_wrap`\". The `_next()` function's behavior depends on `remainingWrapperData`: if it is empty, `_next()` calls the settlement contract directly; if non-empty, it extracts the next wrapper address and continues the chain. The comment incorrectly implies `remainingWrapperData` is always empty, which obscures the chaining capability of the wrapper architecture.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nUpdate the comments in both `CowEvcClosePositionWrapper._evcInternalSettle()` and `CowEvcCollateralSwapWrapper._evcInternalSettle()` to accurately describe that `remainingWrapperData` may contain additional chained wrapper data, and that `_next()` handles both cases.\n\n#### Developer Response\n\nFixed in [40e396c](https://github.com/cowprotocol/euler-integration-contracts/commit/40e396c0b676e14b4d687de775e3be2d5d24d621)."
+    },
+    {
+      "number": 5,
+      "title": "Non-conformant EIP-712 struct hashing in `Inbox.isValidSignature()`",
+      "severity": "Low",
+      "body": "The [`isValidSignature()`](https://github.com/cowprotocol/euler-integration-contracts/blob/beb87e836e3876f4b6cfc47176f14d86278f7263/src/Inbox.sol#L72) function in `Inbox` hashes the CoW `Order` struct by treating all 12 fields as raw 32-byte words. However, the `Order` type contains three `string` fields (`kind`, `sellTokenBalance`, `buyTokenBalance`) which, per EIP-712, must each be individually `keccak256`-hashed before being included in the struct hash.\n\n#### Technical Details\n\nThe assembly block in `isValidSignature()` computes `structHash` by hashing 416 contiguous bytes (type hash + 12 × 32-byte words) starting from `orderData`. This treats every field uniformly as a fixed-size value.\n\nEIP-712 [specifies](https://eips.ethereum.org/EIPS/eip-712#definition-of-encodedata) that dynamic types like `string` must be encoded as `keccak256(value)` within the struct hash. The CoW `Order` type has `kind`, `sellTokenBalance`, and `buyTokenBalance` declared as `string`. Skipping this step produces a struct hash that does not conform to the EIP-712 specification.\n\nIn practice, the CoW settlement contract itself uses the same non-standard encoding for these fields (treating them as pre-hashed `bytes32` values), so the computed hash will match the settlement contract's expected digest. The risk is limited to interoperability: any standard EIP-712 tooling or future contract that strictly follows the specification would compute a different hash for the same order, potentially causing signature verification failures.\n\n#### Impact\n\nLow. The hashing deviates from the EIP-712 standard for `string`-typed fields, but mirrors the CoW settlement contract's own encoding, so it functions correctly in the current integration. The impact is limited to potential interoperability issues with strict EIP-712 implementations.\n\n#### Recommendation\n\nAdd a comment documenting that the encoding intentionally mirrors the CoW settlement contract's non-standard treatment of the `string` fields as pre-hashed `bytes32` values, and that this is a known deviation from EIP-712.\n\n#### Developer Response\n\nFixed in [cc95202](https://github.com/cowprotocol/euler-integration-contracts/commit/cc95202). Added a comment."
+    },
+    {
+      "number": 6,
+      "title": "Close position wrapper repay amount uses existing balance instead of delta",
+      "severity": "Informational",
+      "body": "The comment at [CowEvcClosePositionWrapper.sol#L226](https://github.com/cowprotocol/euler-integration-contracts/blob/beb87e836e3876f4b6cfc47176f14d86278f7263/src/CowEvcClosePositionWrapper.sol#L226) states the repay amount equals \"however much we get from swapping\", but the code uses the Inbox's total borrow asset balance rather than the swap output delta.\n\n#### Technical Details\n\nIn [CowEvcClosePositionWrapper.sol#L226-L227](https://github.com/cowprotocol/euler-integration-contracts/blob/beb87e836e3876f4b6cfc47176f14d86278f7263/src/CowEvcClosePositionWrapper.sol#L226-L227):\n\n```solidity\n// the amount we will *actually* repay is the same as however much we get from swapping\nuint256 repayAmount = swapResultBalance;\n```\n\n`swapResultBalance` is the Inbox's total borrow asset balance, not the delta (`swapResultBalance - swapBeforeResultBalance`). If the Inbox holds pre-existing borrow asset tokens, those are silently consumed for additional debt repayment or returned to the owner as excess. The behavior is beneficial to the Inbox owner but contradicts the comment.\n\n#### Impact\n\nInformational. No security impact — pre-existing tokens in the Inbox conceptually belong to the owner (who can recover them via `callTransfer`). The extra repayment benefits the user.\n\n#### Recommendation\n\nEither use the swap delta to match the comment, or update the comment to reflect the actual behavior.\n\n#### Developer Response\n\nFixed in [539f99b](https://github.com/cowprotocol/euler-integration-contracts/commit/539f99b)."
+    }
+  ]
+}

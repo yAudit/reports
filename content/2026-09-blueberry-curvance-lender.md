@@ -1,6 +1,7 @@
 ---
 tags: ["solidity"]
 title: 2026-09-Blueberry-Curvance-Lender
+repo: yAudit/blueberry-protocol-report
 description: Blueberry Curvance Lender Strategy
 ---
 

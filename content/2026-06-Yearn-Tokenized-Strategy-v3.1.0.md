@@ -1,6 +1,7 @@
 ---
 tags: ["solidity", "yearn"]
 title: 2026-06-Yearn-Tokenized-Strategy-v3.1.0
+repo: yAudit/yearn-tokenized-strategy-v310-report
 description: Yearn Tokenized Strategy v3.1.0
 ---
 

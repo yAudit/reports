@@ -1,6 +1,7 @@
 ---
 tags: ["solidity"]
 title: 2025-08-haiVELO-V2
+repo: yAudit/hai-velo-v2-report
 description: yAudit haiVELO V2 Report
 ---
 

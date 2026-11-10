@@ -1,0 +1,155 @@
+{
+  "repo": "yAudit/moneymarket-report",
+  "githubUrl": "https://github.com/yAudit/moneymarket-report",
+  "title": "3Jane - Moneymarket",
+  "protocolName": "3Jane",
+  "protocolOverview": "3Jane is a credit-based money market built on top of Morpho Blue that provides unsecured credit lines underwritten against DeFi assets and FICO credit scores.",
+  "auditScope": "This audit covers 13 smart contracts totaling approximately 2000 lines of code across 10 days of review.",
+  "overallAssessment": "The 3Jane Moneymarket protocol demonstrates solid architectural foundations with well-integrated external dependencies. The audit identified one high-severity issue in the Pendle YT token handling (subsequently removed from the codebase) and two medium-severity design issues around cooldown mechanics and token burn mechanisms that will be addressed in future releases. No critical vulnerabilities were discovered, and the core mathematical operations and access control systems are sound.",
+  "startDate": "2025-10-06",
+  "finishDate": "2025-10-17",
+  "auditors": [
+    "Panda",
+    "Fede"
+  ],
+  "commits": [
+    {
+      "label": null,
+      "hash": "bcfbebfac56f0e8d1497efde6524eeb3e4d553ea",
+      "url": "https://github.com/3jane-protocol/moneymarket-contracts/blob/bcfbebfac56f0e8d1497efde6524eeb3e4d553ea/"
+    }
+  ],
+  "finalCommits": [],
+  "repositories": [
+    "https://github.com/3jane-protocol/moneymarket-contracts/"
+  ],
+  "auditResources": [
+    "Code repositories and documentation",
+    "Whitepaper",
+    "Previous audit"
+  ],
+  "treeOfAuditedFiles": "src/\n├── MorphoCredit.sol\n├── Morpho.sol\n├── ProtocolConfig.sol\n├── CreditLine.sol\n├── Helper.sol\n├── MarkdownController.sol\n├── InsuranceFund.sol\n├── usd3/\n│   ├── USD3.sol\n│   └── sUSD3.sol\n├── irm/\n│   └── adaptive-curve-irm/\n│       └── AdaptiveCurveIrm.sol\n└── jane/\n    ├── RewardsDistributor.sol\n    ├── Jane.sol\n    └── PYTLocker.sol",
+  "finalRemarks": null,
+  "nsloc": 2000,
+  "evaluations": [
+    {
+      "category": "access_control",
+      "score": "Good",
+      "description": "Access control mechanisms are generally well-implemented with proper role-based restrictions. Minor issues were found with whitelist validation in transfer hooks not being enforced when the whitelist is enabled, allowing potential bypass of access controls through transfers."
+    },
+    {
+      "category": "mathematics",
+      "score": "Good",
+      "description": "Mathematical operations and calculations are sound with no critical vulnerabilities identified."
+    },
+    {
+      "category": "complexity",
+      "score": "Average",
+      "description": "Several design issues stem from complex state management, such as the cooldown restart vulnerability and retroactive parameter modifications affecting existing users."
+    },
+    {
+      "category": "libraries",
+      "score": "Good",
+      "description": "The protocol leverages well-established DeFi libraries and integrations, including Morpho Blue, and standard OpenZeppelin contracts."
+    },
+    {
+      "category": "decentralization",
+      "score": "Good",
+      "description": "The system contains standard admin controls for parameter updates and contract management."
+    },
+    {
+      "category": "code_stability",
+      "score": "Good",
+      "description": "Code stability is adequate with a mix of deployed immutable contracts and upgradeable components."
+    },
+    {
+      "category": "documentation",
+      "score": "Good",
+      "description": "Documentation exists for core functionality."
+    },
+    {
+      "category": "monitoring",
+      "score": "Average",
+      "description": "Event emission coverage is incomplete with several important state-changing functions lacking events."
+    },
+    {
+      "category": "testing",
+      "score": "Average",
+      "description": "Testing appears to cover basic functionality but missed several edge cases and mechanism vulnerabilities."
+    }
+  ],
+  "issues": [
+    {
+      "number": 3,
+      "title": "`RewardsDistributor.Claimed` event emits incorrect user total claimed",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\n[`Claimed`](https://github.com/3jane-protocol/moneymarket-contracts/blob/bcfbebfac56f0e8d1497efde6524eeb3e4d553ea/src/jane/RewardsDistributor.sol#L29) event docs state the third parameter is:\n\n```\n/// @param totalClaimed The total amount the user has claimed after this claim\nevent Claimed(address indexed user, uint256 amount, uint256 totalClaimed);\n```\n\nHowever, the emission passes `totalAllocation` instead of the updated user total claimed.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nEmit the updated cumulative user total `claimed[user]` after state updates:\n\n```solidity\nemit Claimed(user, claimable, alreadyClaimed + claimable);\n```\n\n#### Developer Response\n\nAddressed in [PR#86](https://github.com/3jane-protocol/moneymarket-contracts/pull/86)"
+    },
+    {
+      "number": 4,
+      "title": "`RewardsDistributor.getClaimable()` ignores global cap",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\n[`getClaimable()`](https://github.com/3jane-protocol/moneymarket-contracts/blob/bcfbebfac56f0e8d1497efde6524eeb3e4d553ea/src/jane/RewardsDistributor.sol#L198) returns the user’s uncapped delta `totalAllocation - claimed[user]` but ignores the global cap based on `maxClaimable - totalClaimed`. The cap is only enforced during [`_claim()`](https://github.com/3jane-protocol/moneymarket-contracts/blob/bcfbebfac56f0e8d1497efde6524eeb3e4d553ea/src/jane/RewardsDistributor.sol#L169), where the amount is reduced to the remaining global cap.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nChange `getClaimable()` to apply the cap:\n\n```solidity\nfunction getClaimable(address user, uint256 totalAllocation) external view returns (uint256) {\n    if (maxClaimable == 0 || totalClaimed >= maxClaimable) return 0;\n\n    uint256 alreadyClaimed = claimed[user];\n    uint256 uncapped = totalAllocation > alreadyClaimed ? totalAllocation - alreadyClaimed : 0;\n\n    uint256 remaining = maxClaimable - totalClaimed;\n    return uncapped > remaining ? remaining : uncapped;\n}\n```\n\n#### Developer Response\n\nAcknowledged."
+    },
+    {
+      "number": 5,
+      "title": "Unnecessary cast",
+      "severity": "Informational",
+      "body": "The variable is being cast to its own type\n\n#### Technical Details\n\n\n```solidity\nFile: src/CreditLine.sol\n\n218: IERC20(marketParams.loanToken).approve(address(MORPHO), cover);\n```\n\n[CreditLine.sol#L218](https://github.com/3jane-protocol/moneymarket-contracts/tree/bcfbebfac56f0e8d1497efde6524eeb3e4d553ea/src/CreditLine.sol#L218)\n\n```solidity\nFile: src/irm/adaptive-curve-irm/AdaptiveCurveIrm.sol\n\n189: return (coeff.wMulToZero(err) + WAD).wMulToZero(int256(_rateAtTarget));\n```\n\n[AdaptiveCurveIrm.sol#L189](https://github.com/3jane-protocol/moneymarket-contracts/tree/bcfbebfac56f0e8d1497efde6524eeb3e4d553ea/src/irm/adaptive-curve-irm/AdaptiveCurveIrm.sol#L189)\n\n```solidity\nFile: src/usd3/USD3.sol\n\n713: uint256 newSlotValue = (currentSlotValue & mask) | (uint256(trancheShare) << 32);\n```\n\n[USD3.sol#L713](https://github.com/3jane-protocol/moneymarket-contracts/tree/bcfbebfac56f0e8d1497efde6524eeb3e4d553ea/src/usd3/USD3.sol#L713)\n\n\n#### Impact\n\nInformational\n\n#### Recommendation\n\nSimplify the code by removing the unnecessary cast.\n\n#### Developer Response\n\nfixed [PR#88](https://github.com/3jane-protocol/moneymarket-contracts/pull/88)"
+    },
+    {
+      "number": 6,
+      "title": "Unused import",
+      "severity": "Informational",
+      "body": "The identifier is imported but never used within the file.\n\n#### Technical Details\n\n```solidity\nFile: src/CreditLine.sol\n\n8: import {EventsLib} from \"./libraries/EventsLib.sol\";\n```\n\n[CreditLine.sol#L8](https://github.com/3jane-protocol/moneymarket-contracts/tree/bcfbebfac56f0e8d1497efde6524eeb3e4d553ea/src/CreditLine.sol#L8)\n\n```solidity\nFile: src/MorphoCredit.sol\n\n18: import {IMorphoRepayCallback} from \"./interfaces/IMorphoCallbacks.sol\";\n\n27: import {MathLib, WAD} from \"./libraries/MathLib.sol\"; // (WAD)\n```\n\n[MorphoCredit.sol#L18](https://github.com/3jane-protocol/moneymarket-contracts/tree/bcfbebfac56f0e8d1497efde6524eeb3e4d553ea/src/MorphoCredit.sol#L18), [MorphoCredit.sol#L27](https://github.com/3jane-protocol/moneymarket-contracts/tree/bcfbebfac56f0e8d1497efde6524eeb3e4d553ea/src/MorphoCredit.sol#L27)\n\n```solidity\nFile: src/irm/adaptive-curve-irm/AdaptiveCurveIrm.sol\n\n11: import {ConstantsLib} from \"./libraries/ConstantsLib.sol\";\n\n16: import {IAaveMarket, ReserveDataLegacy} from \"./interfaces/IAaveMarket.sol\"; // (ReserveDataLegacy)\n```\n\n[AdaptiveCurveIrm.sol#L11](https://github.com/3jane-protocol/moneymarket-contracts/tree/bcfbebfac56f0e8d1497efde6524eeb3e4d553ea/src/irm/adaptive-curve-irm/AdaptiveCurveIrm.sol#L11), [AdaptiveCurveIrm.sol#L16](https://github.com/3jane-protocol/moneymarket-contracts/tree/bcfbebfac56f0e8d1497efde6524eeb3e4d553ea/src/irm/adaptive-curve-irm/AdaptiveCurveIrm.sol#L16)\n\n```solidity\nFile: src/usd3/sUSD3.sol\n\n4: import {\n5:     BaseHooksUpgradeable, IERC20, IMorphoCredit, IProtocolConfig, IStrategy, Math, SafeERC20, USD3\n6: } from \"./USD3.sol\"; // (SafeERC20)\n```\n\n[src/usd3/sUSD3.sol#L4](https://github.com/3jane-protocol/moneymarket-contracts/tree/bcfbebfac56f0e8d1497efde6524eeb3e4d553ea/src/usd3/sUSD3.sol#L4)\n\n\n#### Impact\n\nInformational\n\n#### Recommendation\n\nRemove unused import to improve code quality\n\n#### Developer Response\n\nfixed [PR#88](https://github.com/3jane-protocol/moneymarket-contracts/pull/88)"
+    },
+    {
+      "number": 7,
+      "title": "Missing event emission",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nThe following setters are missing events:\n\n- CreditLine\n[setOzd()](https://github.com/3jane-protocol/moneymarket-contracts/tree/bcfbebfac56f0e8d1497efde6524eeb3e4d553ea/src/CreditLine.sol#L79), [setMm()](https://github.com/3jane-protocol/moneymarket-contracts/tree/bcfbebfac56f0e8d1497efde6524eeb3e4d553ea/src/CreditLine.sol#L90), [setProver()](https://github.com/3jane-protocol/moneymarket-contracts/tree/bcfbebfac56f0e8d1497efde6524eeb3e4d553ea/src/CreditLine.sol#L102), [setInsuranceFund()](https://github.com/3jane-protocol/moneymarket-contracts/tree/bcfbebfac56f0e8d1497efde6524eeb3e4d553ea/src/CreditLine.sol#L112)\n\n- MorphoCredit.sol\n[setHelper()](https://github.com/3jane-protocol/moneymarket-contracts/tree/bcfbebfac56f0e8d1497efde6524eeb3e4d553ea/src/MorphoCredit.sol#L113), [setUsd3()](https://github.com/3jane-protocol/moneymarket-contracts/tree/bcfbebfac56f0e8d1497efde6524eeb3e4d553ea/src/MorphoCredit.sol#L118)\n\n\n\n#### Impact\n\nInformational\n\n#### Recommendation\n\nConsider if an event is missing and add it if needed.\n\n#### Developer Response\n\nAck, will not fix. We don't have bytecode headroom in MorphoCredit and CreditLine is immutable and already deployed"
+    },
+    {
+      "number": 8,
+      "title": "`JANE` burn mechanism is unfair and gameable",
+      "severity": "Medium",
+      "body": "The `JANE` burn mechanism has some flaws that lead to an unfair and gameable process.\n\n#### Technical Details\n\nThe burn mechanism relies on a snapshot of the borrower’s balance taken only at the time of the first burn in [`MarkdownController.burnJaneProportional()`](https://github.com/3jane-protocol/moneymarket-contracts/blob/bcfbebfac56f0e8d1497efde6524eeb3e4d553ea/src/MarkdownController.sol#L146). Any `JANE` received after the snapshot is not incorporated into the target burn, causing systematic under-penalization.\n\n[`MarkdownController.burnJaneProportional()`](https://github.com/3jane-protocol/moneymarket-contracts/blob/bcfbebfac56f0e8d1497efde6524eeb3e4d553ea/src/MarkdownController.sol#L146) and [`MarkdownController.burnJaneFull()`](https://github.com/3jane-protocol/moneymarket-contracts/blob/bcfbebfac56f0e8d1497efde6524eeb3e4d553ea/src/MarkdownController.sol#L187) relies on the transfer freeze mechanism to prevent borrowers from moving their `JANE` tokens during default. However, once transfers are globally enabled, borrowers can transfer their `JANE` tokens to other addresses before entering delinquent/default status, effectively avoiding the penalty mechanism.\n\nThe penalty does not consider debt magnitude. Two borrowers with equal `JANE` balances but very different outstanding debts accrue the same burn curve, which is not proportional to credit risk contribution.\n\n#### Impact\n\nMedium. The burn mechanism is not fair and can be gamed.\n\n#### Recommendation\n\nIf the intention is to prevent bad actors farming jane and then defaulting, consider to implement one of the following:\n- Replace liquid `JANE` emissions with a non-transferable, vesting reward token (e.g. `veJANE`) and have the penalty mechanism burn unvested `veJANE`. Upon entering delinquent/default status, immediately stop vesting and farming. Take a deterministic snapshot at the state transition, and optionally scale the penalty by outstanding debt for better fairness.\n- Allow burning not yet claimed `JANE` with the function that helps burn unclaimed `JANE` from the RewardsDistributor using a Merkle proof.\n\n#### Developer Response\n\nAcknowledged, but will not fix immediately. In the short run, `JANE` will be non-transferable. We will come up with a better mechanism in the longer term."
+    },
+    {
+      "number": 11,
+      "title": "Cooldown restart allows users to bypass cooldown mechanism",
+      "severity": "Medium",
+      "body": "Users can repeatedly call `cancelCooldown()` and `startCooldown()` to reset their cooldown timer while maintaining shares in an active cooldown state. This allows them to keep shares \"ready for withdrawal\" without any opportunity cost, effectively bypassing the intended cooldown period protection.\n\n#### Technical Details\n\n1. **No restriction on restarting cooldown**: Users can call `startCooldown()` multiple times, with each call overwriting the previous cooldown state and resetting `cooldownEnd` to `block.timestamp + cooldownPeriod`.\n\n2. **Shares continue earning yield**: Shares placed in cooldown remain as normal sUSD3 shares and continue earning yield from the USD3 strategy. There is no penalty or opportunity cost for having shares in cooldown.\n\n3. **Strategic timing advantage**: A user can repeatedly call `startCooldown()` every few days to maintain a rolling cooldown window. When they actually want to withdraw, they only need to wait from their most recent `startCooldown()` call.\n\n#### Impact\n\nMedium. By allowing cooldown restarts, users can maintain \"withdrawal readiness\" at all times without opportunity cost.\n\n#### Recommendation\n\nImplement a snapshot mechanism where shares in cooldown don't earn new yield but are still exposed to losses:\n\n**Key principle**:\n\n- If share price **increases** during cooldown → user only gets the snapshotted value (no yield gains)\n- If share price **decreases** during cooldown → user is affected by losses (first-loss protection still works)\n\n\n1. **Update the `UserCooldown` struct** to include snapshotted assets:\n\n```solidity\nstruct UserCooldown {\n    uint64 cooldownEnd;        // When cooldown expires\n    uint64 windowEnd;          // When withdrawal window closes\n    uint128 shares;            // Shares locked for withdrawal\n    uint256 snapshotAssets;    // Asset value when cooldown started (NEW)\n}\n```\n\n2. **Modify `startCooldown()`** to snapshot the current value.\n3. **Update `availableWithdrawLimit()`** to use minimum of snapshot and current value.\n4. Update `cancelCooldown` to burn shares to maintain the same number of underlying.\n\n**Notes**:\nWhen a user withdraws with the snapshot mechanism and the share price has increased:\n\n1. User receives `snapshotAssets` (lower than current value)\n2. But `shares` are burned from the total supply\n3. The difference between the current share value and the snapshotted value remains in the contract\n4. This immediately increases the price per share for remaining users\n\n#### Developer Response\n\nAcknowledged, but will not fix in the current release. We will fix in a subsequent release."
+    },
+    {
+      "number": 12,
+      "title": "Cap `cover` to borrower’s total debt instead of `assets` in `CreditLine.settle()`",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\n[`CreditLine.settle()`](https://github.com/3jane-protocol/moneymarket-contracts/blob/bcfbebfac56f0e8d1497efde6524eeb3e4d553ea/src/CreditLine.sol#L204) accepts an `assets` parameter that should represent the assets to settle. However, the function always settles the full position and optionally repays using `cover`, which is passed directly without capping it to `assets` while it should be capped to the borrower’s actual outstanding debt.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nCompute the borrower’s current debt and cap `cover` to that amount. Remove `assets` from the signature to avoid ambiguity.\n\n#### Developer Response\n\nAcknowledged, but will not update. `CreditLine` is already deployed and non-upgradeable. This doesn't rise to the level of an issue that warrants redeployment."
+    },
+    {
+      "number": 14,
+      "title": "Commitment period can be retroactively modified",
+      "severity": "Low",
+      "body": "#### Technical Details\n\n\nThe USD3 contract enforces a minimum commitment period to prevent users from withdrawing immediately after depositing. However, the implementation stores only the `depositTimestamp` and dynamically calculates the commitment end time by reading `minCommitmentTime()` from the ProtocolConfig. Since `minCommitmentTime()` reads from ProtocolConfig, any changes to this parameter will retroactively affect all existing depositors.\n\n#### Impact\n\nLow.\n\n#### Recommendation\n\nStore the commitment end timestamp directly instead of recalculating it dynamically.\n\n#### Developer Response\n\nAcknowledge."
+    },
+    {
+      "number": 15,
+      "title": "Code duplicate",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nA function already exists to wrap USDC into WASUSDC; it's used as part of repay, but not for full replay.\n\n```solidity\nFile: Helper.sol\n144:         IERC20(USDC).safeTransferFrom(msg.sender, address(this), usdcNeeded);\n145:         IERC4626(WAUSDC).deposit(usdcNeeded, address(this));\n// Can be replaced by\n144:         _wrap(msg.sender, usdcNeeded);\n```\n\n[Helper.sol#L144-L145](https://github.com/3jane-protocol/moneymarket-contracts/blob/bcfbebfac56f0e8d1497efde6524eeb3e4d553ea/src/Helper.sol#L144-L145)\n\n\n#### Impact\n\nInformational\n\n#### Recommendation\n\nUpdate the code to remove duplication.\n\n#### Developer Response\n\nfixed [PR#88](https://github.com/3jane-protocol/moneymarket-contracts/pull/88)"
+    },
+    {
+      "number": 16,
+      "title": "USD3 transfer checks ignore whitelist in `_preTransferHook`",
+      "severity": "Low",
+      "body": "#### Technical Details\n\nThe [`_preTransferHook()`](https://github.com/3jane-protocol/moneymarket-contracts/blob/bcfbebfac56f0e8d1497efde6524eeb3e4d553ea/src/usd3/USD3.sol#L506-L506) function in USD3 enforces commitment period restrictions but does not validate whitelist requirements when `whitelistEnabled` is true. This allows whitelisted users to transfer their USD3 shares to non-whitelisted addresses, effectively bypassing the whitelist access control.\n\n#### Impact\n\nLow\n\n#### Recommendation\n\nAdd whitelist validation to `_preTransferHook()` when whitelist is enabled.\n\n#### Developer Response\n\nAcknowledged, will not fix. Whitelist will be disabled soon, and whitelisting can be removed in a future release."
+    },
+    {
+      "number": 17,
+      "title": "Update misleading comment about subordination ratio enforcement",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nNatSpec comment in [sUSD3.availableDepositLimit()](https://github.com/3jane-protocol/moneymarket-contracts/blob/bcfbebfac56f0e8d1497efde6524eeb3e4d553ea/src/usd3/sUSD3.sol#L247) states the subordination ratio is enforced relative to `USD3` total supply, but the implementation uses market debt as the base.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nUpdate comments to reflect debt-based subordination enforcement.\n\n#### Developer Response\n\nfixed [PR#88](https://github.com/3jane-protocol/moneymarket-contracts/pull/88)"
+    }
+  ]
+}

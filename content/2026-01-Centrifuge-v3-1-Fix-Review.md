@@ -1,6 +1,7 @@
 ---
 tags: ["solidity"]
 title: 2026-01-Centrifuge-v3.1-Fix-Review
+repo: yAudit/centrifuge-sherlock-fixes-report
 description: Centrifuge v3.1 Competition Fix Report
 ---
 

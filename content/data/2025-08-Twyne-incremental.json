@@ -1,0 +1,77 @@
+{
+  "repo": "yAudit/twyne-update-1-report",
+  "githubUrl": "https://github.com/yAudit/twyne-update-1-report",
+  "title": "Twyne Incremental Review",
+  "protocolName": "Twyne",
+  "protocolOverview": "Twyne is a risk-modular credit delegation protocol built for the Ethereum Virtual Machine. It addresses a fundamental inefficiency in current DeFi lending markets: the unused borrowing power of users who deposit assets but do not borrow against them. By enabling these depositors (Credit LPs) to earn additional yield by making their unused borrowing power available to borrowers, Twyne unlocks higher capital efficiency while maintaining the security constraints of the underlying lending markets.",
+  "auditScope": "This audit covers the incremental review for Twyne V1 in [PR 35](https://github.com/0xTwyne/twyne-contracts-v1/pull/35) to the smart contracts in scope across 1.5 days of review.",
+  "overallAssessment": null,
+  "startDate": "2025-08-20",
+  "finishDate": "2025-08-21",
+  "auditors": [
+    "HHK",
+    "adriro"
+  ],
+  "commits": [
+    {
+      "label": null,
+      "hash": "802103a5b6621b64dea9adec43529728d7a0e374",
+      "url": "https://github.com/0xTwyne/twyne-contracts-v1/commit/802103a5b6621b64dea9adec43529728d7a0e374"
+    }
+  ],
+  "finalCommits": [],
+  "repositories": [
+    "https://github.com/0xTwyne/twyne-contracts-v1"
+  ],
+  "auditResources": [
+    "Code repositories and documentation"
+  ],
+  "treeOfAuditedFiles": "src/\n├── Periphery\n│   └── EulerWrapper.sol\n├── TwyneFactory\n│   └── CollateralVaultFactory.sol\n├── operators\n│   └── LeverageOperator.sol\n└── twyne\n    ├── CollateralVaultBase.sol\n    ├── EulerCollateralVault.sol\n    └── VaultManager.sol\nscript\n└── TwyneDeployEulerIntegration.s.sol",
+  "finalRemarks": "TODO",
+  "nsloc": null,
+  "evaluations": [],
+  "issues": [
+    {
+      "number": 1,
+      "title": "Teleport should verify subaccount is tied to current borrower",
+      "severity": "High",
+      "body": "A missing validation could be used to pull funds from dangling authorization.\n\n#### Technical Details\n\nThe updated functionality of [`teleport()`](https://github.com/0xTwyne/twyne-contracts-v1/blob/802103a5b6621b64dea9adec43529728d7a0e374/src/twyne/EulerCollateralVault.sol#L237) can be used to migrate a position from a subaccount of the borrower.\n\n```solidity\n237:     function teleport(uint toDeposit, uint toBorrow, address subAccount) external onlyBorrowerAndNotExtLiquidated whenNotPaused nonReentrant {\n238:         createVaultSnapshot();\n239: \n240:         totalAssetsDepositedOrReserved += toDeposit;\n241:         _handleExcessCredit(_invariantCollateralAmount());\n242: \n243:         if (toBorrow == type(uint).max) {\n244:             toBorrow = IEVault(targetVault).debtOf(subAccount);\n245:         }\n246: \n247:         IEVC.BatchItem[] memory items = new IEVC.BatchItem[](3);\n248:         items[0] = IEVC.BatchItem({\n249:             targetContract: asset(),\n250:             onBehalfOfAccount: address(this),\n251:             value: 0,\n252:             data: abi.encodeCall(IERC20.transferFrom, (subAccount, address(this), toDeposit)) // needs allowance\n253:         });\n```\n\nThe problem is the absence of a validation that ties the subaccount to the current borrower, leading to a `transferFrom()` action from an arbitrary account.\n\nUsually, there should not be any active allowance from third-party accounts, as collateral vaults are per borrower. However, since vaults can be liquidated, the borrower may shift to the new liquidator, enabling the new borrower to access the old borrower's funds.\n\n#### Impact\n\nHigh. New vault owners can siphon funds from a previous borrower.\n\nRequirements:\n\n- Collateral vault gets liquidated\n- Excess approval exists\n- Previous vault owner contains a non-zero amount of the collateral token\n- Funds can ONLY be pulled from the previous vault owner\n\n#### Recommendation\n\nValidate `subaccount` is an actual subaccount of the current `borrower`.\n\n#### Developer Response\n\nFixed in [commit 5945b31](https://github.com/0xTwyne/twyne-contracts-v1/pull/35/commits/5945b310d07000e42f1eb613ea069df88d614fa8). To clarify, the proper implementation already existed in [the MockCollateralVault contract](https://github.com/0xTwyne/twyne-contracts-v1/pull/35/commits/83747b437f035485b8f07006237c7f409cdfd955#diff-9abc9f9e83fff2bb247fdf36db974f23feb9f499f5ec85e0cb6e974048dd5fa7)."
+    },
+    {
+      "number": 2,
+      "title": "Missing SafeERC20 operations",
+      "severity": "Low",
+      "body": "The LeverageOperator contract executes ERC20 operations over arbitrary tokens without the SafeERC20 wrapper, potentially causing incompatibility issues.\n\n#### Technical Details\n\n- [LeverageOperator.sol#L156](https://github.com/0xTwyne/twyne-contracts-v1/blob/802103a5b6621b64dea9adec43529728d7a0e374/src/operators/LeverageOperator.sol#L156)\n- [LeverageOperator.sol#L195](https://github.com/0xTwyne/twyne-contracts-v1/blob/802103a5b6621b64dea9adec43529728d7a0e374/src/operators/LeverageOperator.sol#L195)\n\n#### Impact\n\nLow.\n\n#### Recommendation\n\nUse `safeTransfer()` and `forceApprove()`.\n\n#### Developer Response\n\nfixed in [PR#36](https://github.com/0xTwyne/twyne-contracts-v1/pull/36)."
+    },
+    {
+      "number": 3,
+      "title": "Empty contracts in deployment script",
+      "severity": "Informational",
+      "body": "The contracts referenced in the `productionSetup()` function are empty accounts in Ethereum.\n\n#### Technical Details\n\n[TwyneDeployEulerIntegration.s.sol#L280-L284](https://github.com/0xTwyne/twyne-contracts-v1/blob/802103a5b6621b64dea9adec43529728d7a0e374/script/TwyneDeployEulerIntegration.s.sol#L280-L284).\n\n```solidity\n280:         } else if (block.chainid == 1) {\n281:             oracleRouterFactory = 0x72735e5dd42EDc979c600766532eA704842CfB7b;\n282:             evc = EthereumVaultConnector(payable(0xC36aED7b7816aA21B660a33a637a8f9B9B70ad6c));\n283:             factory = GenericFactory(0xd5e966dB359f1cB2A01280fCCBEB839Ac572CE35);\n284:             protocolConfig = ProtocolConfig(0x3b68711EF6c1988c96CBD32d929b76cB09b579Ea);\n```\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nEnsure to deploy these contracts properly before executing the script.\n\n#### Developer Response\n\nAcknowledged. These addresses are just placeholders. The deployment process involves executing an evk-periphery script which provides these addresses."
+    },
+    {
+      "number": 4,
+      "title": "Unused variable in LeverageOperator",
+      "severity": "Informational",
+      "body": "The `initialCollateralBalance` variable is written but never read.\n\n#### Technical Details\n\n[LeverageOperator.sol#L40](https://github.com/0xTwyne/twyne-contracts-v1/blob/802103a5b6621b64dea9adec43529728d7a0e374/src/operators/LeverageOperator.sol#L40).\n\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nRemove the variable.\n\n#### Developer Response\n\nfixed in [PR#36](https://github.com/0xTwyne/twyne-contracts-v1/pull/36)."
+    },
+    {
+      "number": 5,
+      "title": "Ineffective locking mechanism in LeverageOperator",
+      "severity": "Informational",
+      "body": "The mechanism provided by `flashloanLock` does not enforce any lock.\n\n#### Technical Details\n\nThe `flashloanLock` is toggled before executing the flashloan in [`executeLeverage()`](https://github.com/0xTwyne/twyne-contracts-v1/blob/802103a5b6621b64dea9adec43529728d7a0e374/src/operators/LeverageOperator.sol#L84). The implementation doesn't provide any actual locking benefits because:\n\n- This doesn't work as a reentrancy guard: the function can be re-entered while the flag is on.\n- `onMorphoFlashLoan()` cannot be executed by anything other than the LeverageOperator itself, cause the caller must be Morpho, and Morpho only calls the flashloan initiator.\n\n#### Impact\n\nInformational. Gas savings.\n\n#### Recommendation\n\nChange the semantics of this lock to be a normal reentrancy guard in the `executeLeverage()` function or remove the `flashloanLock` variable.\n\n#### Developer Response\n\n`flashloanLock` variable removed in [PR#36](https://github.com/0xTwyne/twyne-contracts-v1/pull/36). Added nonreentrant modifier for extra safety, even if it is not necessarily required."
+    },
+    {
+      "number": 6,
+      "title": "Gas improvements in EulerWrapper",
+      "severity": "Gas",
+      "body": "#### Technical Details\n\nThe EulerWrapper contract enables a zapper functionality to deposit in Twyne.\n\nBoth functions have the `callThroughEVC` modifier, which will re-route the call through the EVC. This modifier shouldn't be needed as the implementation doesn't strictly require it. Additionally, note that each call to EVK vaults would need to be re-wrapped in the EVC that corresponds to each vault (which might be Euler's or Twyne's).\n\nAdditionally, the `pull token → approve → deposit` cycle can leverage the _skim_ functionality and instead do:\n\n1) transfer tokens from the caller to collateral\n2) call `skim()` on the collateral with the intermediate vault as the recipient \n3) call `skim()` on the intermediate vault with the user as the recipient \n\n#### Impact\n\nGas savings.\n\n#### Recommendation\n\nConsider applying the suggested modifications.\n\n#### Developer Response\n\nfixed in [PR#36](https://github.com/0xTwyne/twyne-contracts-v1/pull/36)."
+    },
+    {
+      "number": 7,
+      "title": "Unchecked approval parameter inside `EulerWrapper`",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nThe function [`depositUnderlyingToIntermediateVault()`](https://github.com/0xTwyne/twyne-contracts-v1/blob/deca583d97e11f3c0ad2140401d01a9b3f863a41/src/Periphery/EulerWrapper.sol#L32-L32) takes an `intermediateVault` parameter and approves euler asset on it.\n\nHowever this `intermediateVault` is not enforced to be a legit vault deployed by the factory. This allows any user to approve a malicious contract.\n\nWhile the contract is not supposed to hold funds, it is advised to check the `intermediateVault` against the Vault manager.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nEnsure the `intermediateVault` is a legit vault against the Vault Manager and/or implement the Gas finding recommended which will remove the `approval()`.\n\n#### Developer Response\n\nFixed in [PR#36](https://github.com/0xTwyne/twyne-contracts-v1/pull/36)."
+    }
+  ]
+}

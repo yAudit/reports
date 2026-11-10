@@ -1,6 +1,7 @@
 ---
 tags: ["solidity", "yearn"]
 title: 2026-08-stYFI-Governance
+repo: yAudit/styfi-governance-report
 description: Yearn stYFI Governance Contracts
 ---
 

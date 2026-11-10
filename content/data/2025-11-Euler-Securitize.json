@@ -1,0 +1,58 @@
+{
+  "repo": "yAudit/euler-securitize-vault-report",
+  "githubUrl": "https://github.com/yAudit/euler-securitize-vault-report",
+  "title": "Euler securitize",
+  "protocolName": "Euler",
+  "protocolOverview": "ERC4626EVCCollateralSecuritize is an EVC-compatible collateral vault designed for Securitize RWA tokens, enforcing compliance-checked transfers through the Securitize compliance service while providing governance-controlled freeze and seize capabilities for regulated asset management.",
+  "auditScope": "This audit covers eight smart contracts across two days of review.",
+  "overallAssessment": "The codebase demonstrates strong security practices with no critical or high-severity vulnerabilities identified. The medium-severity finding regarding frozen account borrowing behavior has a clear mitigation path, while the low and informational findings represent edge cases and design considerations rather than fundamental flaws. The code quality is solid and production-ready with the recommended fixes applied.",
+  "startDate": "2025-11-17",
+  "finishDate": "2025-11-18",
+  "auditors": [
+    "Panda",
+    "HHK"
+  ],
+  "commits": [
+    {
+      "label": null,
+      "hash": "101860e5a2b6cdf469f0888faa3cad67e6236c95",
+      "url": "https://github.com/euler-xyz/evk-periphery/blob/101860e5a2b6cdf469f0888faa3cad67e6236c95/"
+    },
+    {
+      "label": null,
+      "hash": "6d5a5af16773b26ff62828cab0305e9809958855",
+      "url": "https://github.com/euler-xyz/evk-periphery/blob/6d5a5af16773b26ff62828cab0305e9809958855/"
+    }
+  ],
+  "finalCommits": [],
+  "repositories": [
+    "https://github.com/euler-xyz/evk-periphery/"
+  ],
+  "auditResources": [
+    "Code repositories, documentation, previous audit"
+  ],
+  "treeOfAuditedFiles": "src/\n├── Swaps/\n│   ├── SwapVerifier.sol\n│   └── TransferFromSender.sol\n├── Vault/\n│   ├── implementation/\n│   │   ├── ERC4626EVC.sol\n│   │   ├── ERC4626EVCCollateral.sol\n│   │   ├── ERC4626EVCCollateralCapped.sol\n│   │   └── ERC4626EVCCollateralFreezable.sol\n│   └── deployed/\n│       └── ERC4626EVCCollateralSecuritize.sol\n└── VaultFactory/\n    └── ERC4626EVCCollateralSecuritizeFactory.sol",
+  "finalRemarks": "The codebase demonstrates strong security practices, no critical/high-severity issues, and only medium/low-severity findings that have clear mitigations and represent edge cases rather than fundamental flaws. However, some elements of the Securitize integration remain unclear and will require additional testing once those details are known.",
+  "nsloc": null,
+  "evaluations": [],
+  "issues": [
+    {
+      "number": 1,
+      "title": "Frozen accounts can still borrow against frozen collateral",
+      "severity": "Medium",
+      "body": "When the governor freezes an account, the collateral becomes unavailable and cannot be liquidated. However, the current architecture still allows the account to borrow tokens, potentially bypassing the freeze's intended purpose.\n\n#### Technical Details\n\nThe function [`freeze()`](https://github.com/euler-xyz/evk-periphery/blob/642602f8cb487969932d86298993f40b42727c88/src/Vault/implementation/ERC4626EVCCollateralFreezable.sol#L74-L74) allows freezing the assets of a user. This freeze functionality is required by the [Securitize integration guide](https://github.com/user-attachments/files/23373397/RWA.Integration.Framework.for.DeFi.Protocols.pdf).\n\nThe freeze is intended to execute court orders or regulatory needs on an account. When frozen, an account cannot be liquidated, and eventually the governor will be responsible for unfreezing it or seizing the collateral.\n\nHowever, the frozen account can still borrow on the EVK after being frozen because [the EVK uses `balanceOf()` to determine the account balance](https://github.com/euler-xyz/euler-vault-kit/blob/5b98b42048ba11ae82fb62dfec06d1010c8e41e6/src/EVault/shared/LiquidityUtils.sol#L106) and ignores if the assets are frozen.\n\nThis could allow a user under court order to max borrow against his collateral after being frozen and exit some liquidity, bypassing some of the intended purpose of the freeze feature.\n\n#### Impact\n\nMedium. A frozen account can still borrow against its collateral, potentially bypassing court orders or regulatory requests.\n\n#### Recommendation\n\nAs suggested by the Euler team:\n\nOverride the `balanceOf()` function to return zero if the EVC checks are in progress. This will result in 0 collateral for the EVK and effectively block new borrows while still returning the correct user balance for wallets and indexers.\n\n#### Developer Response\n\nFixed in: [bb0bb5](https://github.com/euler-xyz/evk-periphery/commit/bb0bb5c9d6bee2d12b6c64b65bfef324b88f6547)."
+    },
+    {
+      "number": 2,
+      "title": "Immutable `complianceService` address cannot be updated",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nThe `complianceService` address is a storage variable on the [Securitize contracts](https://github.com/securitize-io/dstoken/blob/b87d75b595431cbcc052c9e365bd7d4b8d1baccc/contracts/service/ServiceConsumer.sol#L122) and could be updated. The current implementation stores it in an immutable variable that cannot be updated.\n\n#### Impact\n\nInformational. If the `complianceService` address changes, the contracts will need to be redeployed.\n\n#### Recommendation\n\nConsider making `complianceService` a storage variable with a setter, or add a public function that queries the current `complianceService` from Securitize on demand.\n\n#### Developer Response\n\nFixed in: [4b102cd](https://github.com/euler-xyz/evk-periphery/pull/393/commits/4b102cd83cb36517db310c29103ef616f301c24f)."
+    },
+    {
+      "number": 3,
+      "title": "Frozen Accounts Cannot Add Collateral Before Unfreezing, Leading to Immediate Liquidation Risk",
+      "severity": "Low",
+      "body": "#### Technical Details\n\nWhen an account is frozen via the `freeze()` function in [`ERC4626EVCCollateralFreezable`](\\/blob/101860e5a2b6cdf469f0888faa3cad67e6236c95/src/Vault/implementation/ERC4626EVCCollateralFreezable.sol), the `whenNotFrozen` modifier blocks all balance-changing operations including `deposit()`, `mint()`, `withdraw()`, `redeem()`, and `transfer()` operations for that account.\n\nWhile the account owner can still repay outstanding debt on the borrowing vault side while frozen, they cannot add more collateral to this vault to improve their collateralization ratio. If during the freeze period the account becomes undercollateralized, the account will be immediately eligible for liquidation upon being unfrozen.\n\nThis creates an asymmetric situation where:\n\n1. The frozen account cannot proactively add collateral to protect against liquidation\n2. Upon unfreezing, liquidators can immediately liquidate the account if it's underwater\n3. There is no grace period or opportunity for the account owner to add collateral between unfreezing and potential liquidation\n\n#### Impact\n\nLow.\n\n#### Recommendation\n\nImplement a grace period: Add a grace period mechanism after unfreezing during which liquidations are temporarily disabled, giving account owners time to add collateral if needed.\n\n#### Developer Response\n\nAcknowledged, will keep as is. Although this might be a valid issue for other freezable contracts, in the case of Securitize collateral, we prefer to keep the logic simple, as freezing will occur in extraordinary situations, which will be handled individually. Since the liquidators are whitelisted, the parties may arrange unfreezing as they see fit."
+    }
+  ]
+}

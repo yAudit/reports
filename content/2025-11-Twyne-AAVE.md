@@ -1,6 +1,7 @@
 ---
 tags: ["solidity", "aave"]
 title: 2025-11-Twyne-AAVE
+repo: yAudit/twyne-aave-report
 description: Twyne-AAVE Report
 ---
 

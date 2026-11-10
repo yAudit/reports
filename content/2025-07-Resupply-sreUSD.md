@@ -1,6 +1,7 @@
 ---
 tags: ["solidity"]
 title: 2025-07-Resupply-sreUSD
+repo: yAudit/resupply-sreusd-report
 description: Resupply sreUSD Report
 ---
 

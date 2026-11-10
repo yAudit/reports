@@ -1,6 +1,7 @@
 ---
 tags: ["solidity"]
 title: 2025-08-Callisto-Vault
+repo: yAudit/calisto-core-report
 description: Callisto Vault V2 Report
 ---
 

@@ -1,0 +1,159 @@
+{
+  "repo": "yAudit/calisto-core-report",
+  "githubUrl": "https://github.com/yAudit/calisto-core-report",
+  "title": "Callisto Vault",
+  "protocolName": "Callisto",
+  "protocolOverview": "The Callisto protocol is purpose-built for the Olympus ecosystem, enabling advanced use-cases for OHM holders. It directly interacts with the Olympus contracts and ecosystem tokens OHM, gOHM, and utilizes Olympus Cooler Loans V2 (MonoCooler).",
+  "auditScope": "This audit covers four smart contracts totaling approximately 700 lines of code across four and a half days of review.",
+  "overallAssessment": "The Callisto Vault protocol presents a well-architected solution, though the audit revealed several high-severity vulnerabilities related to accounting consistency and edge case handling that the development team promptly addressed. Given the complexity of the architecture and its integrations, along with the nature of discovered issues, additional comprehensive testing and security review are strongly recommended before production deployment.",
+  "startDate": "2025-08-22",
+  "finishDate": "2025-08-28",
+  "auditors": [
+    "Panda",
+    "Adriro"
+  ],
+  "commits": [],
+  "finalCommits": [],
+  "repositories": [
+    "https://github.com/CallistoDAO/callisto-core/"
+  ],
+  "auditResources": [
+    "Code repositories and documentation"
+  ],
+  "treeOfAuditedFiles": "src/\n├── policies/\n│   └── CallistoVault.sol\n└── external/\n    ├── VaultStrategy.sol\n    ├── DebtTokenMigrator.sol\n    └── ConverterToWadDebt.sol",
+  "finalRemarks": null,
+  "nsloc": 700,
+  "evaluations": [
+    {
+      "category": "access_control",
+      "score": "Good",
+      "description": "Proper access management is in place."
+    },
+    {
+      "category": "mathematics",
+      "score": "Low",
+      "description": "Multiple issues have been detected affecting the vault's accountability."
+    },
+    {
+      "category": "complexity",
+      "score": "Average",
+      "description": "The contracts are well-architected with a good level of modularization. However, there is an inherent complexity due to the tight coupling with the Olympus infrastructure."
+    },
+    {
+      "category": "libraries",
+      "score": "Good",
+      "description": "Proper use of established libraries like OpenZeppelin and solady."
+    },
+    {
+      "category": "decentralization",
+      "score": "Good",
+      "description": "The vault requires some privileged actors for its management."
+    },
+    {
+      "category": "code_stability",
+      "score": "Average",
+      "description": "The codebase has been heavily updated to address the reported issues."
+    },
+    {
+      "category": "documentation",
+      "score": "Excellent",
+      "description": "Code is well-documented with extensive NatSpec comments. Additionally, the dev team built a dedicated high-level documentation for the audit."
+    },
+    {
+      "category": "monitoring",
+      "score": "Good",
+      "description": "Events for state-changing functions are in place."
+    },
+    {
+      "category": "testing",
+      "score": "Average",
+      "description": "While the codebase includes multiple tests, the vulnerabilities found hint that more testing is needed."
+    }
+  ],
+  "issues": [
+    {
+      "number": 1,
+      "title": "Liquidated condition can easily be griefed via donations",
+      "severity": "High",
+      "body": "After the vault has been liquidated, the condition to have a null collateral amount can be broken via donations, potentially leading to bricked withdrawals.\n\n#### Technical Details\n\nGiven liquidations in MonoCooler seize all the collateral, the implementation of [`_isVaultPositionLiquidated()`](https://github.com/CallistoDAO/callisto-core/blob/c569946c07c67af13d12229dbe9cf115d7d49c88/src/policies/CallistoVault.sol#L861) checks if the position has zero collateral.\n\n```solidity\n861:     function _isVaultPositionLiquidated(uint256 totalDeposited) private view returns (bool) {\n862:         /* The condition `totalDeposited > 1` is used instead of `!= 0` because, in an extremely rare case,\n863:          * 1 token unit may remain on the strategy's balance after withdrawing all OHM deposits.\n864:          * When migrating to a debt token with lower decimals, the division rounds up to ensure\n865:          * the Callisto vault receives exactly enough tokens to cover its debt.\n866:          * See `DebtTokenMigrator.migrateDebtToken()` for details.\n867:          * Any remaining token unit after withdrawing all deposits is considered as an empty balance.\n868:          * The minimum debt requirement of Olympus Cooler Loans V2 should prevent passing this condition when\n869:          * not liquidated.\n870:          */\n871:         return totalDeposited > 1 && OLYMPUS_COOLER.accountCollateral(address(this)) == 0;\n872:     }\n```\n\nHowever, the MonoCooler can operate on behalf of other accounts. In particular, it allows donations via the `addCollateral()` functions.\n\nA donation of just one wei would be enough to block emergency withdrawals, while regular withdrawals would also fail due to the insolvency of the vault.\n\n#### Impact\n\nHigh. The issue can lead to a denial of service in the withdrawal logic, blocking exits from the vault.\n\n#### Recommendation\n\nGiven the difficulty in correctly assessing whether a position has been liquidated, and considering that this should be a rare event, it might be more reasonable to delegate the task to a trusted operator who can toggle the emergency status.\n\n#### Developer Response\n\nWe have added a state variable `collateralGOHM` that we modify each time the vault position in Cooler v2 is increased or decreased. Now we just compare this value with the actual collateral amount in Cooler v2. If value in Cooler v2 is less than `collateralGOHM`, we assume the position has been liquidated. \n\nFixed in commit [9704f43](https://github.com/CallistoDAO/callisto-core/commit/9704f43fcab7bfb49152b03175d1495e834b71bf#diff-9d453165e50ebdaa3c04c470738084bbde02c4ddb70a401255a58f2745122289L3-R1125)."
+    },
+    {
+      "number": 2,
+      "title": "Improper WAD scaling",
+      "severity": "Medium",
+      "body": "There are different occurrences in the implementation in which amounts are not correctly scaled to the debt token domain.\n\n#### Technical Details\n\nIn [`_handleDepositsToStrategy()`](https://github.com/CallistoDAO/callisto-core/blob/c569946c07c67af13d12229dbe9cf115d7d49c88/src/policies/CallistoVault.sol#L958), the implementation max borrows from the Cooler and sends those assets to the vault strategy.\n\n```solidity\n967:         // Returns `debtToken` amount (USDS) and STRATEGY owns them\n968:         uint256 debtTokenAmount = OLYMPUS_COOLER.borrow({\n969:             borrowAmountInWad: type(uint128).max, // Borrow up to `_globalStateRW().maxOriginationLtv` of Cooler V2.\n970:             onBehalfOf: address(this),\n971:             recipient: address(STRATEGY)\n972:         });\n973: \n974:         // 3. Trigger STRATEGY to invest borrowed `debtToken`.\n975:         STRATEGY.invest(debtTokenAmount);\n```\n\nThe `debtTokenAmount` is interpreted as the amount in the scale of the debt token (i.e., USDS). However, technically, this is returned in the WAD scale, as hinted by the interface:\n\n```solidity\n    function borrow(uint128 borrowAmountInWad, address onBehalfOf, address recipient)\n        external\n        returns (uint128 amountBorrowedInWad);\n```\n\nThe vault keeps track of pending reimbursements independently of the debt token by converting to WAD scale.\n\n```solidity\n685:         uint256 reimbursementClaim = debtConverterToWad.toWad(callerContribution);\n686:         reimbursementClaims[msg.sender] += reimbursementClaim;\n687:         emit ReimbursementClaimAdded(msg.sender, reimbursementClaim, callerContribution);\n688:         totalReimbursementClaim += reimbursementClaim;\n```\n\nHowever, in [`totalProfit()`](https://github.com/CallistoDAO/callisto-core/blob/c569946c07c67af13d12229dbe9cf115d7d49c88/src/policies/CallistoVault.sol#L824), the `totalReimbursementClaim` is directly used with `STRATEGY.totalAssetsInvested()`, which is expressed in terms of the debt token.\n\n```solidity\n824:     function totalProfit() public view override returns (uint256) {\n825:         /* Total profit = Strategy funds - Vault's debt to Olympus Cooler V2 - Total reimbursment to users.\n826:          * If the vault is liquidated, profit is 0.\n827:          */\n828:         uint256 totalDeposited = STRATEGY.totalAssetsInvested();\n829:         uint256 totalReimbursement = totalReimbursementClaim;\n830:         if (totalDeposited < totalReimbursement) return 0;\n831:         if (_isVaultPositionLiquidated(totalDeposited)) return 0;\n832: \n833:         (, uint256 debt) = _debtConverterFromWad.convertToDebtTokenAmount(OLYMPUS_COOLER.accountDebt(address(this)));\n834:         unchecked {\n835:             totalDeposited -= totalReimbursement;\n836:         }\n837:         return totalDeposited < debt ? 0 : FixedPointMathLib.rawSub(totalDeposited, debt);\n838:     }\n```\n\n#### Impact\n\nMedium. Accounting might break if the debt token is migrated to a scale that differs from WAD.\n\n#### Recommendation\n\n```diff\n-       uint256 debtTokenAmount = OLYMPUS_COOLER.borrow({\n+       uint256 amountBorrowedInWad = OLYMPUS_COOLER.borrow({\n            borrowAmountInWad: type(uint128).max, // Borrow up to `_globalStateRW().maxOriginationLtv` of Cooler V2.\n            onBehalfOf: address(this),\n            recipient: address(STRATEGY)\n        });\n+       uint256 debtTokenAmount = _debtConverterFromWad.convertToDebtTokenAmount(amountBorrowedInWad);\n```\n\n```diff\n-   uint256 totalReimbursement = totalReimbursementClaim;\n+   uint256 totalReimbursement = _debtConverterFromWad.convertToDebtTokenAmount(totalReimbursementClaim);\n```\n\nAdd tests that uses different decimals.\n\n#### Developer Response\n\nFixed as part of our big cleanup [commit](https://github.com/CallistoDAO/callisto-core/commit/9704f43fcab7bfb49152b03175d1495e834b71bf)."
+    },
+    {
+      "number": 3,
+      "title": "Potential denial of service in withdrawals",
+      "severity": "Medium",
+      "body": "The withdrawal process will revert if the debt to repay is zero.\n\n#### Technical Details\n\nThe implementation of [`_withdraw()`](https://github.com/CallistoDAO/callisto-core/blob/c569946c07c67af13d12229dbe9cf115d7d49c88/src/policies/CallistoVault.sol#L554) calculates the amount of debt that needs to be repaid to free the required collateral.\n\n```solidity\n623:         /* 1. 3. Calculate the debt amount required to repay a debt in `OLYMPUS_COOLER` to withdraw\n624:          * `gOHMAmountToWithdraw`.\n625:          */\n626:         (uint128 wadDebt, uint256 debtToRepay) = _calcDebtToRepay(gOHMAmountToWithdraw);\n627: \n628:         /* 2. Withdraw the required amount of `debtToken` from the strategy to repay the debt.\n629:          *\n630:          * If an emergency case where not enough are available in the strategy, attempting to obtain\n631:          * the lacking amount of `debtToken` from the caller, and record a reimbursement to be claimed by\n632:          * the caller using `claimReimbursement` when there are enough funds in the strategy.\n633:          * If a caller would not like to pay the lacking amount, then, alternatively, the caller can withdraw\n634:          * the part, for which the available funds are sufficient instead of the entire amount.\n635:          *\n636:          * Note. This also occurs if the yield generated by the strategy is not enough to repay the debt in\n637:          * Olympus Cooler Loans V2. For example, if the first depositor attempts to immediately withdraw\n638:          * the entire initial deposit. So, the strategy has not time to accumulate yield.\n639:          */\n640:         IERC20 debtToken_ = debtToken;\n641:         _withdrawStrategyOrCallerFunds(debtToRepay, debtToken_);\n642: \n643:         // 3. Repay the debt in Olympus Cooler V2 to withdraw gOHM.\n644:         if (debtToRepay != 0) {\n645:             // slither-disable-next-line unused-return\n646:             debtToken_.approve(address(OLYMPUS_COOLER), debtToRepay);\n647:             // slither-disable-next-line unused-return\n648:             OLYMPUS_COOLER.repay({ repayAmountInWad: wadDebt, onBehalfOf: address(this) });\n649:         }\n```\n\nIn the case `debtToRepay` is zero, the implementation avoids calling `MonoCooler.repay()` due to the check on line 644, but always calls `_withdrawStrategyOrCallerFunds()` on line 641.\n\n```solidity\n672:     function _withdrawStrategyOrCallerFunds(uint256 debtToRepay, IERC20 debtToken_) private {\n673:         // Get the total amount available in the strategy.\n674:         uint256 strategyBalance = STRATEGY.totalAssetsAvailable();\n675: \n676:         // If the strategy covers the entire debt, withdraw the required amount of `debtToken`.\n677:         if (debtToRepay <= strategyBalance) {\n678:             STRATEGY.divest(debtToRepay, address(this));\n679:             return;\n680:         }\n```\n\nNote that when `debtToRepay` is zero, the call to `divest()` on line 678 is always executed too, which would conflict with the `nonzeroValue` validation, causing a revert in the flow path.\n\n#### Impact\n\nMedium. Withdrawals may fail in cases where the vault is not max-borrowed.\n\n#### Recommendation\n\nMove the call to `_withdrawStrategyOrCallerFunds()` inside the `if` of line 644.\n\n#### Developer Response\n\nFixed in [commit](https://github.com/CallistoDAO/callisto-core/commit/9704f43fcab7bfb49152b03175d1495e834b71bf)."
+    },
+    {
+      "number": 4,
+      "title": "`maxDeposit()` and `maxWithdraw()` should account for pause limits",
+      "severity": "Low",
+      "body": "According to the ERC-4626 standard, both of these functions should account for limits and return zero if disabled.\n\n#### Technical Details\n\n[CallistoVault.sol#L119-L121](https://github.com/CallistoDAO/callisto-core/blob/c569946c07c67af13d12229dbe9cf115d7d49c88/src/policies/CallistoVault.sol#L119-L121).\n\n#### Impact\n\nLow.\n\n#### Recommendation\n\nOverride `maxDeposit()` and `maxWithdraw()` and return zero if the functionality is paused.\n\n#### Developer Response\n\nFixed in this [commit](https://github.com/CallistoDAO/callisto-core/commit/46048eb3bad9ca00dcb9c1d0da2267a7dcbb0989)."
+    },
+    {
+      "number": 5,
+      "title": "Use SafeERC20 for debt token",
+      "severity": "Low",
+      "body": "While USDS is standard, the debt token might be migrated to a non-standard implementation.\n\n#### Technical Details\n\n- [VaultStrategy.sol#L130](https://github.com/CallistoDAO/callisto-core/blob/c569946c07c67af13d12229dbe9cf115d7d49c88/src/external/VaultStrategy.sol#L130)\n- [VaultStrategy.sol#L171](https://github.com/CallistoDAO/callisto-core/blob/c569946c07c67af13d12229dbe9cf115d7d49c88/src/external/VaultStrategy.sol#L171)\n- [VaultStrategy.sol#L229](https://github.com/CallistoDAO/callisto-core/blob/c569946c07c67af13d12229dbe9cf115d7d49c88/src/external/VaultStrategy.sol#L229)\n- [DebtTokenMigrator.sol#L236](https://github.com/CallistoDAO/callisto-core/blob/c569946c07c67af13d12229dbe9cf115d7d49c88/src/external/DebtTokenMigrator.sol#L236)\n- [CallistoVault.sol#L206](https://github.com/CallistoDAO/callisto-core/blob/c569946c07c67af13d12229dbe9cf115d7d49c88/src/policies/CallistoVault.sol#L206)\n- [CallistoVault.sol#L304](https://github.com/CallistoDAO/callisto-core/blob/c569946c07c67af13d12229dbe9cf115d7d49c88/src/policies/CallistoVault.sol#L304)\n- [CallistoVault.sol#L646](https://github.com/CallistoDAO/callisto-core/blob/c569946c07c67af13d12229dbe9cf115d7d49c88/src/policies/CallistoVault.sol#L646)\n- [CallistoVault.sol#L746](https://github.com/CallistoDAO/callisto-core/blob/c569946c07c67af13d12229dbe9cf115d7d49c88/src/policies/CallistoVault.sol#L746)\n- [CallistoVault.sol#L1000](https://github.com/CallistoDAO/callisto-core/blob/c569946c07c67af13d12229dbe9cf115d7d49c88/src/policies/CallistoVault.sol#L1000)\n- [CallistoVault.sol#L1007](https://github.com/CallistoDAO/callisto-core/blob/c569946c07c67af13d12229dbe9cf115d7d49c88/src/policies/CallistoVault.sol#L1007)\n\n#### Impact\n\nLow.\n\n#### Recommendation\n\nUse `forceApprove()` to handle approvals.\n\n#### Developer Response\n\nFixed in [PR#13](https://github.com/CallistoDAO/callisto-core/pull/13)."
+    },
+    {
+      "number": 6,
+      "title": "Remove approval to the previous yield vault",
+      "severity": "Low",
+      "body": "The `migrateAsset()` function grants an infinite approval to the new yield vault, but never revokes the allowance to the previous vault.\n\n#### Technical Details\n\n[VaultStrategy.sol#L217](https://github.com/CallistoDAO/callisto-core/blob/c569946c07c67af13d12229dbe9cf115d7d49c88/src/external/VaultStrategy.sol#L217)\n\n#### Impact\n\nLow.\n\n#### Recommendation\n\nRevoke the approval to the current `yieldVault` before replacing it.\n\n#### Developer Response\n\nFixed and covered by tests in [PR#12](https://github.com/CallistoDAO/callisto-core/pull/12)."
+    },
+    {
+      "number": 7,
+      "title": "Incorrect handling of PSM liquidity during migrations",
+      "severity": "High",
+      "body": "The migration contract incorrectly assumes a direct relation between the old yield vault shares and the new yield vault.\n\n#### Technical Details\n\nThe implementation of [`migrateDebtToken()`](https://github.com/CallistoDAO/callisto-core/blob/c569946c07c67af13d12229dbe9cf115d7d49c88/src/external/DebtTokenMigrator.sol#L176) scales the current amount of shares supplied by LP to the PSM by simply adjusting by the decimal difference of the underlying tokens.\n\n```solidity\n190:         // Gets the total assets supplied in the PSM to convert this value using new decimals.\n191:         uint256 suppliedInPSM = psm_.suppliedByLP();\n192: \n193:         /* Converts amounts to new decimals if necessary.\n194:          *\n195:          * Warning. When migrating from a debt token with higher decimals to one with lower decimals,\n196:          * the operation involves division with upward rounding, ensuring that the Callisto vault has sufficient\n197:          * tokens to fully repay its debt in Olympus Cooler Loans V2.\n198:          */\n199:         IERC20Metadata newDebtToken_ = newDebtToken;\n200:         uint8 fromDecimals = IERC20Metadata(address(vault.debtToken())).decimals();\n201:         uint8 toDecimals = newDebtToken_.decimals();\n202:         uint256 debtTokenAmountConverted;\n203:         uint256 suppliedInPSMConverted;\n204:         if (fromDecimals > toDecimals) {\n205:             uint256 precisionDiff = 10 ** uint256(fromDecimals - toDecimals);\n206:             debtTokenAmountConverted = debtTokenAmount.ceilDiv(precisionDiff);\n207:             suppliedInPSMConverted = suppliedInPSM.ceilDiv(precisionDiff);\n208:         } else if (fromDecimals < toDecimals) {\n209:             uint256 precisionDiff = 10 ** uint256(toDecimals - fromDecimals);\n210:             debtTokenAmountConverted = debtTokenAmount * precisionDiff;\n211:             suppliedInPSMConverted = suppliedInPSM * precisionDiff;\n212:         } else {\n213:             debtTokenAmountConverted = debtTokenAmount;\n214:             suppliedInPSMConverted = suppliedInPSM;\n215:         }\n```\n\nEventually, this might be incorrect because:\n\n1. It assumes that both yield vaults have the same number of decimals as their underlying token (so that a difference in asset decimals directly translates to their yield vaults).\n2. Share value may have a different relation. Scaling aside, shares may not represent the same amount of underlying.\n\n#### Impact\n\nHigh. PSM accounting might break after a migration, causing cascading issues related to the value held by the strategy.\n\n#### Recommendation\n\nUse the result of `newYieldVault_.deposit({ assets: newDebtTokenAmount, receiver: psmAddr })` to determine the new amount for `suppliedByLP`.\n\n#### Developer Response\n\nFixed in commit [9704f43](https://github.com/CallistoDAO/callisto-core/commit/9704f43fcab7bfb49152b03175d1495e834b71bf)."
+    },
+    {
+      "number": 8,
+      "title": "Emergency redeem should account for pending reimbursements",
+      "severity": "High",
+      "body": "The total invested amount in the strategy should consider pending reimbursements to calculate the owed assets per cOHM.\n\n#### Technical Details\n\nThe implementation of [`emergencyRedeem()`](https://github.com/CallistoDAO/callisto-core/blob/c569946c07c67af13d12229dbe9cf115d7d49c88/src/policies/CallistoVault.sol#L487) uses the assets held by the strategy to calculate the redemption amount.\n\n```solidity\n487:     function emergencyRedeem(uint256 shares)\n488:         external\n489:         override\n490:         whenWithdrawalNotPaused\n491:         nonzeroValue(shares)\n492:         returns (uint256 debtAmount)\n493:     {\n494:         uint256 debtTokensDeposited = STRATEGY.totalAssetsInvested();\n495:         if (_isVaultPositionLiquidated(debtTokensDeposited)) {\n496:             /* In an emergency where the vault's position has been liquidated in Olympus Cooler V2 and there are\n497:              * funds in the strategy.\n498:              */\n499:             // Amount to redeem = cOHM amount * Total funds in the strategy / Total cOHM.\n500:             debtAmount = Math.mulDiv(shares, debtTokensDeposited, totalSupply());\n501:             _burn(msg.sender, shares);\n502:             STRATEGY.divest(debtAmount, msg.sender);\n503:             emit EmergencyRedeemed(msg.sender, debtAmount);\n504:         }\n505:         return debtAmount;\n506:     }\n```\n\nThe assets invested in the strategy should also cover the pending reimbursements. If everything is allocated to shareholders, eventually this will lead to insolvent claims.\n\n#### Impact\n\nHigh. The issue can cause reimbursement insolvency.\n\n#### Recommendation\n\nSubtract the \n\n```diff\n+   uint256 availableAssets = debtTokensDeposited - _debtConverterFromWad.convertToDebtTokenAmount(totalReimbursementClaim);\n+   debtAmount = Math.mulDiv(shares, availableAssets, totalSupply());\n-   debtAmount = Math.mulDiv(shares, debtTokensDeposited, totalSupply());\n```\n\n#### Developer Response\n\nFixed in commit [a080d5a](https://github.com/CallistoDAO/callisto-core/commit/a080d5aebbbbf3cdc845b1591b3da6ef95f723ef)."
+    },
+    {
+      "number": 10,
+      "title": "OHM-gOHM swap accounting mismatch",
+      "severity": "High",
+      "body": "Assuming 1:1 cOHM -> gOHM conversion when using external swapper leads to accounting inconsistencies and potential undercollateralization.\n\n\n#### Technical Details\n\nWhen using `OHMToGOHMMode.Swap`, the vault converts OHM to gOHM via an external swapper but incorrectly assumes 1:1 conversion for accounting.\nThe vault mints cOHM 1:1 with deposited OHM but uses the actual `gOHMAmount` received (which may be less due to slippage/fees) as collateral. This creates a mismatch between issued shares and actual backing.\n\n#### Impact\n\nHigh - Protocol insolvency risk. There will be more cOHM minted than the actual backing.\n\n#### Recommendation\n\nWhen OHM->gOHM conversion requires external swapping, pause the standard deposit function and implement a swap-aware deposit function that:\n\n1. Performs the OHM->gOHM swap first\n2. Mints cOHM based on the actual gOHM received\n3. Maintains accurate 1:1 backing between cOHM shares and gOHM collateral\n\n**Note**: A residual risk remains when pending deposits exist at the time of switching to swap mode, as these deposits were accounted for assuming direct 1:1 conversion.\n\n#### Developer Response\n\nThis is acknowledged risk. We do not expect the Swapping use case to ever be used so this is added only as a protection for some really unexpected circumstances. Even if that is activated, it would most likely only affect the last-to-redeem user and we expect that to be the protocol itself."
+    },
+    {
+      "number": 11,
+      "title": "Timelock protection bypass in debt token migration",
+      "severity": "Medium",
+      "body": "The `onlyTimelock` modifier can be bypassed by replacing the DebtTokenMigrator contract, rendering timelock protections ineffective.\n\n#### Technical Details\n\nThe DebtTokenMigrator uses `onlyTimelock` modifier to ensure migration parameters can only be set after a time delay. However, both CallistoVault and VaultStrategy allow setting a new debt token migrator without timelock protection:\n```solidity\nFile: CallistoVault.sol\n377:     function setDebtTokenMigrator(address newMigrator) external onlyRole(CommonRoles.ADMIN) {\n378:         if (newMigrator != address(0)) {\n379:             require(\n380:                 address(DebtTokenMigrator(newMigrator).OLYMPUS_COOLER()) == address(OLYMPUS_COOLER),\n381:                 MismatchedCoolerAddress()\n382:             );\n383:         }\n384:         address oldMigrator = debtTokenMigrator;\n385:         debtTokenMigrator = newMigrator;\n386:         emit DebtTokenMigratorSet(oldMigrator, newMigrator);\n387:     }\n```\n```solidity\nFile: VaultStrategy.sol\n148:     function setDebtTokenMigrator(address newMigrator) external onlyOwner {\n149:         if (newMigrator != address(0)) {\n150:             require(\n151:                 address(DebtTokenMigrator(newMigrator).OLYMPUS_COOLER())\n152:                     == address(CallistoVault(vault).OLYMPUS_COOLER()),\n153:                 MismatchedCoolerAddress()\n154:             );\n155:         }\n156:         address oldMigrator = debtTokenMigrator;\n157:         debtTokenMigrator = newMigrator;\n158:         emit DebtTokenMigratorSet(oldMigrator, newMigrator); \n159:     }\n```\n\nAn attacker with admin privileges can deploy a malicious migrator contract and immediately execute the migration without any time delay.\n\n#### Impact\n\nMedium - Complete bypass of timelock security controls. If the timelock exists to prevent team misbehavior or protect against compromised admin keys, this bypass allows immediate unauthorized debt token migrations, potentially draining protocol funds or disrupting operations.\n\n#### Recommendation\n\nApply timelock protection to `setDebtTokenMigrator()` functions in both contracts, or implement additional governance controls to prevent unauthorized migrator replacement.\n\n#### Developer Response\n\nFixed in [commit](https://github.com/CallistoDAO/callisto-core/commit/e7630e33825b85da21a5b3ddbe63c4a43602ad68)."
+    },
+    {
+      "number": 12,
+      "title": "Unnecessary in memory variable declaration",
+      "severity": "Gas",
+      "body": "Some memory variables are declared, but the code can be written without usage of it, reducing gas usage.\n\n#### Technical Details\n\nThe following block:\n\n```solidity\n        address oldMigrator = debtTokenMigrator;\n        debtTokenMigrator = newMigrator;\n        emit DebtTokenMigratorSet(oldMigrator, newMigrator);\n```\nCan be replaced by:\n```solidity\n        emit DebtTokenMigratorSet(debtTokenMigrator, newMigrator);\n        debtTokenMigrator = newMigrator;\n```\n\nIt is found on: [VaultStrategy.sol#L156-L158](https://github.com/CallistoDAO/callisto-core/blob/e7630e33825b85da21a5b3ddbe63c4a43602ad68/src/external/VaultStrategy.sol#L156-L158) and [CallistoVault.sol#L384-L386](https://github.com/CallistoDAO/callisto-core/blob/e7630e33825b85da21a5b3ddbe63c4a43602ad68/src/policies/CallistoVault.sol#L384-L386)\n\n\nThe following line can be removed in favour of the usage of the PSM immutable variable.\n```solidity\nFile: VaultStrategy.sol\n199:         CallistoPSM psm = PSM; \n```\n[VaultStrategy.sol#L199-L199](https://github.com/CallistoDAO/callisto-core/blob/e7630e33825b85da21a5b3ddbe63c4a43602ad68/src/external/VaultStrategy.sol#L199-L199)\n\n#### Impact\n\nGas savings.\n\n#### Recommendation\n\nUpdate the code to reduce gas usage.\n\n#### Developer Response\n\nThese functions were removed in the latest version."
+    },
+    {
+      "number": 13,
+      "title": "Max withdrawal from yield vault might affect debt token migration",
+      "severity": "Low",
+      "body": "A limit on withdrawals could cause a partial debt token migration.\n\n#### Technical Details\n\nThe [`migrateDebtToken()`](https://github.com/CallistoDAO/callisto-core/blob/c569946c07c67af13d12229dbe9cf115d7d49c88/src/external/DebtTokenMigrator.sol#L176) function in the DebtTokenMigrator contract uses `ERC4626::maxWithdraw()` to determine the amount of debt tokens that are expected to be migrated.\n\n```solidity\n188:         uint256 debtTokenAmount = IERC4626(strategy.yieldVault()).maxWithdraw(psmAddr);\n```\n\nA limit or restriction in the yield vault could result in a lower amount being returned than actually held, potentially leading to a partial debt token migration.\n\n#### Impact\n\nLow.\n\n#### Recommendation\n\nWhile this doesn't affect the current sUSDS vault, consider using `redeem()` with the share balance to draw assets from the vault.\n\n#### Developer Response\n\nFixed in [PR#12](https://github.com/CallistoDAO/callisto-core/pull/12)."
+    },
+    {
+      "number": 14,
+      "title": "Unnecessary ERC20 approvals",
+      "severity": "Gas",
+      "body": "#### Technical Details\n\n[`VaultStrategy::invest()`](https://github.com/CallistoDAO/callisto-core/blob/c569946c07c67af13d12229dbe9cf115d7d49c88/src/external/VaultStrategy.sol#L171): the yield vault has been already given an infinity approval in the constructor or when migrating to a new one.\n\n[`CallistoVault::constructor()`](https://github.com/CallistoDAO/callisto-core/blob/c569946c07c67af13d12229dbe9cf115d7d49c88/src/policies/CallistoVault.sol#L206): debt tokens are pushed to the strategy, the strategy doesn't pull from the vault.\n\n[`CallistoVault::withdraw()`](https://github.com/CallistoDAO/callisto-core/blob/c569946c07c67af13d12229dbe9cf115d7d49c88/src/policies/CallistoVault.sol#L661): the OlympusStaking contract burns GOHM from the caller, it doesn't pull tokens.\n\n#### Impact\n\nGas savings.\n\n#### Recommendation\n\nRemove the highlighted approvals.\n\n#### Developer Response\n\nThe first approval was removed as part of [commit](https://github.com/CallistoDAO/callisto-core/commit/9704f43fcab7bfb49152b03175d1495e834b71bf#diff-c02e324ec78750c0ec97aa9379e0295acae1e0d4e5c20ce6fbf01d92c7e38f0cR91)\n\nThe second remove in [commit](https://github.com/CallistoDAO/callisto-core/commit/9704f43fcab7bfb49152b03175d1495e834b71bf#diff-9d453165e50ebdaa3c04c470738084bbde02c4ddb70a401255a58f2745122289L206)\n\nburn()` requires approval, and the test will fail if you try to remove it. We actually now have full control in the constructor in the latest code\n\n```\nGOHM.approve(address(OLYMPUS_STAKING), type(uint256).max);\n```"
+    },
+    {
+      "number": 15,
+      "title": "Deposit pauses don't affect queued OHM",
+      "severity": "Informational",
+      "body": "While new deposits are forbidden, pending OHM waiting to be staked is not affected by pauses.\n\n#### Technical Details\n\n[CallistoVault.sol#L119](https://github.com/CallistoDAO/callisto-core/blob/c569946c07c67af13d12229dbe9cf115d7d49c88/src/policies/CallistoVault.sol#L119).\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nConsider if the deposit pause should also halt gOHM staking and/or swaps.\n\n#### Developer Response\n\nPending OHM can always be withdrawn when cOHM is redeemed, so we are fine with that."
+    }
+  ]
+}

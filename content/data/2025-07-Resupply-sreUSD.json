@@ -1,0 +1,71 @@
+{
+  "repo": "yAudit/resupply-sreusd-report",
+  "githubUrl": "https://github.com/yAudit/resupply-sreusd-report",
+  "title": "Resupply sreUSD",
+  "protocolName": "Resupply",
+  "protocolOverview": "Resupply Finance is a CDP-based lending protocol that allows simple, low-risk, leveraged yield farming while encouraging the use of value-added ecosystem protocols' underlying stables like Curve's crvUSD and Frax's FRAX.",
+  "auditScope": "This audit covers 7 smart contracts totaling approximately 750 lines of code across 4.5 days of review.",
+  "overallAssessment": "The update includes the new ERC-4626 vault for savings reUSD, along with changes to the interest rate calculator to boost fees depending on the stable peg.",
+  "startDate": "2025-07-16",
+  "finishDate": "2025-07-21",
+  "auditors": [
+    "HHK",
+    "adriro"
+  ],
+  "commits": [
+    {
+      "label": null,
+      "hash": "9a3de5b4a3ced4eb993c87cc19cf85c99bf3e6a2",
+      "url": "https://github.com/resupplyfi/resupply/commit/9a3de5b4a3ced4eb993c87cc19cf85c99bf3e6a2"
+    }
+  ],
+  "finalCommits": [],
+  "repositories": [
+    "https://github.com/resupplyfi/resupply"
+  ],
+  "auditResources": [
+    "[sreUSD Auditor Roadmap](https://hackmd.io/@wavey/Bkt8wkrLee)"
+  ],
+  "treeOfAuditedFiles": "src/\n└── protocol\n    ├── FeeDepositController.sol\n    ├── FeeLogger.sol\n    ├── InterestRateCalculatorV2.sol\n    ├── PriceWatcher.sol\n    ├── RewardHandler.sol\n    └── sreusd\n        ├── LinearRewardsErc4626.sol\n        └── sreUSD.sol",
+  "finalRemarks": "TODO remarks",
+  "nsloc": 750,
+  "evaluations": [],
+  "issues": [
+    {
+      "number": 1,
+      "title": "Preview sync rewards doesn't account for fee distribution",
+      "severity": "Low",
+      "body": "The public facing variant of [`previewSyncRewards()`](https://github.com/resupplyfi/resupply/blob/9a3de5b4a3ced4eb993c87cc19cf85c99bf3e6a2/src/protocol/sreusd/LinearRewardsErc4626.sol#L128) doesn't account for fee distribution and will return incorrect results.\n\n#### Technical Details\n\nThe implementation of [`_syncRewards()`](https://github.com/resupplyfi/resupply/blob/9a3de5b4a3ced4eb993c87cc19cf85c99bf3e6a2/src/protocol/sreusd/LinearRewardsErc4626.sol#L157) has been updated so that `_distributeFees()` is called before `previewSyncRewards()` but only if the current cycle has elapsed (`block.timestamp <= rewardsCycleData.cycleEnd`).\n\n```solidity\n157:     function _syncRewards() internal virtual {\n158:         if (block.timestamp <= rewardsCycleData.cycleEnd) return;\n159:         _distributeFees();\n160:         RewardsCycleData memory _rewardsCycleData = previewSyncRewards();\n```\n\nThis is needed so that fees are pulled into the contract and accounted for as rewards for the upcoming cycle.\n\nHowever, if `previewSyncRewards()` is called externally, the fee distribution isn't executed and rewards are actually not accounted for in the preview simulation.\n\n#### Impact\n\nLow. `previewSyncRewards()` returns incorrect results.\n\n#### Recommendation\n\nThe implementation should be refactored so that `previewSyncRewards()` simulates the effects of fee distribution.\n\n#### Developer Response\n\nFixed in [48d2b16](https://github.com/resupplyfi/resupply/commit/48d2b16d25ff790d374dabefb6dd359936b75710)."
+    },
+    {
+      "number": 2,
+      "title": "Incorrect split update implementation",
+      "severity": "Low",
+      "body": "The new staked reUSD split is not considered in the update logic of FeeDepositController.\n\n#### Technical Details\n\nThe implementation of [`setSplits()`](https://github.com/resupplyfi/resupply/blob/9a3de5b4a3ced4eb993c87cc19cf85c99bf3e6a2/src/protocol/FeeDepositController.sol#L181) takes all four split arguments but requires only three of them to equal the total BPS.\n\n```solidity\n181:     function setSplits(uint256 _insuranceSplit, uint256 _treasurySplit, uint256 _platformSplit, uint256 _stakedStableSplit) external onlyOwner {\n182:         require(_insuranceSplit + _treasurySplit + _platformSplit == BPS, \"invalid splits\");\n183:         splits.insurance = uint40(_insuranceSplit);\n184:         splits.treasury = uint40(_treasurySplit);\n185:         splits.platform = uint40(_platformSplit);\n186:         splits.stakedStable = uint40(_stakedStableSplit);\n187:         emit SplitsSet(uint40(_insuranceSplit), uint40(_treasurySplit), uint40(_platformSplit), uint40(_stakedStableSplit));\n188:     }\n```\n\nAdditionally, during initialization, the `stakedStable` variable is missing from the check on line 62. However, in this case, the split can still be initialized properly, and would overflow on line 66 if the splits exceed 100%.\n\n```solidity\n62:         require(_insuranceSplit + _treasurySplit <= BPS, \"invalid splits\");\n```\n\n#### Impact\n\nLow.\n\n#### Recommendation\n\nChange the condition in `setSplits()` to account for the new staked split.\n\n```diff\n-   require(_insuranceSplit + _treasurySplit + _platformSplit == BPS, \"invalid splits\");\n+   require(_insuranceSplit + _treasurySplit + _platformSplit + _stakedStableSplit == BPS, \"invalid splits\");\n```\n\nThe condition in the contract's constructor can be adjusted as well.\n\n```diff\n-   require(_insuranceSplit + _treasurySplit <= BPS, \"invalid splits\");\n+   require(_insuranceSplit + _treasurySplit + _stakedStableSplit <= BPS, \"invalid splits\");\n```\n\nAlternatively, the platform split can be removed and interpreted as the difference between 100% and the sum of the other three split, aligning the behavior with the actual split implementation.\n\n#### Developer Response\n\nFixed the summation check in [2f9510b](https://github.com/resupplyfi/resupply/commit/2f9510ba76a69e9c9e150810bba703d65d397e51).\n\nWe think it's preferable to leave the struct as-is for the following reasons:\n\n1. Explicitness.\n2. Convenient for users or indexers to read from."
+    },
+    {
+      "number": 3,
+      "title": "Ensure no distribution is triggered when deploying sreUSD",
+      "severity": "Informational",
+      "body": "The initialization of LinearRewardsErc4626 triggers a dummy distribution to bootstrap to state, which could create a conflict if there are actual rewards being distributed.\n\n#### Technical Details\n\nThe [constructor](https://github.com/resupplyfi/resupply/blob/9a3de5b4a3ced4eb993c87cc19cf85c99bf3e6a2/src/protocol/sreusd/LinearRewardsErc4626.sol#L52) of LinearRewardsErc4626 calls `_syncRewards()`\n\n```solidity\n67:         // initialize rewardsCycleEnd value\n68:         // NOTE: normally distribution of rewards should be done prior to _syncRewards but in this case we know there are no users or rewards yet.\n69:         _syncRewards();\n70: \n71:         // initialize lastRewardsDistribution value\n72:         _distributeRewards();\n```\n\nAs the comment indicates, is it expected that no users or rewards are present at this point. However, this may not be true if the call to `_distributeFees()` ends up doing an actual distribution of tokens.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nEnsure no reward distribution happens as part of the initialization of the staked reUSD vault.\n\n#### Developer Response\n\nAdded an extra sanity check in constructor: [c41e8ae](https://github.com/resupplyfi/resupply/commit/c41e8aed2c3bd078caca8338baa60f3813048eb5)."
+    },
+    {
+      "number": 4,
+      "title": "PriceWatcher weights can exceed the `1e6` scale",
+      "severity": "Medium",
+      "body": "Weights can potentially fall outside the expected scale, affecting the PriceWatcher consumers.\n\n#### Technical Details\n\nThe implementation of [`getCurrentWeight()`](https://github.com/resupplyfi/resupply/blob/9a3de5b4a3ced4eb993c87cc19cf85c99bf3e6a2/src/protocol/PriceWatcher.sol#L153) fetches the reUSD price from the Oracle and adjusts the scale to return a value within `1e6` precision.\n\n```solidity\n153:     function getCurrentWeight() public view returns (uint64) {\n154:         uint256 price = IReusdOracle(oracle).price();\n155:         uint256 weight = price > 1e18 ? 0 : 1e18 - price;\n156:         //our oracle has a floor that matches redemption fee\n157:         //e.g. it returns a minimum price of 0.9900 when there is a 1% redemption fee\n158:         //at this point a price of 0.99000 has a weight of 0.010000 or 1e16\n159:         //reduce precision to 1e6\n160:         return uint64(weight / 1e10);\n161:     }\n```\n\nThe expected behavior here is that the Oracle price is clamped to $1 minus the redemption fee (1%), making the resulting weight fall within the `[0, 0.01]` range, which is then scaled down to the `1e6` region\n\nHowever, two dependencies could potentially break this invariant\n\n- The ReusdOracle [`price()`](https://github.com/resupplyfi/resupply/blob/9a3de5b4a3ced4eb993c87cc19cf85c99bf3e6a2/src/protocol/ReusdOracle.sol#L69) function multiplies the reUSD price (floored to the redemption fee) by the crvUSD price, potentially allowing the resulting value to be actually less than $0.99\n- The redemption fee can be updated, breaking the floored price assumption.\n\n#### Impact\n\nMedium. Users of the PriceWatcher contract consume the weight as a rate while assuming the returned scale is `1e6`, potentially causing downstream calculations to exceed 100%.\n\n#### Recommendation\n\nThe weight calculation should use `priceAsCrvusd()`, which returns the floored price without the crvUSD price scaling. Additionally, ensure the redemption fee is not changed, as this might also break the calculations.\n\n#### Developer Response\n\nFixed in [4cc34fb](https://github.com/resupplyfi/resupply/commit/4cc34fb18cf6ae31c1ddae04198d446b791df499)."
+    },
+    {
+      "number": 5,
+      "title": "Ensure `_updateInterest = true` when setting the new interest rate contract in `setRateCalculator()`",
+      "severity": "Low",
+      "body": "#### Technical Details\n\nThe function [`setRateCalculator()`](https://github.com/resupplyfi/resupply/blob/9a3de5b4a3ced4eb993c87cc19cf85c99bf3e6a2/src/protocol/ResupplyPair.sol#L208C14-L208C31) updates the contract used to calculate the interest rate. When called the param `_updateInterest` can be set to true to flush interests prior to changing the contract.\n\nThe new contract `InterestRateCalculatorV2` and `PriceWatcher` use the pair's `lastPairUpdate` variable to determine the new interest rate. This variable is only updated when interest are flushed/added on the pair.\n\nWhen the `PriceWatcher` is deployed, it will save two new `priceData`, one at timestamp 0 and one at the deployment timestamp's floor.\n\nIf the `lastPairUpdate` is smaller than the deployment's timestamp floor, the [`findPairPriceWeight()`](https://github.com/resupplyfi/resupply/blob/9a3de5b4a3ced4eb993c87cc19cf85c99bf3e6a2/src/protocol/PriceWatcher.sol#L98-L98) function called by the `InterestRateCalculatorV2` will loop forever looking for a valid `priceData` all the way to timestamp 0 which will likely result in the transaction reverting out of gas.\n\n#### Impact\n\nLow. The pair might not be able to flush interests anymore until a new interest rate contract is set.\n\n#### Recommendation\n\nEnsure that the param `_updateInterest` is set to true inside the deployment script when calling [`setRateCalculator()`](https://github.com/resupplyfi/resupply/blob/9a3de5b4a3ced4eb993c87cc19cf85c99bf3e6a2/src/protocol/ResupplyPair.sol#L208C14-L208C31) (already the case inside `LaunchSreUsd`) and document this in the natspec of the `InterestRateCalculatorV2` contract.\n\n#### Developer Response\n\nIncluded in the draft governance proposal: [LaunchSreUsd.s.sol#L126](https://github.com/resupplyfi/resupply/blob/965949da06a811c67daefb19770b721ffdac78ac/script/proposals/LaunchSreUsd.s.sol#L126)."
+    },
+    {
+      "number": 6,
+      "title": "Return early inside `previewDistributeRewards()`",
+      "severity": "Gas",
+      "body": "#### Technical Details\n\nInside the function [`previewDistributeRewards()`](https://github.com/resupplyfi/resupply/blob/9a3de5b4a3ced4eb993c87cc19cf85c99bf3e6a2/src/protocol/sreusd/LinearRewardsErc4626.sol#L94-L94) return early if `lastRewardsDistribution == block.timestamp`.\n\nThis will save gas on deposits and withdraws as the contract currently `_distributeRewards()` first which will update `lastRewardsDistribution` but then call the function `previewDistributeRewards()` again inside `totalAssets()` to determine the amount of shares to mint/burn.\n\n#### Impact\n\nGas.\n\n#### Recommendation\n\nInside the function `previewDistributeRewards()` return early if `lastRewardsDistribution == block.timestamp`.\n\n#### Developer Response\n\nUpdated in [b2139c2](https://github.com/resupplyfi/resupply/commit/b2139c249ccd7c3f2b3c6f021f048aa2e3f0152c)."
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 ---
 tags: ["solidity", "wallet"]
 title: 2026-04-Den-MLS-Wallet
+repo: yAudit/den-report
 description: Den MLS Wallet
 ---
 

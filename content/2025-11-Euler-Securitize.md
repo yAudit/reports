@@ -1,6 +1,7 @@
 ---
 tags: ["solidity", "euler"]
 title: 2025-11-Euler-Securitize
+repo: yAudit/euler-securitize-vault-report
 description: Euler - Securitize report
 ---
 

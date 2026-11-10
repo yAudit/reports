@@ -1,0 +1,106 @@
+# Imports the structured data of the reports (config.yaml and the findings in
+# the issues of each report repository) into content/data, and commits it.
+#
+# - On a push to main, only the reports whose markdown file the push added,
+#   changed or renamed, and that name a repository ("repo:"). A report already
+#   published changes only when someone touches its file, not when its
+#   repository changes.
+# - By hand from the Actions tab: the reports named, or every report when the
+#   field is empty.
+#
+# The report repositories are private: the REPORTS_IMPORT_TOKEN secret holds a
+# token that can read their contents and issues.
+name: Import report data
+
+on:
+  push:
+    branches: [main]
+    paths: ["content/*.md"]
+  workflow_dispatch:
+    inputs:
+      reports:
+        description: "Reports to import, as content/ file names without .md, separated by spaces. Empty imports every report."
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: import-reports-${{ github.ref }}
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Reports to import
+        id: reports
+        env:
+          EVENT: ${{ github.event_name }}
+          INPUT: ${{ inputs.reports }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+        run: |
+          if [ "$EVENT" != "push" ]; then
+            echo "names=$INPUT" >> "$GITHUB_OUTPUT"
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Only the commit before the push, to compare: not the whole history.
+          git fetch --no-tags --depth=1 origin "$BEFORE"
+
+          names=""
+          for file in $(git diff --name-only --diff-filter=AMR "$BEFORE" "$AFTER" -- 'content/*.md'); do
+            if grep -q '^repo:' "$file"; then
+              names="$names $(basename "$file" .md)"
+            fi
+          done
+
+          echo "names=$names" >> "$GITHUB_OUTPUT"
+          if [ -n "$names" ]; then
+            echo "Importing:$names"
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            # An empty list would import every report.
+            echo "No changed report names a repository: nothing to import."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: pnpm/action-setup@v4
+        if: steps.reports.outputs.run == 'true'
+
+      - uses: actions/setup-node@v4
+        if: steps.reports.outputs.run == 'true'
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+        if: steps.reports.outputs.run == 'true'
+
+      - name: Import
+        if: steps.reports.outputs.run == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.REPORTS_IMPORT_TOKEN }}
+          REPORTS: ${{ steps.reports.outputs.names }}
+        # REPORTS is split into words on purpose, one argument per report;
+        # set -f keeps a "*" in it from expanding to file names.
+        run: |
+          set -f
+          node scripts/import-github.mjs $REPORTS
+
+      - name: Commit
+        if: steps.reports.outputs.run == 'true'
+        run: |
+          git add content/data
+          if git diff --cached --quiet; then
+            echo "No changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Import report data"
+          git push

@@ -1,0 +1,107 @@
+{
+  "repo": "yAudit/yearn-stYFI-Teams",
+  "githubUrl": "https://github.com/yAudit/yearn-stYFI-Teams",
+  "title": "stYFI Teams PR",
+  "protocolName": "Yearn",
+  "protocolOverview": "Yearn's Staked YFI is a liquid governance and revenue sharing vault wrapping the YFI token. The reviewed PR implements team-based funding accounting and distribution on-chain.",
+  "auditScope": "This audit covers 8 smart contracts totaling approximately 1144 lines of code across 3 days of review.",
+  "overallAssessment": "PR#3 is correctly implemented with minor severity issues identified, triggerable either in low-probability scenarioes or by a trusted party's actions. While its core functionality has been found to function correctly and as expected, an incorrect value initialization in BonusDistributor's constructor was found to potentially lead to a bonus claim DoS, triggered by an unexpected division by zero. Furthermore, RevenueRecipient's sweep method presents an incorrectly handled edge case by which, if the contract's main token is swept, its per-category budget accounting system could break temporarily. While the highlighted issues require minor changes to be addressed, they remain tied to management-triggered actions and do not impact the system's main execution flows.",
+  "startDate": "2026-05-04",
+  "finishDate": "2026-05-06",
+  "auditors": [
+    "Panda",
+    "Watermelon"
+  ],
+  "commits": [
+    {
+      "label": null,
+      "hash": "a921a4f4c58e49d1c1400e135fd76344ddceb531",
+      "url": "https://github.com/yearn/stYFI/tree/a921a4f4c58e49d1c1400e135fd76344ddceb531"
+    }
+  ],
+  "finalCommits": [],
+  "repositories": [
+    "https://github.com/yearn/stYFI"
+  ],
+  "auditResources": [
+    "Code repositories and documentation"
+  ],
+  "treeOfAuditedFiles": "contracts\n├── BonusDistributor.vy\n├── BonusPriceOracle.vy\n├── FundingDistributor.vy\n├── RevenueOracle.vy\n├── RevenueRecipient.vy\n├── Team.vy\n├── TeamAccountant.vy\n└── TeamRegistry.vy",
+  "finalRemarks": null,
+  "nsloc": 1144,
+  "evaluations": [
+    {
+      "category": "access_control",
+      "score": "Good",
+      "description": "Adequate access control is implemented within the reviewed contracts, with a minor inconsistency identified between a method's documentation and its implementation."
+    },
+    {
+      "category": "mathematics",
+      "score": "Good",
+      "description": "The mathemathical relations employed are simple and concise, although subject to issues under certain administrative actions."
+    },
+    {
+      "category": "complexity",
+      "score": "Good",
+      "description": "The implemented system maintains a modular architecture with several components tightly aggregated."
+    },
+    {
+      "category": "libraries",
+      "score": "Good",
+      "description": "No use of external libraries is made within the reviewed contracts. Some common functionality, like period calcuations and two-step ownership transfers could be implemented in standalone modules and imported in every contract in order to reduce code repetition."
+    },
+    {
+      "category": "decentralization",
+      "score": "Low",
+      "description": "Management and operator actors are granted large power over the reviewed contracts' states."
+    },
+    {
+      "category": "documentation",
+      "score": "Average",
+      "description": "The code is documented via contract-leven and method-level natspec documentation."
+    },
+    {
+      "category": "testing",
+      "score": "Good",
+      "description": "Adequate unit tests and fork tests have been implemented to ensure the contracts work as expected."
+    }
+  ],
+  "issues": [
+    {
+      "number": 1,
+      "title": "`BonusDistributor.finalize_period` can permanently brick all calls to `claim` for the related period",
+      "severity": "Medium",
+      "body": "#### Technical Details\n\nBonusDistributor's [`constructor`](https://github.com/yearn/stYFI/blob/teams/contracts/BonusDistributor.vy#L93-L106) initializes `growth_rate_cap` to `BPS_PRECISION`. However, [`BonusDistributor.set_growth_rate_cap`](https://github.com/yearn/stYFI/blob/teams/contracts/BonusDistributor.vy#L285-L295) enforces an upper bound of `BPS_PRECISION * 4 // 5` on any future update.\n\nWithin [`BonusDistributor.finalize_period`](https://github.com/yearn/stYFI/blob/teams/contracts/BonusDistributor.vy#L118-L156), the cap is applied to the `growth_factor` and the bonus token price is adjusted accordingly. With the default `growth_rate_cap` set to `BPS_PRECISION`, the local `growth_rate_cap` evaluates to `PRECISION`, allowing `growth_factor` to be capped at `2 * PRECISION`. When this upper cap is hit, `adjusted_price` evaluates to `0`, and is then stored in `self.parameters[period]` as the period's `bonus_price`.\n\nThis condition is reached whenever the ratio between the current `ema_revenue` and the previous one is greater than or equal to `2`, which can occur in two scenarios:\n\n1. A period reports zero revenue. Subsequent periods will set `prev_ema_revenue` to `1`, causing `growth_factor` to be saturated at the cap as soon as any non-trivial revenue is reported.\n2. A revenue period whose smoothed revenue is at least double that of the previous one is encountered.\n\nOnce `adjusted_price` is stored as `0`, every subsequent call to [`BonusDistributor.claim`](https://github.com/yearn/stYFI/blob/teams/contracts/BonusDistributor.vy#L159-L200) for that period reverts due to division by zero. Because `claim` iterates sequentially through periods starting from `self.pending_claims[_team]` and updates the cursor only at the end of the loop, all teams whose claim cursor has not yet advanced past the affected period are unable to claim any bonus, including for any subsequent period.\n\n#### Impact\n\nMedium. All bonus claims for affected teams are bricked until management intervenes.\n\n#### Recommendation\n\nInitialize `growth_rate_cap` in the constructor to the same maximum value enforced by `set_growth_rate_cap` (80%):\n\n```diff\n@@ -102,7 +102,7 @@\n     self.management = msg.sender\n     self.operator = msg.sender\n     self.smoothing_factor = PRECISION\n-    self.growth_rate_cap = BPS_PRECISION\n+    self.growth_rate_cap = BPS_PRECISION * 4 // 5\n     self.bonus_factor = BPS_PRECISION\n```\n\nThis ensures that `2 * PRECISION - growth_factor` cannot evaluate to `0` and that `adjusted_price` remains strictly positive for any oracle price greater than zero.\n\n#### Developer Response\n\nFixed in [022243c](https://github.com/yearn/stYFI/pull/3/changes/022243cf52e015df80482178bb677b789fa01341)."
+    },
+    {
+      "number": 2,
+      "title": "Incorrect access control comment in `BonusDistributor.finalize_period`",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\n[`BonusDistributor.finalize_period`](https://github.com/yearn/stYFI/blob/teams/contracts/BonusDistributor.vy#L118-L156)'s docstring states:\n\n```\n@dev Can only be called by the operator\n```\n\nHowever, the actual access control check allows the call to succeed when `self.operator` is set to the zero address:\n\n```vyper\nassert self.operator in [msg.sender, empty(address)]\n```\n\nWhen the operator role is disabled (i.e. set to `empty(address)` via [`BonusDistributor.set_operator`](https://github.com/yearn/stYFI/blob/teams/contracts/BonusDistributor.vy#L219-L228)), any account is able to call `finalize_period`.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nEither align the docstring with the implementation or restrict the access control check to a non-zero operator only.\n\n#### Developer Response\n\nUpdated in [93ab181](https://github.com/yearn/stYFI/pull/3/changes/93ab181c8d99a0b6ac457e8bf7b0d062571a0b50)."
+    },
+    {
+      "number": 3,
+      "title": "`BonusPriceOracle.price()` recomputes current period",
+      "severity": "Gas",
+      "body": "#### Technical Details\n\n`BonusPriceOracle.price()` caches the current period in current, but then calls `self._period()` again in the next line.\n\n```solidity\nFile: BonusPriceOracle.vy\n81:     current: uint256 = self._period()\n82:     assert _period < self._period()\n```\n\n  #### Impact\n\nGas savings.\n\n#### Recommendation\n\nUse the cached value:\n```solidity\nassert _period < current\n```\n\n#### Developer Response\n\nFixed in [9ac8e98](https://github.com/yearn/stYFI/pull/3/changes/9ac8e98f52cb9281335698e3f8df59ea9fecb0dc)."
+    },
+    {
+      "number": 4,
+      "title": "`RevenueRecipient.sweep` of the main token breaks per-category budget invariant",
+      "severity": "Low",
+      "body": "#### Technical Details\n\n[`RevenueRecipient.sweep`](https://github.com/yearn/stYFI/blob/a921a4f4c58e49d1c1400e135fd76344ddceb531/contracts/RevenueRecipient.vy#L246-L264) lets management withdraw any token held by the contract. When `_token == token.address`, it reduces `sum_balance` and `last_balance` by the swept amount but does not adjust the `used` array, which tracks how much of each split has already been disbursed.\n\nPer-category budgets in [`_use_balance`](https://github.com/yearn/stYFI/blob/a921a4f4c58e49d1c1400e135fd76344ddceb531/contracts/RevenueRecipient.vy#L405-L413) are computed as `sum_balance * token_split[_i] // BPS_PRECISION`. Sweeping the main token therefore shrinks every budget proportionally while `used[_i]` stays put, breaking the invariant that the per-category available budget never exceeds `last_balance`. Two consequences follow:\n\n1. Any category for which `used[_i]` exceeds its post-sweep budget is permanently bricked. `_use_balance` asserts `used <= budget` and reverts on any nonzero `_amount` for that category until enough revenue accrues to lift `sum_balance` back up.\n2. The remaining drawable category can pass the `used <= budget` assert with an `_amount` greater than `last_balance`, then revert with an underflow on `self.last_balance -= _amount`.\n\n##### PoC\n\nAdd the following test case to `tests/test_revenue_recipient.py` and execute it with `ape test tests/test_revenue_recipient.py::test_sweep_breaks_budget_invariant`:\n\n```python\ndef test_sweep_breaks_budget_invariant(project, deployer, alice, bob, genesis, token, vault, recipient):\n    distributor = project.RewardDistributor.deploy(genesis, vault, sender=deployer)\n    recipient.set_reward_distributor(distributor, sender=deployer)\n    recipient.set_operator(alice, sender=deployer)\n    recipient.set_treasury(bob, sender=deployer)\n\n    # seed the recipient with 100 UNIT of the main token (the vault)\n    token.mint(deployer, 100 * UNIT, sender=deployer)\n    token.approve(vault, 100 * UNIT, sender=deployer)\n    vault.deposit(100 * UNIT, recipient, sender=deployer)\n\n    # consume half of the treasury budget (cat 1)\n    # splits = (8000, 1000, 1000) -> treasury budget = 10 UNIT\n    recipient.to_treasury(5 * UNIT, sender=alice)\n    assert recipient.sum_balance() == 100 * UNIT\n    assert recipient.last_balance() == 95 * UNIT\n    assert recipient.used(1) == 5 * UNIT\n\n    # management sweeps 80 UNIT of the main token\n    recipient.sweep(vault, 80 * UNIT, sender=deployer)\n    assert recipient.sum_balance() == 20 * UNIT\n    assert recipient.last_balance() == 15 * UNIT\n    # used[] is unchanged --> invariant broken\n    assert recipient.used(1) == 5 * UNIT\n\n    # post sweep budgets: stYFI = 16 UNIT, treasury = 2 UNIT, yETH = 2 UNIT\n    # treasury already used (5 UNIT) exceeds new budget (2 UNIT)\n    # --> any nonzero treasury draw fails the `assert used <= budget` check\n    with reverts():\n        recipient.to_treasury(1, sender=alice)\n\n    # stYFI's leftover budget (16 UNIT) exceeds last_balance (15 UNIT)\n    # --> the operator passes the budget assert with _amount = 16 UNIT,\n    #     then `last_balance -= 16 * UNIT` underflows on `15 - 16`\n    with reverts():\n        recipient.to_styfi_rewards(0, 16 * UNIT, sender=alice)\n```\n\n#### Impact\n\nLow. Sweep is restricted to management, so this is a privileged foot-gun rather than an attack vector. The DoS on the over-budget categories is recoverable as additional revenue is deposited and `sum_balance` grows back above the existing `used` totals, but until that point those splits cannot disburse anything.\n\n#### Recommendation\n\nScale the `used` array's elements down proportionally alongside `sum_balance` so that per-category budgets remain coherent with the disbursements already made.\n\n#### Developer Response\n\nThe revenue token should only be sweeped out in an emergency, in which case it is okay to break the invariant as the contract wont be used afterwards. So instead we have added a kill switch in [8dee8cb](https://github.com/yearn/stYFI/pull/3/changes/8dee8cb0d1db2d56d6c582dfa2dc135340edf58e), and only allow the revenue token to be sweeped if it has been activated."
+    },
+    {
+      "number": 5,
+      "title": "`RevenueOracle.convert` re-approves the vault on every call",
+      "severity": "Gas",
+      "body": "#### Technical Details\n\n[`RevenueOracle.convert`](https://github.com/yearn/stYFI/blob/a921a4f4c58e49d1c1400e135fd76344ddceb531/contracts/RevenueOracle.vy#L54-L64) approves the vault for `_amount` on every call. The vault's `deposit` then consumes the full allowance, leaving the slot at zero. Each conversion therefore writes the allowance slot twice.\n\nSince `RevenueOracle` is a stateless passthrough that does not hold funds across transactions, a one-time infinite approval at construction is equivalent and avoids the redundant writes.\n\n#### Impact\n\nGas optimization.\n\n#### Recommendation\n\n```diff\n @deploy\n def __init__(_vault: address):\n     vault = _vault\n     token = staticcall IERC4626(_vault).asset()\n     decimals: uint8 = staticcall IERC20Detailed(token).decimals()\n     assert decimals <= 18\n     scale = 10**(36 - convert(decimals, uint256))\n+    assert extcall IERC20(token).approve(_vault, max_value(uint256), default_return_value=True)\n\n @external\n def convert(_token: address, _amount: uint256):\n     assert _token == token\n\n     assert extcall IERC20(token).transferFrom(msg.sender, self, _amount, default_return_value=True)\n-    extcall IERC20(token).approve(vault, _amount)\n     extcall IERC4626(vault).deposit(_amount, msg.sender)\n```\n\n#### Developer Response\n\nFixed as recommended in commit [6206111](https://github.com/yearn/stYFI/pull/3/changes/6206111584aeff5863d2f183598cee50e910dd37)."
+    },
+    {
+      "number": 6,
+      "title": "Registry migration can strand team funding state on the old distributor",
+      "severity": "Low",
+      "body": "#### Technical Details\nA Team contract resolves its funding distributor dynamically at call time by querying `self.registry.funding_distributor()`. When a registry is deprecated and a successor registry is configured, any user can permissionlessly call `TeamRegistry.migrate_team()` to update the team's registry pointer. The `Team.migrate()` function replaces `self.registry` with the successor registry address without preserving any reference to the original registry.\n\nAfter migration, the team's `claim_funding()` and `return_funding()` methods query the successor registry's distributor. However, funding approvals and cost accounting state remain stored in the original FundingDistributor. Each approval is indexed locally within its distributor (`approvals[_idx]`), and refund accounting depends on per-team, per-period cost records (`costs[team][period][token]`) that exist only in the original distributor.\n\nIf the successor registry points to a different FundingDistributor instance or reuses indices for unrelated approvals, the team loses its only callable path to interact with the old distributor. Direct calls to the old FundingDistributor are blocked because `FundingDistributor.claim()` and `FundingDistributor.refund()` require `msg.sender` to be the approval's team contract. The migration flow in `TeamRegistry.migrate_team()` verifies only that a successor exists and that `team_retirements[_team] > current_period + 1`; it performs no check for outstanding approvals or refundable balances on the old distributor.\n\nThe issue surfaces when management deprecates the old registry and configures the successor to use a different funding distributor while teams still have unclaimed approvals or refundable balances on the old distributor.\n\n#### Impact\nLow. Teams that are migrated with outstanding funding state on the old distributor lose access to unclaimed approved funding and the ability to refund previously claimed amounts. Because the Team contract's `claim_funding()` and `return_funding()` methods now resolve to the successor's distributor, any unclaimed approvals or refundable balances recorded in the original distributor become unreachable through the canonical team interface. This can result in lost funds for teams and stranded approval state in the original distributor.\n\n#### Recommendation\nDuring registry migration, management should keep the successor registry pointing to the same FundingDistributor until all teams have claimed or expired their old approvals and no longer need to refund balances. To enforce this operationally, consider adding a check in `migrate_team()` that blocks migration when the successor's `funding_distributor()` differs from the current registry's distributor:\n\n```vyper\n@external\ndef migrate_team(_team: address):\n    successor: address = self.successor\n    assert successor != empty(address)\n    assert self.team_retirements[_team] > self._period() + 1\n    \n    # Block migration if successor uses a different funding distributor\n    old_distributor: address = staticcall self.funding_distributor()\n    new_distributor: address = staticcall IRegistry(successor).funding_distributor()\n    assert old_distributor == new_distributor, \"Successor must use same distributor\"\n    \n    extcall ITeam(_team).migrate(successor)\n    log MigrateTeam(team=_team)\n```\n\nAlternatively, extend the Team contract to preserve a reference to the original distributor for legacy claims and refunds, allowing the team to resolve the correct distributor based on approval origin.\n\n#### Developer Response\n\nAckwnoledged. Management should only initiate migrating to a new registry if there is very good reason to do so, and in that case it should take into account any existing unused approvals. But we give as much flexibility to management as possible, therefore we do not want to encode a requirement like that on-chain. Note that the same issue would occur by simply setting a new funding distributor on the existing registry, it would block teams from getting approved funding on the old distributor."
+    }
+  ]
+}
