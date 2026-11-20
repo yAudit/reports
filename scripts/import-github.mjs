@@ -129,14 +129,15 @@ function commits(hashes, urls) {
 }
 
 // Configs have no required field for it: use nsloc when it is set, otherwise
-// the "N lines of code" (or "N nSLOC") figure in the audit scope.
+// the "N lines of code" (or "N nSLOC") figure in the audit scope, also when
+// it is marked as approximate: "665~ lines of code".
 function nsloc(value, scope) {
   const parse = (raw) => {
     const count = parseInt(String(raw).replace(/,/g, ""), 10);
     return Number.isFinite(count) ? count : null;
   };
   if (value !== undefined && value !== null && value !== "") return parse(value);
-  const match = (scope || "").match(/(\d[\d,]*)\s+(?:n?SLOC|lines of code)/i);
+  const match = (scope || "").match(/(\d[\d,]*)\s*~?\s+(?:n?SLOC|lines of code)/i);
   return match ? parse(match[1]) : null;
 }
 

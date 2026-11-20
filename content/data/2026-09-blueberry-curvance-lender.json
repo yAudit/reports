@@ -28,7 +28,7 @@
   ],
   "treeOfAuditedFiles": "src\n├── BlueberryProtocolAddressProvider.sol\n├── CurvanceOptimizer.sol\n├── CurvanceOptimizerFactory.sol\n├── Strategy.sol\n└── StrategyFactory.sol",
   "finalRemarks": null,
-  "nsloc": null,
+  "nsloc": 665,
   "evaluations": [
     {
       "category": "access_control",

@@ -174,8 +174,9 @@ function ReportContent({ report }: ReportPageProps) {
 
       <section id="scope" className={sectionClass}>
         <div className="flex flex-col gap-3 border-b border-zinc-200 px-5 py-4 min-[640px]:flex-row min-[640px]:items-center min-[640px]:justify-between min-[640px]:px-7">
-          <h2 className={sectionTitleClass}>Scope</h2>
-          <div className="flex flex-wrap gap-2 text-sm">
+          {/* Many chips must not squeeze the title onto two lines ("SCOP / E"). */}
+          <h2 className={`${sectionTitleClass} shrink-0 whitespace-nowrap`}>Scope</h2>
+          <div className="flex min-w-0 flex-wrap gap-2 text-sm">
             {report.repositories.map((repository) => (
               <a key={repository.url} href={repository.url} className={`${chipLinkClass} max-w-full`}>
                 <HeroIcon name="code-bracket-square" className="size-4 shrink-0" />
