@@ -1,6 +1,7 @@
 ---
 tags: ["vyper", "yearn"]
 title: 2026-05-Yearn-stYFI-Teams
+repo: yAudit/yearn-stYFI-Teams
 description: Yearn stYFI teams
 ---
 

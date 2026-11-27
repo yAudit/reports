@@ -1,4 +1,3 @@
-import matter from "gray-matter";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
@@ -9,97 +8,6 @@ import remarkParse from "remark-parse";
 import rehypeStringify from "rehype-stringify";
 import remarkRehype from "remark-rehype";
 
-function generateTableOfContents(content: string) {
-  const headings: {
-    depth: number;
-    text: string;
-    id: string;
-    section: string;
-  }[] = [];
-  let startCounting = false;
-
-  const ast = unified().use(remarkParse).parse(content);
-
-  let currentSection = "";
-  visit(ast, "heading", (node: any) => {
-    // Generate text and HTML separately
-    const plainText = node.children
-      .map((child: any) => {
-        if (child.type === "text") return child.value;
-        if (child.type === "inlineCode") return child.value;
-        return "";
-      })
-      .join("");
-
-    // Generate HTML with styled code blocks
-    const htmlText = node.children
-      .map((child: any) => {
-        if (child.type === "text") return child.value;
-        if (child.type === "inlineCode") {
-          return `<code class="inline-code-block">${child.value}</code>`;
-        }
-        return "";
-      })
-      .join("");
-
-    // Skip "Table of Contents" heading
-    if (plainText.toLowerCase().includes("table of contents")) {
-      return;
-    }
-
-    const id = plainText
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, "")
-      .replace(/\s+/g, "-");
-
-    if (node.depth === 2) {
-      currentSection = plainText;
-    }
-
-    headings.push({
-      depth: node.depth,
-      text: htmlText, // Store the HTML version with styling
-      id,
-      section: currentSection,
-    });
-  });
-
-  // Generate TOC markdown
-  const tocLines: string[] = [];
-  let sectionCount = 0;
-
-  headings
-    .filter((h) => {
-      return h.depth > 1 && !h.text.toLowerCase().includes("table of contents");
-    })
-    .forEach((h) => {
-      let currentLetterIndex = 0;
-      if (h.depth === 2) {
-        if (h.text.toLowerCase().includes("review summary")) {
-          startCounting = true;
-        }
-        if (startCounting) {
-          sectionCount++;
-          currentLetterIndex = 0;
-          tocLines.push(
-            `${sectionCount}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#${h.id}">${h.text}</a>`
-          );
-        }
-      } else if (h.depth === 3 && startCounting) {
-        tocLines.push(
-          `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#${h.id}">${h.text}</a>`
-        );
-        currentLetterIndex++;
-      }
-    });
-
-  const tocHtml = tocLines
-    .map((line) => `<div style="margin-bottom: 0.5rem;">${line}</div>`)
-    .join("");
-  return tocHtml;
-}
-
-// Don't forget to also update the heading IDs plugin to handle code blocks
 function remarkHeadingIds() {
   return (tree: any) => {
     visit(tree, "heading", (node) => {
@@ -146,20 +54,40 @@ function remarkTrimBackticks() {
   };
 }
 
-export async function processMarkdown(content: string) {
-  // Parse frontmatter
-  const { data, content: markdownContent } = matter(content);
+// A line break inside a paragraph is kept, as on GitHub (hardbreaks).
+function remarkHardBreaks() {
+  return (tree: any) => {
+    visit(tree, "text", (node: any, index: number | undefined, parent: any) => {
+      if (!parent || index === undefined || !node.value.includes("\n")) return;
+      const nodes = node.value
+        .split(/\r?\n/)
+        .flatMap((value: string, line: number) =>
+          line === 0 ? [{ type: "text", value }] : [{ type: "break" }, { type: "text", value }]
+        );
+      parent.children.splice(index, 1, ...nodes);
+      return index + nodes.length;
+    });
+  };
+}
 
-  // Replace TOC placeholder with generated TOC
-  const contentWithToc = markdownContent.replace(/1\.\s*TOC\s*{:toc}/g, () =>
-    generateTableOfContents(markdownContent)
-  );
+// Leaves the tree as it is: stands in for remark-math when math is off.
+function remarkNothing() {}
 
+/**
+ * Renders a markdown fragment (no frontmatter) to HTML. The findings imported
+ * from GitHub issues are rendered without math, as on GitHub, where "$" is
+ * mostly an amount.
+ */
+export async function renderMarkdown(
+  markdown: string,
+  { math = true }: { math?: boolean } = {}
+): Promise<string> {
   // Process markdown with all plugins including image URL replacement and KaTeX
   const processedContent = await unified()
     .use(remarkParse)
-    .use(remarkMath) // Parse math syntax
+    .use(math ? remarkMath : remarkNothing) // Parse math syntax
     .use(remarkGfm)
+    .use(remarkHardBreaks)
     .use(remarkReplaceImageUrls) // Add the image URL replacement plugin
     .use(remarkHeadingIds)
     .use(remarkTrimBackticks)
@@ -175,12 +103,9 @@ export async function processMarkdown(content: string) {
       displayMode: false,
     })
     .use(rehypeStringify, { allowDangerousHtml: true }) // Convert to HTML string
-    .process(contentWithToc);
+    .process(markdown);
 
-  return {
-    frontMatter: data,
-    content: processedContent.toString(),
-  };
+  return processedContent.toString();
 }
 
 export function extractDate(filename: string): string | null {

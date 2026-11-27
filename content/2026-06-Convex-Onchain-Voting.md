@@ -1,6 +1,7 @@
 ---
 tags: ["solidity", "curve", "resupply"]
 title: 2026-06-Convex-Onchain-Voting
+repo: yAudit/convex-onchain-voting
 description: Convex Onchain voting
 ---
 

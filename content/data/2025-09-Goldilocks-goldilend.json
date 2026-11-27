@@ -1,0 +1,232 @@
+{
+  "repo": "yAudit/goldilocks-goldilend-report",
+  "githubUrl": "https://github.com/yAudit/goldilocks-goldilend-report",
+  "title": "Goldilocks Goldilend",
+  "protocolName": "Goldilocks",
+  "protocolOverview": "Goldilocks Goldilend is a fixed-term NFT lending protocol that enables users to borrow assets using NFTs as collateral. The protocol features two main lending contracts: RebaseGoldilend (supporting Rebase Bera NFTs with HONEY tokens) and BeraBondGoldilend (supporting BeraBond NFTs with native BERA tokens). The system implements dynamic interest rates based on utilization ratios and loan duration, with upfront interest payment and comprehensive liquidation mechanisms.",
+  "auditScope": "This audit covers three smart contracts totaling approximately 622 lines of code across 3 days of review.",
+  "overallAssessment": "The protocol demonstrates a sophisticated design for NFT-backed lending with innovative features like Token Bound Account integration. However, the audit revealed several critical vulnerabilities.",
+  "startDate": "2025-09-02",
+  "finishDate": "2025-09-04",
+  "auditors": [
+    "fedebianu",
+    "HHK"
+  ],
+  "commits": [
+    {
+      "label": null,
+      "hash": "5875627dd0ad99d6a9bc620b474d33b7b5f61ff6",
+      "url": "https://github.com/0xgeeb/goldilocks-core/commit/5875627dd0ad99d6a9bc620b474d33b7b5f61ff6"
+    }
+  ],
+  "finalCommits": [],
+  "repositories": [
+    "https://github.com/0xgeeb/goldilocks-core"
+  ],
+  "auditResources": [
+    "Code repositories",
+    "Previous audit"
+  ],
+  "treeOfAuditedFiles": "src/core/goldilend/\n├── BeraBondGoldilend.sol\n├── GoldilendDebtAsset.sol\n└── RebaseGoldilend.sol",
+  "finalRemarks": "Major issues were identified during the audit and subsequently addressed. However, we suggest another audit to ensure production readiness. The test suite, while comprehensive, needs enhancement to catch edge cases and complex interaction scenarios that were missed in the initial testing. Additionally, the documentation requires significant expansion to provide clear explanations of the lending mechanics, interest rate formulas, risk parameters, and protocol governance structure.",
+  "nsloc": 622,
+  "evaluations": [
+    {
+      "category": "access_control",
+      "score": "Good",
+      "description": "Access control is well implemented."
+    },
+    {
+      "category": "mathematics",
+      "score": "Average",
+      "description": "Some inconsistency in how interests are calculated upwards has been found."
+    },
+    {
+      "category": "complexity",
+      "score": "Average",
+      "description": "The codebase has moderate complexity with clear separation between different lending contracts. However, significant code duplication between BeraBondGoldilend and RebaseGoldilend contracts increases maintenance burden and security risks."
+    },
+    {
+      "category": "libraries",
+      "score": "Good",
+      "description": "Good use of established libraries like FixedPointMathLib for mathematical operations and OpenZeppelin contracts for standard functionality."
+    },
+    {
+      "category": "decentralization",
+      "score": "Low",
+      "description": "The protocol relies entirely on a single multisig for protocol management, creating significant trust assumptions."
+    },
+    {
+      "category": "code_stability",
+      "score": "Good",
+      "description": "Code wasn't updated during the audit."
+    },
+    {
+      "category": "documentation",
+      "score": "Average",
+      "description": "Basic documentation exists with clear function names and comments, but lacks comprehensive documentation of the lending mechanics, interest calculation formulas, and risk parameters."
+    },
+    {
+      "category": "monitoring",
+      "score": "Good",
+      "description": "Event emissions for key operations are in place."
+    },
+    {
+      "category": "testing",
+      "score": "Average",
+      "description": "Good test coverage with comprehensive unit tests, fuzz tests, and invariant tests. However, some critical bugs were not caught by existing tests, suggesting gaps in test scenarios."
+    }
+  ],
+  "issues": [
+    {
+      "number": 1,
+      "title": "Interest calculation on gross amount creates higher rates than expected",
+      "severity": "Medium",
+      "body": "When a user borrows assets, the contract calculates and charges interest upfront, but it is incorrectly deducted upfront and sent to multisig. This results in higher borrow rates than expected.\n\n#### Technical Details\n\nUsers can borrow assets with `borrow()` in both [`BeraBondGoldilend`](https://github.com/0xgeeb/goldilocks-core/blob/5875627dd0ad99d6a9bc620b474d33b7b5f61ff6/src/core/goldilend/BeraBondGoldilend.sol#L170) and [`RebaseGoldilend`](https://github.com/0xgeeb/goldilocks-core/blob/5875627dd0ad99d6a9bc620b474d33b7b5f61ff6/src/core/goldilend/RebaseGoldilend.sol#L157) contracts.\n\nThe issue occurs because:\n\n1. Interest is calculated on the full `borrowAmount` requested\n2. Interest is deducted upfront and sent to multisig\n3. User receives only `borrowAmount - interest`\n\nThis creates a discrepancy where the effective interest rate paid by users is higher than the nominal rate, as shown in the following example:\n\n- User requests: 1000 BERA\n- Interest calculated: 100 BERA (10% of 1000)\n- User receives: 900 BERA (1000 - 100)\n- Effective rate: 100/900 = 11.11% instead of 10%\n\n#### Impact\n\nMedium. Users pay higher effective interest rates than expected, especially problematic for high rates or long durations. The contract also incorrectly tracks pool utilization including interests.\n\n#### Recommendation\n\nTransfer all the `borrowAmount` to the user and add the interest to it in storage. Check that `borrowAmount + interest` is not above the NFT fair value is already in place.\n\nLogic and checks involving `borrowAmount` should also be changed accordingly if needed.\n\n#### Developer Response\n\nAcknowledged."
+    },
+    {
+      "number": 2,
+      "title": "Protocol can be drained by renewing already repaid or liquidated loans",
+      "severity": "Critical",
+      "body": "When a user repays a loan completely, the collateral NFT is returned and the loan is marked as repaid. However, `renew()` does not check if the loan has been repaid, allowing users to receive new funds without providing any collateral.\n\n#### Technical Details\n\nA user can repay a loan completely with `repay()` in both `BeraBondGoldilend` and `RebaseGoldilend` contracts. When the loan is fully repaid, the collateral NFT is transferred back to the user and `repaid` is set to `true`.\n\nHowever, `renew()` does not verify if the loan has been repaid or if the collateral still exists, allowing users to exploit this vulnerability.\n\nThe exploit works as follows:\n\n1. User borrows funds with NFT collateral\n2. User repays the loan completely receiving back the NFT\n3. User calls `renew()` on the same `loanId`\n4. User receives new funds without providing any collateral\n5. Repeat\n\nThis also apply for liquidation flow.\n\n#### Impact\n\nCritical. Attacker can steal all funds by renewing already repaid or liquidated loans without providing any collateral.\n\n#### Recommendation\n\nVerify in `renew()` that `userLoan.repaid == false` and `userLoan.liquidated == false`.\n\n#### Developer Response\n\nFixed in commit [32980ec965b9a3e23d3631adf34c227f1e766066](https://github.com/0xgeeb/goldilocks-core/commit/32980ec965b9a3e23d3631adf34c227f1e766066)."
+    },
+    {
+      "number": 3,
+      "title": "Avoid mismatch between loan ID and NFT ID position in `userTokenIds`",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nWhen a user borrows assets, the contract creates a loan with ID `userLoansLength + 1` but stores the NFT ID in `userTokenIds[msg.sender].push(collateralNFTId)`. This creates a mismatch between loan IDs and their corresponding NFT positions in the array.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nFix the mismatch by either using the same ID for both the loan and the NFT position.\n\n#### Developer Response\n\nAcknowledged."
+    },
+    {
+      "number": 4,
+      "title": "Avoid code duplication between `BeraBondGoldilend` and `RebaseGoldilend` contracts",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nBoth `BeraBondGoldilend` and `RebaseGoldilend` contracts contain identical implementations for internal functions, variables and some checks, leading to code duplication. While the main functions (borrow, repay, renew, liquidate) have similar logic but handle different collateral types, the internal mathematical and utility functions are completely duplicated.\n\nThis duplication means:\n- Security fixes for internal functions must be applied to both contracts\n- Bug fixes risk being missed in one of the contracts\n- Future development should be done twice with error risk\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nRefactor the common code into a base contract that both `BeraBondGoldilend` and `RebaseGoldilend` can inherit from.\n\n#### Developer Response\n\nAcknowledged, thank you for this issue. These contracts previously did inherit from the same base contract but I thought due to the native token debt asset and collateral specific functions in BeraBondGoldilend that it made separate contracts necessary."
+    },
+    {
+      "number": 5,
+      "title": "Remove or use unused state variables",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\n- Both `BeraBondGoldilend` and `RebaseGoldilend` contracts declare a `multisigClaims` state variable that is never used.\n- In `RebaseGoldilend` the state variable `timelock` is never used.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nRemove the variable from both contracts or use them.\n\n#### Developer Response\n\nFixed in commit [63a94a3c4d05115ba52978c5f3a950cdcee4e7fc](https://github.com/0xgeeb/goldilocks-core/commit/63a94a3c4d05115ba52978c5f3a950cdcee4e7fc)."
+    },
+    {
+      "number": 6,
+      "title": "Inefficient use of `safeTransferFrom()`",
+      "severity": "Gas",
+      "body": "#### Technical Details\n\nThe contract uses `safeTransferFrom()` to transfer NFTs during liquidation, but since the contract is already the owner of the NFT, received as collateral, using `transfer()` would be more gas efficient. `safeTransfer()` performs additional checks, verifying if the recipient is a contract by calling `onERC721Received()`, which are unnecessary as the multisig is a protocol known contract.\n\n#### Impact\n\nGas savings.\n\n#### Recommendation\n\nReplace `safeTransferFrom()` with `transfer()` in the liquidation function since the contract is already the owner of the NFT.\n\n#### Developer Response\n\nFixed in commit [b32554a839dee30012476659371288fd58159b3b](https://github.com/0xgeeb/goldilocks-core/commit/b32554a839dee30012476659371288fd58159b3b)."
+    },
+    {
+      "number": 7,
+      "title": "Remove unnecessary `unchecked` blocks",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nThe contract uses `unchecked` blocks in loops which are no longer necessary from Solidity version `0.8.22` as the compiler automatically handles loop variable increments optimization.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nRemove `unchecked` blocks in loops. This will improve code readability.\n\n#### Developer Response\n\nFixed in commit [981ca4f4ac519b9c789063f7dc463f2ed12e4904](https://github.com/0xgeeb/goldilocks-core/commit/981ca4f4ac519b9c789063f7dc463f2ed12e4904)."
+    },
+    {
+      "number": 8,
+      "title": "Remove unnecessary `onERC721Received()`",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nBoth `BeraBondGoldilend` and `RebaseGoldilend` contracts implement `onERC721Received()` which is unnecessary as the contracts only needs to receive NFTs as collateral during `borrow()`. This theoretically allows users to accidentally send NFTs to the contract even though the use of `safeTranferFrom()`, potentially resulting in locked assets.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nRemove the `onERC721Received()` function entirely.\n\n#### Developer Response\n\nFixed in commit [5efe6fe80f72f7edfe36f7ad460cec076980454f](https://github.com/0xgeeb/goldilocks-core/commit/5efe6fe80f72f7edfe36f7ad460cec076980454f)."
+    },
+    {
+      "number": 9,
+      "title": "Refactor `initializeBeras()` and `initializeParameters()`",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\n`initializeBeras()` and `initializeParameters()` contains duplicated code as the same logic already exists in `changeValue()` and `changeLendingParams()`.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nRefactor `initializeBeras()` and `initializeParameters()`, eliminating the duplicated logic:\n\n```solidity\nfunction initializeParameters(\n    uint256 _protocolInterestRate,\n    uint256 _minDuration,\n    uint256 _maxDuration,\n    uint256 _slope,\n    uint256 _maxUtilization\n) external {\n    if (msg.sender != multisig) revert NotMultisig();\n    if (parametersInitialized) revert AlreadyInitialized();\n\n    setParameters(_protocolInterestRate, _minDuration, _maxDuration, _slope, _maxUtilization);\n\n    parametersInitialized = true;\n}\n\nfunction initializeBeras(address[] calldata _nfts, uint256[] calldata _nftFairValues) external {\n    if (msg.sender != multisig) revert NotMultisig();\n    if (berasInitialized) revert AlreadyInitialized();\n\n    changeValue(_nfts, _nftFairValues);\n\n    berasInitialized = true;\n    borrowingActive = true;\n}\n```\n\n`setParameters()` and `changeValue()` must be made `public`.\n\n#### Developer Response\n\nFixed in commit [6e764b7ae95d33a55956c2f2dcc73db6e3e4e2f0](https://github.com/0xgeeb/goldilocks-core/commit/6e764b7ae95d33a55956c2f2dcc73db6e3e4e2f0)."
+    },
+    {
+      "number": 10,
+      "title": "Users can bypass maximum loan duration through repeated `renew()` calls",
+      "severity": "Medium",
+      "body": "The `renew()` function allows users to extend loans beyond the intended `maxDuration` limit by calling the function multiple times consecutively.\n\n#### Technical Details\n\nIn both [BeraBondGoldilend](https://github.com/0xgeeb/goldilocks-core/blob/5875627dd0ad99d6a9bc620b474d33b7b5f61ff6/src/core/goldilend/BeraBondGoldilend.sol#L211-L211) and [RebaseGoldilend](https://github.com/0xgeeb/goldilocks-core/blob/5875627dd0ad99d6a9bc620b474d33b7b5f61ff6/src/core/goldilend/RebaseGoldilend.sol#L195-L195), the `renew()` function validates that `newDuration` falls within the `minDuration` and `maxDuration` bounds. However, it then adds this duration to the existing loan:\n\n```solidity\nnewUserLoan.endDate += newDuration\n```\n\nThis allows users to batch multiple `renew()` calls, each adding up to `maxDuration` to their loan, effectively creating loans that last much longer than intended. A user could potentially extend their loan indefinitely by repeatedly calling `renew()` with valid duration parameters.\n\n#### Impact\n\nMedium. Users can bypass the maximum duration restriction, creating liquidity issues for depositors and circumventing protocol-intended loan limits.\n\n#### Recommendation\n\nModify the `renew()` function to set the loan duration from the current timestamp rather than extending it:\n\n```solidity\nnewUserLoan.endDate = block.timestamp + newDuration\n```\n\nThis ensures loans never exceed the maximum allowed duration.\n\n#### Developer Response\n\nFixed in commit [b74bb183a2eb902d9ce9a3e8adc77d7015752b98](https://github.com/0xgeeb/goldilocks-core/commit/b74bb183a2eb902d9ce9a3e8adc77d7015752b98) and [a2705e9e4e0df7944abbe8107854470a84f799e5](https://github.com/0xgeeb/goldilocks-core/commit/a2705e9e4e0df7944abbe8107854470a84f799e5)."
+    },
+    {
+      "number": 11,
+      "title": "Attacker can steal all funds by repaying already repaid loans",
+      "severity": "Critical",
+      "body": "The `repay()` function allows repayment of loans that have already been repaid, enabling attackers to repeatedly withdraw their NFT collateral and drain protocol funds.\n\n#### Technical Details\n\nThe `repay()` function in both [RebaseGoldilend](https://github.com/0xgeeb/goldilocks-core/blob/5875627dd0ad99d6a9bc620b474d33b7b5f61ff6/src/core/goldilend/RebaseGoldilend.sol#L221-L221) and [BeraBondGoldilend](https://github.com/0xgeeb/goldilocks-core/blob/5875627dd0ad99d6a9bc620b474d33b7b5f61ff6/src/core/goldilend/BeraBondGoldilend.sol#L242-L242) lacks validation to prevent repayment of already repaid loans.\n\nThe function caps the repayment amount to the borrowed amount:\n```solidity\nif(repayAmount > userLoan.borrowedAmount) repayAmount = userLoan.borrowedAmount;\n```\n\nFor already repaid loans where `borrowedAmount` is 0, this sets `repayAmount` to 0. The function then marks the loan as repaid and returns the NFT collateral, regardless of whether the loan was previously repaid.\n\nAn attacker can exploit this by:\n1. Taking a loan and repaying it normally\n2. Taking a new loan \n3. Calling `repay()` with the old loan ID (and 1 wei payment to bypass the `if(msg.value == 0) revert InvalidAmount()` check in BeraBondGoldilend version)\n4. Receiving the NFT collateral back for essentially free\n5. Repeating steps 2-4 until all protocol funds are drained\n\n#### Impact\n\nCritical. Attackers can steal all protocol funds by repeatedly exploiting already repaid loans.\n\n#### Recommendation\n\nAdd a check to prevent repayment of already repaid and liquidated loans.\n\n#### Developer Response\n\nFixed in commit [ceac8609a462989fee645eb030f542fc1b01ea90](https://github.com/0xgeeb/goldilocks-core/commit/ceac8609a462989fee645eb030f542fc1b01ea90)."
+    },
+    {
+      "number": 12,
+      "title": "Users can claim yield from NFTs they no longer own",
+      "severity": "Medium",
+      "body": "The [`claimYield()`](https://github.com/0xgeeb/goldilocks-core/blob/5875627dd0ad99d6a9bc620b474d33b7b5f61ff6/src/core/goldilend/BeraBondGoldilend.sol#L273-L273) function allows users to claim rewards from NFTs they previously used as collateral but no longer own, as it fails to verify the loan status.\n\n#### Technical Details\n\nWhen borrowing in in the [BeraBondGoldilend](https://github.com/0xgeeb/goldilocks-core/blob/5875627dd0ad99d6a9bc620b474d33b7b5f61ff6/src/core/goldilend/BeraBondGoldilend.sol#L170-L170) and contract, the NFT ID used is added to `userTokenIds`.\n\nWhen loans are repaid or liquidated in the [BeraBondGoldilend](https://github.com/0xgeeb/goldilocks-core/blob/5875627dd0ad99d6a9bc620b474d33b7b5f61ff6/src/core/goldilend/BeraBondGoldilend.sol#L242-L242) contract, the NFT ID is not deleted from the `userTokenIds`is not deleted. Instead, it remains in storage and the loan struct is updated with `liquidated` or `repaid` set to `true` and `borrowedAmount` set to 0.\n\nThe [`claimYield()`](https://github.com/0xgeeb/goldilocks-core/blob/5875627dd0ad99d6a9bc620b474d33b7b5f61ff6/src/core/goldilend/BeraBondGoldilend.sol#L273-L273) function allows users to claim rewards on Token Bound Accounts (TBAs) linked to BeraBonds used as collateral. However, it does not verify whether the associated loans are still active:\n\nThis creates a scenario where:\n1. User A borrows against a BeraBond NFT\n2. User A repays the loan and retrieves the NFT\n3. User A transfers the NFT to User B\n4. User B uses the same NFT as collateral for a new loan\n5. User A can still call `claimYield()` to claim rewards from the NFT now owned by User B\n\nAdditionally `borrow()` will always push the NFT ID to the `userTokenIds` no matter if it as already been added in the past, leading to potential duplicated of IDs inside the array.\n\n#### Impact\n\nMedium. Previous NFT holders can steal yield from current NFT owners who use the same ID.\n\n#### Recommendation\n\nDelete the NFT ID from the `userTokenIds` array when repaying or liquidating a loan.\n\n#### Developer Response\n\nFixed in commit [00b5051aa34a8e82e9136af1a990d2423b6e3747](https://github.com/0xgeeb/goldilocks-core/commit/00b5051aa34a8e82e9136af1a990d2423b6e3747) and [3a0e566db27f6ef69fe3b48f54473772e5f36a92](https://github.com/0xgeeb/goldilocks-core/commit/3a0e566db27f6ef69fe3b48f54473772e5f36a92)."
+    },
+    {
+      "number": 13,
+      "title": "Share value increase can be sandwiched, diluting historical lenders",
+      "severity": "Medium",
+      "body": "The [`increaseglDebtAssetBacking()`](https://github.com/0xgeeb/goldilocks-core/blob/5875627dd0ad99d6a9bc620b474d33b7b5f61ff6/src/core/goldilend/RebaseGoldilend.sol#L386-L386) function instantly increases share value, allowing attackers to sandwich the transaction and extract value intended for historical lenders.\n\n#### Technical Details\n\nThe function [`increaseglDebtAssetBacking()`](https://github.com/0xgeeb/goldilocks-core/blob/5875627dd0ad99d6a9bc620b474d33b7b5f61ff6/src/core/goldilend/RebaseGoldilend.sol#L386-L386) can be called by the multisig to increase the share value of the debtAsset token. This function is typically called after liquidations when NFT collateral is sent to the multisig during `liquidate()` calls, and the team recovers proceeds from liquidating the collateral or using insurance funds.\n\nThe share value increase is applied instantly but at a later time than the liquidation, creating two issues:\n\n1. **Sandwich attacks**: An attacker can deposit large amounts just before the multisig calls [`increaseglDebtAssetBacking()`](https://github.com/0xgeeb/goldilocks-core/blob/5875627dd0ad99d6a9bc620b474d33b7b5f61ff6/src/core/goldilend/RebaseGoldilend.sol#L386-L386), then immediately withdraw after the transaction to capture most of the value increase at the expense of historical lenders.\n\n2. **Historical lender dilution**: Even without sandwich attacks, new depositors that deposited just after the liquidation but before the call to [`increaseglDebtAssetBacking()`](https://github.com/0xgeeb/goldilocks-core/blob/5875627dd0ad99d6a9bc620b474d33b7b5f61ff6/src/core/goldilend/RebaseGoldilend.sol#L386-L386) benefit from the share increase intended to reimburse historical lenders for liquidation losses, diluting the compensation meant for those who suffered the original losses.\n\n#### Impact\n\nMedium. The share value increase mechanism can be exploited through sandwich attacks and inherently dilutes compensation for historical lenders who suffered liquidation losses.\n\n#### Recommendation\n\nConsider implementing a streaming mechanism to distribute the backing increase over time, or restrict deposits/withdrawals during the backing increase process. Alternatively, implement a separate compensation mechanism that directly benefits affected lenders without diluting their recovery through new deposits.\n\n#### Developer Response\n\nFixed in commits [fa8dbaf5e95732b62fde5cc23f83ce644198c381](https://github.com/0xgeeb/goldilocks-core/commit/fa8dbaf5e95732b62fde5cc23f83ce644198c381), [1c3480ea42f6f47987310b48d51977a570e28ba0](https://github.com/0xgeeb/goldilocks-core/commit/1c3480ea42f6f47987310b48d51977a570e28ba0), [5fa6ec612908c143c628212c2a65547bc7c7c092](https://github.com/0xgeeb/goldilocks-core/commit/5fa6ec612908c143c628212c2a65547bc7c7c092), [a73a57400c63248cbac6684c9f7eb45ed1d739cb](https://github.com/0xgeeb/goldilocks-core/commit/a73a57400c63248cbac6684c9f7eb45ed1d739cb) and [bdfaba489b74cb0fda9b0344beeea45b4a27c20a](https://github.com/0xgeeb/goldilocks-core/commit/bdfaba489b74cb0fda9b0344beeea45b4a27c20a)."
+    },
+    {
+      "number": 14,
+      "title": "Users can exploit loan renewal to pay lower interest rates",
+      "severity": "Medium",
+      "body": "Users can repeatedly renew loans with short durations to pay significantly less interest than borrowing for the full intended duration upfront.\n\n#### Technical Details\n\nThe function [`_calculateInterest()`](https://github.com/0xgeeb/goldilocks-core/blob/5875627dd0ad99d6a9bc620b474d33b7b5f61ff6/src/core/goldilend/RebaseGoldilend.sol#L287-L287) calculates interest with an exponential duration and amount weight - longer duration especially, result in higher interest rates. \n\nUsers can exploit this by taking short-term loans and repeatedly calling [`renew()`](https://github.com/0xgeeb/goldilocks-core/blob/5875627dd0ad99d6a9bc620b474d33b7b5f61ff6/src/core/goldilend/RebaseGoldilend.sol#L195-L195) with short durations instead of borrowing for the full intended period.\n\nExample calculation:\n```solidity\nParameters: rate = 20e18, debt = 100e18, borrowAmount = 50e18, poolSize = 200e18, slope = 2e18\n\n//Single 100-day loan:\n_calculateInterest(borrowAmount, debt, 100 days) //→ 4.6e18 interest\n\n//Ten 10-day renewals:\n_calculateInterest(borrowAmount, debt, 10 days) //→ 0.29e18 per renewal\n//Total for 100 days: 0.29e18 × 10 = 2.9e18 interest\n\n//Savings: 4.6e18 - 2.9e18 = 1.7e18 (37% reduction)\n```\n\nUsers can automate this process with bots to continuously renew loans and minimize interest payments.\n\n#### Impact\n\nMedium. Users can exploit the interest calculation mechanism to pay significantly lower rates than intended, reducing protocol revenue and creating unfair advantages for sophisticated users.\n\n#### Recommendation\n\nImplement a fixed renewal fee or modify the interest calculation to account for cumulative loan duration, preventing users from gaming the system through frequent renewals.\n\n#### Developer Response\n\nAcknowledged, we believe this is not an issue. First, we have a minimum duration check so there is a minimum length that the loan will always be on renewals, and users will always have to pay the interest on that duration up front. And it’s okay if a user gets a lower rate by repeatedly renewing compared to doing one large loan, because the protocol is then taking on less risk because it is able to update the valuations of the collateral in between renewals."
+    },
+    {
+      "number": 15,
+      "title": "Missing slippage protection in borrowing functions",
+      "severity": "Medium",
+      "body": "The `borrow()` and `renew()` functions lack slippage protection, potentially causing users to receive less funds than expected due to changing interest rates.\n\n#### Technical Details\n\nThe functions `borrow()` and `renew()` in both [RebaseGoldilend](https://github.com/0xgeeb/goldilocks-core/blob/5875627dd0ad99d6a9bc620b474d33b7b5f61ff6/src/core/goldilend/RebaseGoldilend.sol#L157-L157) and [BeraBondGoldilend](https://github.com/0xgeeb/goldilocks-core/blob/5875627dd0ad99d6a9bc620b474d33b7b5f61ff6/src/core/goldilend/BeraBondGoldilend.sol#L170-L170) do not include slippage parameters.\n\nInterest is paid upfront and can fluctuate based on:\n- Current utilization percentage\n- Protocol parameters that can be updated by the team\n\nBetween transaction submission and execution, interest calculations may change significantly, causing users to receive less borrowed funds than anticipated. Users may only want to proceed if their net borrowing amount meets a minimum threshold.\n\n#### Impact\n\nMedium. Users may receive less borrowed funds than expected due to interest rate changes between transaction preparation, submission and execution.\n\n#### Recommendation\n\nAdd a `minOut` parameter to both functions and validate that the amount sent to users meets their minimum requirements.\n\n#### Developer Response\n\nFixed in commit [ad3b6f15f8dc9a64e60c8c99c4e10d7ebd1771f5](https://github.com/0xgeeb/goldilocks-core/commit/ad3b6f15f8dc9a64e60c8c99c4e10d7ebd1771f5)."
+    },
+    {
+      "number": 16,
+      "title": "`calculateInterest()` doesn't doesn't enforce the same checks as `borrow()`",
+      "severity": "Low",
+      "body": "#### Technical Details\n\n- [`_calculateInterest()`](https://github.com/0xgeeb/goldilocks-core/blob/5875627dd0ad99d6a9bc620b474d33b7b5f61ff6/src/core/goldilend/RebaseGoldilend.sol#L263) calculates interest based on the total `borrowedAmount` but the last check against `fairValue` doesn't account for existing interest that has already been paid upfront as it does in [`borrow()`](https://github.com/0xgeeb/goldilocks-core/blob/5875627dd0ad99d6a9bc620b474d33b7b5f61ff6/src/core/goldilend/RebaseGoldilend.sol#L173).\n- [`_calculateInterest()`](https://github.com/0xgeeb/goldilocks-core/blob/5875627dd0ad99d6a9bc620b474d33b7b5f61ff6/src/core/goldilend/RebaseGoldilend.sol#L263) doesn't check for `maxUtilization` as it does in [`borrow()`](https://github.com/0xgeeb/goldilocks-core/blob/5875627dd0ad99d6a9bc620b474d33b7b5f61ff6/src/core/goldilend/RebaseGoldilend.sol#L172-L172).\n\n#### Impact\n\nLow. This can lead to incorrect information passed to function caller.\n\n#### Recommendation\n\nModify `_calculateInterest()` in `RebaseGoldilend` as follow:\n\n```diff\n-       if(borrowAmount > fairValue || borrowAmount > poolSize - debt) revert BorrowLimitExceeded();\n-       return _calculateInterest(borrowAmount, debt, duration);\n+       uint256 _interest = _calculateInterest(borrowAmount, debt, duration);\n+       if(borrowAmount + interest > fairValue || borrowAmount > poolSize - debt) revert BorrowLimitExceeded();\n+       if(debt + borrowAmount > poolSize * maxUtilization / 100) revert MaxUtilizationExceeded();\n+       return _interest;\n```\n\n#### Developer Response\n\nFixed in commit [f1b650fe146b22e53740f7d105298ae74eacbd59](https://github.com/0xgeeb/goldilocks-core/commit/f1b650fe146b22e53740f7d105298ae74eacbd59)."
+    },
+    {
+      "number": 17,
+      "title": "`glDebtAsset` tokens do not accumulate yields in the contracts",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nThe `glDebtAsset` tokens are minted when users deposit assets. However, when interests are accrued, these funds are sent directly to the multisig instead of being added to the pool. This means that while `glDebtAsset` tokens represent pool shares, they do not accumulate value over time as users would expect from a vault-like system.\n\n#### Impact\n\nInformational. Devs state that all revenue/interest goes to a multisig that then bribes a Berachain reward vault for the lending receipt token.\n\n#### Recommendation\n\nClearly document the whole process.\n\n#### Developer Response\n\nAcknowledged, this process will be outlined in the documentation, UI, and marketing materials."
+    },
+    {
+      "number": 18,
+      "title": "Remove division by `100` in `_calculateInterest()`",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\n`_calculateInterest()` uses an unnecessary division by `100` at the end, which can be eliminated by properly setting the `protocolInterestRate` in 1e18 precision format instead of the current 1e20 format.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nChange the initialization of `protocolInterestRate` with a 1e18 precision format value, remove the `/100` division at the end of `_calculateInterest`. This will make the interest calculation more transparent.\n\n#### Developer Response\n\nFixed in commit [a976a5f3c7515762ea14dc73a9689043b39d77ad](https://github.com/0xgeeb/goldilocks-core/commit/a976a5f3c7515762ea14dc73a9689043b39d77ad)."
+    },
+    {
+      "number": 19,
+      "title": "Inconsistent deadline enforcement between `repay()` and `renew()` functions",
+      "severity": "Low",
+      "body": "The `repay()` function blocks repayment after the grace period expires, while `renew()` allows loan extensions at any time, creating inconsistent behavior.\n\n#### Technical Details\n\nIn both [BeraBondGoldilend](https://github.com/0xgeeb/goldilocks-core/blob/5875627dd0ad99d6a9bc620b474d33b7b5f61ff6/src/core/goldilend/BeraBondGoldilend.sol#L211-L211) and [RebaseGoldilend](https://github.com/0xgeeb/goldilocks-core/blob/5875627dd0ad99d6a9bc620b474d33b7b5f61ff6/src/core/goldilend/RebaseGoldilend.sol#L221-L221) contracts, the `repay()` function includes a check that prevents repayment once `block.timestamp > userLoan.endDate + LOAN_GRACE_PERIOD`:\n\n```solidity\nif(block.timestamp > userLoan.endDate + LOAN_GRACE_PERIOD) revert LoanExpired();\n```\n\nHowever, the `renew()` function lacks this same validation, allowing users to extend loans indefinitely regardless of how far past the deadline they are.\n\nThis inconsistency enables users to bypass the repayment deadline restriction by:\n1. Waiting until after the grace period expires (when `repay()` would revert)\n2. Calling `renew()` with minimal parameters (short duration, small amount)\n3. Immediately calling `repay()` since the loan deadline has been reset\n\n#### Impact\n\nLow. Users can circumvent deadline restrictions through loan renewal, undermining the intended grace period enforcement.\n\n#### Recommendation\n\nAdd the same deadline check to `renew()` for consistency:\n\n```solidity\nif(block.timestamp > userLoan.endDate + LOAN_GRACE_PERIOD) revert LoanExpired();\n```\n\nAlternatively, remove the check from `repay()` to allow both functions to operate without deadline restrictions.\n\n#### Developer Response\n\nFixed in commit [59408f41680c11fa244296a60552f102e427b9fe](https://github.com/0xgeeb/goldilocks-core/commit/59408f41680c11fa244296a60552f102e427b9fe)."
+    },
+    {
+      "number": 20,
+      "title": "Over-repayment results in asset loss",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nThe `repay()` function in both [BeraBondGoldilend](https://github.com/0xgeeb/goldilocks-core/blob/5875627dd0ad99d6a9bc620b474d33b7b5f61ff6/src/core/goldilend/BeraBondGoldilend.sol#L242-L242) and [RebaseGoldilend](https://github.com/0xgeeb/goldilocks-core/blob/5875627dd0ad99d6a9bc620b474d33b7b5f61ff6/src/core/goldilend/RebaseGoldilend.sol#L221-L221) allows users to send more assets than their outstanding loan balance.\n\nWhile the function caps the repayment amount:\n```solidity\nif(repayAmount > userLoan.borrowedAmount) repayAmount = userLoan.borrowedAmount;\n```\n\nThe excess payment is neither refunded to the user nor used to increase the debtAsset backing, resulting in permanent loss of the overpaid assets.\n\n#### Impact\n\nInformational. Users who accidentally overpay lose their excess funds with no recovery mechanism.\n\n#### Recommendation\n\nConsider reverting when the payment exceeds the loan's `borrowedAmount` to prevent accidental asset loss.\n\n#### Developer Response\n\nFixed in commit [fff7ad21293a8c8ea542dedcde5b828e25003e46](https://github.com/0xgeeb/goldilocks-core/commit/fff7ad21293a8c8ea542dedcde5b828e25003e46)."
+    },
+    {
+      "number": 21,
+      "title": "Pool size limit can be bypassed through repeated `renew()` calls",
+      "severity": "Low",
+      "body": "The [`renew()`](https://github.com/0xgeeb/goldilocks-core/blob/5875627dd0ad99d6a9bc620b474d33b7b5f61ff6/src/core/goldilend/BeraBondGoldilend.sol#L211-L211) function only checks the new borrow amount against the pool size limit, allowing users to exceed the 10% borrowing restriction through multiple renewals.\n\n#### Technical Details\n\nThe `renew()` function in both [BeraBondGoldilend](https://github.com/0xgeeb/goldilocks-core/blob/5875627dd0ad99d6a9bc620b474d33b7b5f61ff6/src/core/goldilend/BeraBondGoldilend.sol#L211-L211) and [RebaseGoldilend](https://github.com/0xgeeb/goldilocks-core/blob/5875627dd0ad99d6a9bc620b474d33b7b5f61ff6/src/core/goldilend/RebaseGoldilend.sol#L195-L195) includes a check to prevent borrowing more than 10% of the pool size:\n\n```solidity\nif(newBorrowAmount > _poolSize / 10) revert InvalidLoanAmount();\n```\n\nHowever, this check only considers the `newBorrowAmount` parameter and ignores the user's existing `borrowedAmount`. This allows users to bypass the borrowing limit by calling `renew()` multiple times with amounts just under the 10% threshold, accumulating a total borrowed amount that exceeds the intended limit.\n\n#### Impact\n\nLow. The pool size borrowing limit can be easily circumvented, undermining the protocol's risk management controls.\n\n#### Recommendation\n\nModify the check to include the existing borrowed amount:\n\n```solidity\nif(userLoan.borrowedAmount + newBorrowAmount > _poolSize / 10) revert InvalidLoanAmount();\n```\n\n#### Developer Response\n\nFixed in commit [302a158c767e1afe68de86aeb816652adff9318e](https://github.com/0xgeeb/goldilocks-core/commit/302a158c767e1afe68de86aeb816652adff9318e)."
+    },
+    {
+      "number": 22,
+      "title": "Redundant liquidation status check in `liquidate()` function",
+      "severity": "Gas",
+      "body": "#### Technical Details\n\nThe `liquidate()` function in [BeraBondGoldilend](https://github.com/0xgeeb/goldilocks-core/blob/5875627dd0ad99d6a9bc620b474d33b7b5f61ff6/src/core/goldilend/BeraBondGoldilend.sol#L261-L261) and [RebaseGoldilend](https://github.com/0xgeeb/goldilocks-core/blob/5875627dd0ad99d6a9bc620b474d33b7b5f61ff6/src/core/goldilend/RebaseGoldilend.sol#L240-L240) checks both `liquidated` and `borrowedAmount == 0` to determine if a loan is valid for liquidation:\n\n```solidity\nif((block.timestamp < userLoan.endDate + LOAN_GRACE_PERIOD || userLoan.liquidated || userLoan.borrowedAmount == 0) revert InvalidLoan();\n```\n\nWhen a loan is repaid or liquidated, the `borrowedAmount` is set to 0. Since `borrowedAmount == 0` already identifies loans that cannot be liquidated, checking `userLoan.liquidated` is redundant and wastes gas.\n\n#### Impact\n\nGas savings.\n\n#### Recommendation\n\nSimplify the check by removing the redundant `liquidated` flag verification:\n\n```solidity\nif((block.timestamp < userLoan.endDate + LOAN_GRACE_PERIOD || userLoan.borrowedAmount == 0) revert InvalidLoan();\n```\n\n#### Developer Response\n\nFixed in commit [71fe0f7dfc8cb153ff013818389af52cc472258e](https://github.com/0xgeeb/goldilocks-core/commit/71fe0f7dfc8cb153ff013818389af52cc472258e)."
+    },
+    {
+      "number": 23,
+      "title": "Inefficient yield claiming may cause gas issues or reverts",
+      "severity": "Low",
+      "body": "The [`claimYield()`](https://github.com/0xgeeb/goldilocks-core/blob/5875627dd0ad99d6a9bc620b474d33b7b5f61ff6/src/core/goldilend/BeraBondGoldilend.sol#L273-L273) function loops through all user NFT IDs, including those from repaid or liquidated loans, causing unnecessary gas consumption and potential transaction failures.\n\n#### Technical Details\n\nThe function [`claimYield()`](https://github.com/0xgeeb/goldilocks-core/blob/5875627dd0ad99d6a9bc620b474d33b7b5f61ff6/src/core/goldilend/BeraBondGoldilend.sol#L273-L273) always iterates through the entire `userTokenIds` array.\n\nThis can be an issue as the array currently doesn't see its NFT IDs removed from it when a user repays his loan or gets liquidated. Additionally, a user may have yield available for only one NFT ID and not all of them, trying to claim on all of them will cost extra gas and might even revert.\n\n#### Impact\n\nLow. Inefficient gas usage and potential denial of service for users with many historical loans.\n\n#### Recommendation\n\nAdd parameters to allow partial claiming:\n\n```solidity\nfunction claimYield(address[] memory rewardContracts, uint256 startIndex, uint256 endIndex) external {\n    // Only process userTokenIds[startIndex:endIndex]\n}\n```\n\nThis enables users to claim yield for a subset of NFT IDs instead of all at once.\n\n#### Developer Response\n\nFixed in commit [1786177e49e0fab0ef602fa02d22e78c4a4ba77d](https://github.com/0xgeeb/goldilocks-core/commit/1786177e49e0fab0ef602fa02d22e78c4a4ba77d) and [00b5051aa34a8e82e9136af1a990d2423b6e3747](https://github.com/0xgeeb/goldilocks-core/commit/00b5051aa34a8e82e9136af1a990d2423b6e3747)."
+    },
+    {
+      "number": 24,
+      "title": "Zero `poolSize` allows unfair dilution of new depositors",
+      "severity": "Low",
+      "body": "#### Technical Details\n\nLiquidations can lower the `poolSize` down all the way to zero. When depositing, the function [`_glDebtAssetMintAmount()`](https://github.com/0xgeeb/goldilocks-core/blob/5875627dd0ad99d6a9bc620b474d33b7b5f61ff6/src/core/goldilend/BeraBondGoldilend.sol#L343-L343) returns the amount of shares depending on the current ratio between `supply` and `poolSize`, unless one of the two is 0 in which case it will mint 1:1 shares per asset.\n\nWhen withdrawing, it acts differently - if the `poolSize` is 0 then it will revert with a division by zero. This shouldn't be a problem as the shares are worth zero so there is no real interest for a user to withdraw 0 assets.\n\nHowever there is an issue for depositors. If the `poolSize` is 0 then they will mint 1:1 shares, increasing the backing for already existing shares which will dilute the new depositors.\n\nExample:\n- 100 shares exist, `poolSize` is 0 due to liquidations, the ratio is 0\n- New user deposits 100 assets, receives 100 shares\n- Now there are 200 shares for 100 assets so the ratio moved from 0 to 0.5\n- Older users that experienced liquidations can withdraw up to 50 assets at the cost of that new lender\n\n#### Impact\n\nLow. It's unlikely that `poolSize` goes all the way down to 0 and ideally the team is able to reimburse liquidations in a timely manner, but an unaware user may end up depositing and getting diluted.\n\n#### Recommendation\n\nConsider preventing deposits when `poolSize == 0` but `supply > 0`\n\n#### Developer Response\n\nFixed in commit [801a80be3a1fc6305d0596a593a742209a70a5c6](https://github.com/0xgeeb/goldilocks-core/commit/801a80be3a1fc6305d0596a593a742209a70a5c6)."
+    },
+    {
+      "number": 25,
+      "title": "Inconsistent behavior between RebaseGoldilend and BeraBondGoldilend contracts",
+      "severity": "Low",
+      "body": "#### Technical Details\n\nThere is inconsistent behavior between `RebaseGoldilend` and `BeraBondGoldilend`, some checks are done differently which can lead to unexpected behavior.\n\nFor example inside `repay()`, inside the [RebaseGoldilend](https://github.com/0xgeeb/goldilocks-core/blob/5875627dd0ad99d6a9bc620b474d33b7b5f61ff6/src/core/goldilend/RebaseGoldilend.sol#L221-L221) the `repayAmount` is bounded to `outstandingDebt` while inside the [BeraBondGoldilend](https://github.com/0xgeeb/goldilocks-core/blob/5875627dd0ad99d6a9bc620b474d33b7b5f61ff6/src/core/goldilend/BeraBondGoldilend.sol#L242-L242) it is bounded to `userLoan.borrowedAmount`.\n\nThis inconsistency may lead to different repayment calculations and behaviors between the two contracts, potentially confusing users and creating integration issues.\n\n#### Impact\n\nLow. While it doesn't seem to be creating major issues, this could lead to unexpected behavior and assumptions between the two contracts.\n\n#### Recommendation\n\nStandardize the logic between both contracts to ensure consistent behavior. \n\nConsider using a base contract and inheriting from it as suggested in https://github.com/electisec/goldilocks-goldilend-report/issues/4.\n\n#### Developer Response\n\nPartially fixed in commit [0949d4b8ceeac999307e075577874bd8453d7867](https://github.com/0xgeeb/goldilocks-core/commit/0949d4b8ceeac999307e075577874bd8453d7867). Lack of Base contract can still lead to inconsistencies."
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 ---
 tags: ["vyper"]
 title: 2025-06-YieldBasis
+repo: yAudit/yield-basis-report-tex
 description: Yield Basis DAO
 ---
 

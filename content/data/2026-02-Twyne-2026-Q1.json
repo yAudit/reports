@@ -1,0 +1,66 @@
+{
+  "repo": "yAudit/twyne-202602-update-report",
+  "githubUrl": "https://github.com/yAudit/twyne-202602-update-report",
+  "title": "Twyne 2026-Q1 update",
+  "protocolName": "Twyne",
+  "protocolOverview": "Twyne is a credit delegation protocol that lets borrowers rent unused borrowing power from other lenders to boost their Liquidation LTV. Lenders earn additional yield while borrowers get to ramp up their leverage or insulate their debt.",
+  "auditScope": "This audit covers 7 pull requests across 2.5 days of review.",
+  "overallAssessment": "The audit of Twyne's 2025 Q1 update identified no medium severity or above vulnerabilities, indicating a solid update that maintains the security standards of the protocol's foundation. The updates result in three major changes: a refactor of the IRM, usage of the intermediate vault address over collateral inside the buffer mapping, and a rework of the fixed Twyne LTV into a dynamic one.",
+  "startDate": "2026-02-06",
+  "finishDate": "2026-02-09",
+  "auditors": [
+    "Adriro",
+    "HHK"
+  ],
+  "commits": [],
+  "finalCommits": [],
+  "repositories": [
+    "https://github.com/0xTwyne/twyne-contracts"
+  ],
+  "auditResources": [
+    "Code repositories and documentation",
+    "Dynamic Liquidation LTV whitepaper"
+  ],
+  "treeOfAuditedFiles": "0xTwyne/twyne-contracts/src\n├── TwyneFactory\n│   ├── BridgeHookTarget.sol\n│   └── CollateralVaultFactory.sol\n└── twyne\n    ├── AaveV3CollateralVault.sol\n    ├── CollateralVaultBase.sol\n    ├── EulerCollateralVault.sol\n    ├── IRMTwyneCurve.sol\n    ├── IRMTwyneCurveGamma32.sol\n    └── VaultManager.sol",
+  "finalRemarks": "Twyne's 2025 Q1 update introduces changes to the IRM, LTV mapping, and liquidation mechanism, no medium or above severity findings were found outlying solid development practices from the Twyne team. The dynamic liquidation LTV is a welcome change that will result in a better user experience. Some concerns were raised about the LTV potentially being manipulated using the cash balance on the intermediate vault, but this did not result in any meaningful threat and is a necessary trade-off for the feature. All issues identified during the review have been acknowledged or fixed. The final commit containing these changes on the private Twyne repository can be found at [f15c596c527d9865d95c2fe90f06d0367435fba7](https://github.com/0xTwyne/twyne-contracts/commit/f15c596c527d9865d95c2fe90f06d0367435fba7).",
+  "nsloc": null,
+  "evaluations": [],
+  "issues": [
+    {
+      "number": 1,
+      "title": "IRMTwyneCurve constructor reverts with misleading error",
+      "severity": "Informational",
+      "body": "The `IRMTwyneCurve` [constructor](https://github.com/0xTwyne/twyne-contracts/blob/7ba36ceafa19a0434cde1b8dc9fe719de033c148/src/twyne/IRMTwyneCurve.sol#L27) reuses the `E_IRMUpdateUnauthorized()` error from the Euler Vault Kit's `IIRM` interface to signal invalid constructor parameters, which is semantically incorrect and can mislead developers and monitoring tools during debugging.\n\n#### Technical Details\n\nThe constructor validates that `polynomialParameter_` and `nonlinearPoint_` are non-zero and that `nonlinearPoint_` is below 100%. When any of these checks fail, it reverts with `E_IRMUpdateUnauthorized()`:\n\n```solidity\nif (\n    polynomialParameter_ == 0\n    || nonlinearPoint_ == 0\n    || nonlinearPoint_ >= 1e18\n) revert E_IRMUpdateUnauthorized();\n```\n\nThis error is defined in the `IIRM` interface and is intended for authorization failures, specifically when `msg.sender` is not the expected vault (as seen in `computeInterestRate()`). Using it for parameter validation conflates two distinct failure modes: unauthorized access and invalid input. Off-chain tooling or integrators catching `E_IRMUpdateUnauthorized` would incorrectly interpret a deployment misconfiguration as an authorization issue.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nDefine a dedicated error (e.g., `error E_InvalidIRMParameters()`) for the constructor validation and revert with that instead.\n\n#### Developer Response\n\nAcknowledged."
+    },
+    {
+      "number": 3,
+      "title": "Oracle quotes scaled collateral in EulerCollateralVault",
+      "severity": "Informational",
+      "body": "The `_collateralScaledByLiqLTV1e8()` return value is passed directly into `EulerRouter.getQuote()` as the input amount. Since this value is already scaled by the LLTV (in 1e8 precision), the oracle must price it linearly — any non-linear pricing behavior would produce incorrect collateral valuations.\n\n#### Technical Details\n\nIn [`EulerCollateralVault._canLiquidate()`](https://github.com/0xTwyne/twyne-contracts/blob/7ba36ceafa19a0434cde1b8dc9fe719de033c148/src/twyne/EulerCollateralVault.sol#L149), the collateral value used for liquidation checks is computed by calling `getQuote()` with the output of [`_collateralScaledByLiqLTV1e8(false, adjExtLiqLTV)`](https://github.com/0xTwyne/twyne-contracts/blob/7ba36ceafa19a0434cde1b8dc9fe719de033c148/src/twyne/CollateralVaultBase.sol#L430). This value equals the user's collateral multiplied by a liquidation LTV factor at 1e8 precision. The oracle receives this scaled quantity and is expected to convert it to the unit of account.\n\nIf the oracle's `getQuote()` implementation is not linear in the input amount (i.e., `getQuote(k * x) != k * getQuote(x)`), the resulting collateral valuation will be incorrect.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nDocument the linearity requirement for Oracles used with `getQuote()` in this context. Consider adding a comment or NatSpec annotation at the oracle configuration point to alert of this behavior.\n\n#### Developer Response\n\nFixed in [PR#242](https://github.com/0xTwyne/twyne-contracts/pull/242)."
+    },
+    {
+      "number": 4,
+      "title": "Stale NatSpec on `_invariantCollateralAmount()` does not reflect dynamic liquidation LTV",
+      "severity": "Informational",
+      "body": "The `@dev` comment on [`_invariantCollateralAmount()`](https://github.com/0xTwyne/twyne-contracts/blob/7ba36ceafa19a0434cde1b8dc9fe719de033c148/src/twyne/CollateralVaultBase.sol#L567) describes the formula as `ceil(userCollateral * twyneLiqLTV * MAXFACTOR / (externalLiqLTV * buffer))`, but the actual computation now uses a dynamic liquidation LTV model introduced with the Dynamic Liquidation LTV update.\n\n#### Technical Details\n\nThe NatSpec comment on `_invariantCollateralAmount()` in `CollateralVaultBase` references an older, static formula. The current implementation uses a dynamic LTV derived from the credit reservation invariant (`C · λ̃^dyn_t = β_safe · λ̃_e · (C_LP + C)`), as implemented in [`_collateralScaledByLiqLTV1e8()`](https://github.com/0xTwyne/twyne-contracts/blob/7ba36ceafa19a0434cde1b8dc9fe719de033c148/src/twyne/CollateralVaultBase.sol#L430).\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nUpdate the `@dev` comment on `_invariantCollateralAmount()` to reflect the dynamic liquidation LTV formula currently in use.\n\n#### Developer Response\n\nFixed in [PR#242](https://github.com/0xTwyne/twyne-contracts/pull/242)."
+    },
+    {
+      "number": 5,
+      "title": "Reducing `maxTwyneLTV` can retroactively liquidate existing positions",
+      "severity": "Low",
+      "body": "When `maxTwyneLTVs` is lowered by governance or when the vault implementation is updated, positions that were healthy under the previous parameter may become immediately liquidatable.\n\n#### Technical Details\n\nIn [`_collateralScaledByLiqLTV1e8()`](https://github.com/0xTwyne/twyne-contracts/blob/7ba36ceafa19a0434cde1b8dc9fe719de033c148/src/twyne/CollateralVaultBase.sol#L430), the effective liquidation LTV is capped at `Math.min(twyneLiqLTV, twyneVaultManager.maxTwyneLTVs(address(intermediateVault)))`. This value is read from `twyneVaultManager` at query time, meaning any reduction to `maxTwyneLTVs` takes effect immediately for all existing positions.\n\nA borrower who opened a position at an LTV just below the previous `maxTwyneLTV` would find their position suddenly above the new threshold, making them liquidatable. The same applies if the vault implementation is upgraded and the new logic changes how `twyneLiqLTV` interacts with `maxTwyneLTVs`.\n\n#### Impact\n\nLow. This requires a governance action to reduce `maxTwyneLTVs`, which is a privileged operation. However, the absence of a buffer or time-delay mechanism means the effect on existing borrowers is immediate and potentially severe.\n\n#### Recommendation\n\nConsider implementing a time-delayed parameter change or a grace period during which existing positions are evaluated against the old `maxTwyneLTV` while new positions use the updated value. Additionally, assess the effects of upgrading the implementation over existing collateral vaults.\n\n#### Developer Response\n\nFixed in [PR#239](https://github.com/0xTwyne/twyne-contracts/pull/239).\n\n**yAudit**: Before deploying the ramp-down feature, verify no existing vault has twyneLiqLTV > maxTwyneLTVs on-chain, as those vaults would have already had their effective LTV reduced instantly by a prior maxTwyneLTVs change and the ramp mechanism cannot retroactively protect them."
+    },
+    {
+      "number": 6,
+      "title": "`_handleExcessCredit` duplicates identical logic across Euler and Aave vaults",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nThe credit handling logic in [EulerCollateralVault.sol#L87](https://github.com/0xTwyne/twyne-contracts/blob/7ba36ceafa19a0434cde1b8dc9fe719de033c148/src/twyne/EulerCollateralVault.sol#L87) and [AaveV3CollateralVault.sol#L140](https://github.com/0xTwyne/twyne-contracts/blob/7ba36ceafa19a0434cde1b8dc9fe719de033c148/src/twyne/AaveV3CollateralVault.sol#L140) is identical. The only difference is the Aave override mixing in `rebalanceATokens_CV`, which is aToken wrapper bookkeeping — not credit handling.\n\n#### Impact\n\nInformational. Duplicated logic increases divergence risk — PR #243's bugfix had to be applied to both files independently.\n\n#### Recommendation\n\nMove the shared logic into `CollateralVaultBase`. Aave can overrides with a simple `super._handleExcessCredit(...)` + `rebalanceATokens_CV`.\n\n#### Developer Response\n\nAcknowledged."
+    },
+    {
+      "number": 7,
+      "title": "No way to deregister an intermediate vault",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\n[`VaultManager.setIntermediateVault()`](https://github.com/0xTwyne/twyne-contracts/blob/7ba36ceafa19a0434cde1b8dc9fe719de033c148/src/twyne/VaultManager.sol#L90) sets `isIntermediateVault[vault] = true` but there is no function to set it back to `false`. Once registered, an intermediate vault cannot be removed from the approved set.\n\n#### Impact\n\nInformational. If an intermediate vault needs to be deprecated, it will remain permanently valid in `isIntermediateVault`.\n\n#### Recommendation\n\nAdd a `bool value` parameter to the function and set the mapping with it.\n\n#### Developer Response\n\nFixed in [PR#252](https://github.com/0xTwyne/twyne-contracts/pull/252)."
+    }
+  ]
+}

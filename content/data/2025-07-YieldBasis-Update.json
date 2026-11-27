@@ -1,0 +1,178 @@
+{
+  "repo": "yAudit/yield-basis-report-2",
+  "githubUrl": "https://github.com/yAudit/yield-basis-report-2",
+  "title": "Yield Basis DAO Update Security Review",
+  "protocolName": "Yield Basis",
+  "protocolOverview": "Yield Basis is a protocol that features a new type of AMM that focuses on solving impermanent loss. The current review targets the DAO contracts of the protocol, including the governance token, along with the mechanism to vote, incentivize pools, and distribute rewards.",
+  "auditScope": "This audit covers 6 smart contracts across 5 days of review.",
+  "overallAssessment": null,
+  "startDate": "2025-06-30",
+  "finishDate": "2025-07-04",
+  "auditors": [
+    "Panda",
+    "HHK",
+    "Block 7 fellows"
+  ],
+  "commits": [
+    {
+      "label": null,
+      "hash": "74dcb46765081ef5170aa0cffcb8925f98cf84b6",
+      "url": "https://github.com/yield-basis/yb-core/commit/74dcb46765081ef5170aa0cffcb8925f98cf84b6"
+    }
+  ],
+  "finalCommits": [],
+  "repositories": [
+    "https://github.com/yield-basis/yb-core/"
+  ],
+  "auditResources": [
+    "Code repositories and documentation"
+  ],
+  "treeOfAuditedFiles": "contracts/dao\n├── CliffEscrow.vy\n├── GaugeController.vy\n├── LiquidityGauge.vy\n├── VestingEscrow.vy\n├── VotingEscrow.vy\n└── YB.vy",
+  "finalRemarks": null,
+  "nsloc": null,
+  "evaluations": [
+    {
+      "category": "access_control",
+      "score": "Low",
+      "description": "Critical vulnerability in VotingEscrow transfer functions allows position theft due to insufficient input validation."
+    },
+    {
+      "category": "mathematics",
+      "score": "Average",
+      "description": "ERC4626 inflation attack vulnerability in LiquidityGauge, slope change accounting issues in position merging."
+    },
+    {
+      "category": "complexity",
+      "score": "Average",
+      "description": "Complex interactions between multiple DAO contracts with various edge cases. Infinite lock mechanics, gauge weight adjustments, and position merging introduce significant complexity that led to several vulnerabilities."
+    },
+    {
+      "category": "libraries",
+      "score": "Good",
+      "description": "Proper use of established libraries like snekmate for ERC20/ERC721 functionality. Clean separation of concerns with library usage."
+    },
+    {
+      "category": "decentralization",
+      "score": "Good",
+      "description": "Well-structured DAO implementation with voting mechanisms, gauge controllers, and reward distribution. Users maintain control over their positions and voting power."
+    },
+    {
+      "category": "code_stability",
+      "score": "Average",
+      "description": "Several stability issues, including merge reverts for infinite locks, transfer restrictions due to time calculations."
+    },
+    {
+      "category": "documentation",
+      "score": "Good",
+      "description": "Code is well-documented with clear function purposes and parameter descriptions. Contract interfaces are properly defined."
+    },
+    {
+      "category": "monitoring",
+      "score": "Good",
+      "description": "Adequate event emissions for most operations."
+    },
+    {
+      "category": "testing",
+      "score": "Average",
+      "description": "Various edge cases and attack vectors discovered during audit suggest test coverage could be improved, particularly around infinite lock scenarios and mathematical edge cases."
+    }
+  ],
+  "issues": [
+    {
+      "number": 1,
+      "title": "`CliffEscrow` can't use `VotingEscrow` infinite lock",
+      "severity": "Low",
+      "body": "#### Technical Details\n\n`VotingEscrow` implements an `infinite_lock_toggle()` function that allows users to create or cancel ever-extending locks by setting the lock end time to `max_value(uint256)`. However, `CliffEscrow` only exposes a subset of `VotingEscrow` methods (`create_lock`, `increase_amount`, `increase_unlock_time`, `withdraw`, and `transferFrom`) but does not include `infinite_lock_toggle()` in its interface or implementation.\n\nThe missing method prevents users who interact with `VotingEscrow` through `CliffEscrow` from accessing this functionality.\n\n\n#### Impact\n\nLow. Users interacting with `VotingEscrow` through `CliffEscrow` cannot benefit from the infinite lock feature.\n\n#### Recommendation\n\nAdd the `infinite_lock_toggle()` method to `CliffEscrow`.\n\n```vyper\n@external\ndef infinite_lock_toggle():\n    self._access()\n    extcall VE.infinite_lock_toggle()\n```\n\n#### Developer Response\n\nFixed in [4378752a0bb17169648a8711598a18372a93de7f](https://github.com/yield-basis/yb-core/commit/4378752a0bb17169648a8711598a18372a93de7f)."
+    },
+    {
+      "number": 2,
+      "title": "VestingEscrow view functions incorrectly report vested amount for disabled addresses",
+      "severity": "Low",
+      "body": "The `_total_vested_of` function in VestingEscrow.vy does not account for the `disabled_at` timestamp, causing view functions like `vestedOf`, `balanceOf`, and `lockedOf` to return incorrect values for disabled addresses.\n\n#### Technical Details\n\nThe VestingEscrow contract includes a disable mechanism where the admin can call `toggle_disable(_recipient)` to prevent an address from claiming tokens that have not yet vested at the time of disabling. This is implemented using the `disabled_at` mapping:\n\n```vyper\n@external\ndef toggle_disable(_recipient: address):\n    # ...\n    is_disabled: bool = self.disabled_at[_recipient] == 0\n    if is_disabled:\n        self.disabled_at[_recipient] = block.timestamp  # Set disable timestamp\n    else:\n        self.disabled_at[_recipient] = 0  # Re-enable\n```\n\nThe `claim` function correctly handles this by using the `disabled_at` timestamp when calculating vested amounts:\n\n```vyper\n@external\ndef claim(addr: address = msg.sender):\n    t: uint256 = self.disabled_at[addr]\n    if t == 0:\n        t = block.timestamp\n    claimable: uint256 = self._total_vested_of(addr, t) - self.total_claimed[addr]\n    # ...\n```\n\nowever, the view functions `vestedOf`, `balanceOf`, and `lockedOf` all call `_total_vested_of` with the default `block.timestamp` parameter, ignoring the `disabled_at` state:\n\n```vyper\n@external\n@view  \ndef vestedOf(_recipient: address) -> uint256:\n    return self._total_vested_of(_recipient)  # Uses block.timestamp by default\n\n@external\n@view\ndef balanceOf(_recipient: address) -> uint256:\n    return self._total_vested_of(_recipient) - self.total_claimed[_recipient]  # Uses block.timestamp by default\n\n@external\n@view\ndef lockedOf(_recipient: address) -> uint256:\n    return self.initial_locked[_recipient] - self._total_vested_of(_recipient)  # Uses block.timestamp by default\n```\n\n#### Impact\n\nLow. This inconsistency leads to misleading information for disabled addresses.\n\n#### Recommendation\n\nModify the view functions to account for the `disabled_at` timestamp when calculating vested amounts. The fix should ensure consistency with the `claim` function's behavior.\n\n#### Developer Response\n\nFixed at: [f563fb5](https://github.com/yield-basis/yb-core/commit/f563fb5b9da8846cd2c6b920a9ad27ec8dbc8001)"
+    },
+    {
+      "number": 3,
+      "title": "VotingEscrow `_merge_positions` Missing Checkpoint",
+      "severity": "Medium",
+      "body": "The `_merge_positions` function in VotingEscrow bypasses the proper `_checkpoint()` mechanism, leading to incorrect slope change accounting. This results in permanent corruption of the global voting weight decay timeline and miscalculated voting weights for future periods.\n\n## Technical Details\n\nThe `_merge_positions` function bypasses proper slope change accounting by directly updating `user_point_history` instead of calling `_checkpoint()` for each user. When positions are merged, the function:\n\n1. Directly sets `self.user_point_history[owner][user_epoch] = Point(bias=0, slope=0, ts=block.timestamp)`\n2. Directly sets `self.user_point_history[to][user_epoch] = Point(bias=slope * convert(new_locked.end - block.timestamp, int256), slope=slope, ts=block.timestamp)`\n\nThis bypasses the `slope_changes` tracking logic in `_checkpoint()` that properly schedules slope decreases at lock expiration times. The missing logic includes:\n- Removing old slope changes: `old_dslope += u_old.slope` and `self.slope_changes[old_locked.end] = old_dslope`\n- Adding new slope changes: `new_dslope -= u_new.slope` and `self.slope_changes[new_locked.end] = new_dslope`\n\n#### Impact\n\nMedium. The global voting weight decay timeline becomes corrupted.\n\n#### Recommendation\n\nOnly allow merging to locks with similar duration. \n\n#### Developer Response\n\nFixed in: [6a7b17e2b5bf50f9378a21748831b35c956afc0a](https://github.com/yield-basis/yb-core/commit/6a7b17e2b5bf50f9378a21748831b35c956afc0a)"
+    },
+    {
+      "number": 4,
+      "title": "Infinite locks won't be able to vote for gauges",
+      "severity": "Medium",
+      "body": "The [`vote_for_gauge_weights()`](https://github.com/yield-basis/yb-core/blob/74dcb46765081ef5170aa0cffcb8925f98cf84b6/contracts/dao/GaugeController.vy#L211-L211) function uses `slope` to determine voting power which will be 0 for infinite locks.\n\n#### Technical Details\n\nWhen a user calls [`infinite_lock_toggle()`](https://github.com/yield-basis/yb-core/blob/74dcb46765081ef5170aa0cffcb8925f98cf84b6/contracts/dao/VotingEscrow.vy#L338-L338) it saves a checkpoint and sets the `slope` to 0.\n\nLater on when a user tries to vote for a gauge on the gauge controller by calling [`vote_for_gauge_weights()`](https://github.com/yield-basis/yb-core/blob/74dcb46765081ef5170aa0cffcb8925f98cf84b6/contracts/dao/GaugeController.vy#L211-L211) it will result in no power added to that gauge as the `slope`for the infinite lock is 0.\n\n#### Impact\n\nMedium. Users with infinite locks won't be able to vote, they can still toggle off the infinite lock to bypass the issue.\n\n#### Recommendation\n\nModify the gauge voting to take into account infinite locks.\n\n#### Developer Response\n\nFixed in: [f46a125604c6f16d3522ddd4a40969dbfd3ff8e6](https://github.com/yield-basis/yb-core/commit/f46a125604c6f16d3522ddd4a40969dbfd3ff8e6)"
+    },
+    {
+      "number": 7,
+      "title": "Incorrect comment in `YB.sol`'s `__init__()`",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nInside [`__init__()`](https://github.com/yield-basis/yb-core/blob/74dcb46765081ef5170aa0cffcb8925f98cf84b6/contracts/dao/YB.vy#L34-L34) there is a comment:\n\n```\n# * set_minter(deployer, False)\n```\n\nWhich may not work as [`set_minter()`](https://github.com/yield-basis/yb-core/blob/74dcb46765081ef5170aa0cffcb8925f98cf84b6/venv/lib/python3.13/site-packages/snekmate/tokens/erc20.vy#L345-L345) has a check `assert minter != msg.sender, \"erc20: minter is owner address\"` which will make that call revert.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nRemove this comment and the line from the potential deploy script.\n\n#### Developer Response\n\nFixed in [2cd7c1b51fbebee771a521307838f978a87e68fe](https://github.com/yield-basis/yb-core/commit/2cd7c1b51fbebee771a521307838f978a87e68fe)."
+    },
+    {
+      "number": 8,
+      "title": "`UMAXTIME` is not a multiple of 7 days",
+      "severity": "Medium",
+      "body": "#### Technical Details\n\nThe constant `UMAXTIME` is widely used throughout the code to represent the maximum possible lock duration. It is currently set to 4 * 365 days. However, this duration leaves a remainder of 4 days when divided by 7, which is suboptimal since lock end times are aligned to 7-day intervals.\n\nAs a result, in the [`_ve_transfer_allowed()`](https://github.com/yield-basis/yb-core/blob/74dcb46765081ef5170aa0cffcb8925f98cf84b6/contracts/dao/VotingEscrow.vy#L507-L507) function, a user’s lock is unlikely to exactly match `max_time`. Consequently, the conditions `owner_time // WEEK * WEEK == max_time` and `to_time // WEEK * WEEK == max_time` will evaluate to false, preventing transfers from being allowed.\n\n#### Impact\n\nMedium. Users will not be able to max lock and transfer their NFTs\n\n#### Recommendation\n\nSet `UMAXTIME` to a multiple of 7 days, such as `UMAXTIME = 4 * 52 * 7 days` which would by 4 years minus 4 days.\n\n#### Developer Response\n\nThis is partially expected, the lock should always be less, however fixed the `_ve_transfer_allowed()` check in [7215a47023e025a3941b29c6af5c844653bcc673](https://github.com/yield-basis/yb-core/commit/7215a47023e025a3941b29c6af5c844653bcc673)."
+    },
+    {
+      "number": 10,
+      "title": "Insufficient input validation allows anyone to steal other user's voting escrow position",
+      "severity": "Critical",
+      "body": "Attacker can sacrifice his own NFT and steal other user's position due to a missing check in [`VotingEscrow.transferFrom()`](https://github.com/yield-basis/yb-core/blob/74dcb46765081ef5170aa0cffcb8925f98cf84b6/contracts/dao/VotingEscrow.vy#L566-L566) and [`VotingEscrow.safeTransferFrom()`](https://github.com/yield-basis/yb-core/blob/74dcb46765081ef5170aa0cffcb8925f98cf84b6/contracts/dao/VotingEscrow.vy#L575-L575).\n\n#### Technical Details\n\n[`VotingEscrow.create_lock()`](https://github.com/yield-basis/yb-core/blob/74dcb46765081ef5170aa0cffcb8925f98cf84b6/contracts/dao/VotingEscrow.vy#L282-L282) mints user an NFT, the `token_id` is uint256 format of `user_address`: user address is soulbound to user NFT id.\n\nInside the transfers functions the contract uses `erc721._is_approved_or_owner(msg.sender, token_id)` for ownership check. The check verifies if `msg.sender` is the owner of `token_id`, or if `msg.sender` has sufficient allowance for `token_id`. But there is no check to verify `token_id` == uint256 format of `owner`.\n\nSay max lock time is reached, and attacker calls `transferFrom(victim_address, attacker_address, attacker_token_id)`. The first check will pass because attacker owns `attacker_token_id`. The second check will pass because max lock time is reached. \nThe internal function [`self._merge_positions(owner, to)`](https://github.com/yield-basis/yb-core/blob/74dcb46765081ef5170aa0cffcb8925f98cf84b6/contracts/dao/VotingEscrow.vy#L530-L530) is then executed, victim's position is merged with attacker's. \nThen `erc721._burn(token_id)` burns attacker's NFT. In short, attacker can sacrifice his own NFT and steal victim's position. If attacker's position is tiny compared to victim's position, this attack lets him sacrifice something small and grief something big.\n\nTo amplify the impact, consider this intricately designed attack:\n\n1. Attack prepares two wallets A and B, mints NFT for each (call them NFT A and NFT B)\n2. Wallets B approves wallet A max allowance (to bypass the snekmate `erc721._is_approved_or_owner` check)\n3. Attacker calls `transferFrom(victim_address, wallet_A_address, NFT_B_token_id)`\n4. Victim's position is merged to wallet A's position\n5. NFT B is burned but attacker can still withdraw all the asset via NFT A.\n\n#### Impact\n\nAttacker can steal any user's position.\n\n#### Recommendation\n\nAdd validation to ensure the token_id corresponds to the owner parameter in both functions:\n\n```python\n@external\n@payable\ndef transferFrom(owner: address, to: address, token_id: uint256):\n    assert token_id == convert(owner, uint256), \"token_id must match owner\"  # ← ADD THIS\n    assert erc721._is_approved_or_owner(msg.sender, token_id), \"erc721: caller is not token owner or approved\"\n    assert self._ve_transfer_allowed(owner, to), \"Need max veLock\"\n    self._merge_positions(owner, to)\n    erc721._burn(token_id)\n\n@external\n@payable\ndef safeTransferFrom(owner: address, to: address, token_id: uint256, data: Bytes[1_024] = b\"\"):\n    assert token_id == convert(owner, uint256), \"token_id must match owner\"  # ← ADD THIS\n    assert erc721._is_approved_or_owner(msg.sender, token_id), \"erc721: caller is not token owner or approved\"\n    assert self._ve_transfer_allowed(owner, to), \"Need max veLock\"\n    self._merge_positions(owner, to)\n    erc721._burn(token_id)\n```\n\n#### Developer Response\n\nFixed in [3af52777ac4a199a8e1b97f6a557ea06ab642a0d](https://github.com/yield-basis/yb-core/commit/3af52777ac4a199a8e1b97f6a557ea06ab642a0d)."
+    },
+    {
+      "number": 11,
+      "title": "Infinite-Lock Merge will always revert",
+      "severity": "Medium",
+      "body": "Attempting to merge two “infinite” ve-NFT locks via [`transferFrom()`](https://github.com/yield-basis/yb-core/blob/74dcb46765081ef5170aa0cffcb8925f98cf84b6/contracts/dao/VotingEscrow.vy#L566-L566) or [`safeTransferFrom()`](https://github.com/yield-basis/yb-core/blob/74dcb46765081ef5170aa0cffcb8925f98cf84b6/contracts/dao/VotingEscrow.vy#L575-L575) will always reverts due to an out-of-range signed cast, making the core “infinite-lock transfer” feature unusable.\n\n#### Technical Details\n\nAfter calling [`infinite_lock_toggle()`](https://github.com/yield-basis/yb-core/blob/74dcb46765081ef5170aa0cffcb8925f98cf84b6/contracts/dao/VotingEscrow.vy#L338-L338), the user lock’s end is set to `max_value(uint256)`.\n\nUsers can merge locks together by transferring them to another user, by calling [`transferFrom()`](https://github.com/yield-basis/yb-core/blob/74dcb46765081ef5170aa0cffcb8925f98cf84b6/contracts/dao/VotingEscrow.vy#L566-L566) or [`safeTransferFrom()`](https://github.com/yield-basis/yb-core/blob/74dcb46765081ef5170aa0cffcb8925f98cf84b6/contracts/dao/VotingEscrow.vy#L575-L575).\n\nInside the internal function [`_merge_positions()`](https://github.com/yield-basis/yb-core/blob/74dcb46765081ef5170aa0cffcb8925f98cf84b6/contracts/dao/VotingEscrow.vy#L530-L530) the logic is as follow:\n\n```python\nslope = new_locked.amount // MAXTIME\nbias  = slope * convert(new_locked.end - block.timestamp, int256)\n```\n\nThis is an issue for infinite locks, since it will result in `new_locked.end - now` ≈ 2²⁵⁶−1, which exceeds the signed-256 range (±2²⁵⁵−1). And since `convert(uint256, int256)` is range-checked, this always reverts.\n\n#### Impact\n\nMedium. Users cannot transfer or merge permanent locks. This core feature is non-functional.\n\n#### Recommendation\n\nIntroduce a special-case before the cast to handle infinite locks explicitly. Something of the below order. \n\n```bash\ndef _merge_positions(owner: address, to: address):\n    ...\n    new_locked.amount += locked.amount\n    self.locked[to] = new_locked\n\n    if new_locked.end == max_value(uint256):\n        # Special-case infinite lock: no decay\n        slope = 0\n        bias  = convert(new_locked.amount, int256)\n    else:\n        slope = new_locked.amount // MAXTIME\n        bias  = slope * convert(new_locked.end - block.timestamp, int256)\n    ...\n```\n\nThis restores the intended “merge two infinite locks” functionality without causing an overflow revert.\n\n#### Developer Response\n\nFixed in [6a7b17e2b5bf50f9378a21748831b35c956afc0a](https://github.com/yield-basis/yb-core/commit/6a7b17e2b5bf50f9378a21748831b35c956afc0a)"
+    },
+    {
+      "number": 12,
+      "title": "LiquidityGauge is prone to inflation attacks such as the first share deposit one",
+      "severity": "High",
+      "body": "The `LiquidityGauge` contract is vulnerable to an ERC4626 inflation attack that allows malicious actors to manipulate the share price and steal funds from subsequent depositors. The vulnerability stems from the contract's reliance on `asset.balanceOf(self)` for calculating total assets, which can be artificially inflated through direct token transfers.\n\n#### Technical Details\n\nThe `LiquidityGauge` contract inherits the default `_preview_deposit` and `_preview_redeem` implementations from `erc4626.vy`, which depend on `_total_assets()`. This function simply returns the current balance of the asset token held by the contract (`asset.balanceOf(self)`). This design is problematic because it can be manipulated by an attacker transferring tokens directly to the contract outside of the intended deposit flow.\n\n- The `LiquidityGauge` inherits `_preview_deposit` and `_preview_redeem` from `erc4626.vy`, both of which rely on `_total_assets()`\n- `_total_assets()` calls `asset.balanceOf(self)`, returning the total token balance of the contract\n- Direct transfers to the contract (outside the intended deposit flow) inflate `totalAssets`, skewing the share minting calculation\n- The ERC4626 share calculation formula `shares = assets * totalSupply / totalAssets` becomes vulnerable when `totalAssets` is artificially inflated\n\n**Proof of Concept**\n\nA malicious actor can exploit this vulnerability through the following steps:\n\n1. **Initial Setup**: Transfer a large amount of tokens directly to the contract (bypassing the deposit function)\n2. **Minimal Deposit**: Make a small deposit (e.g., 1 wei) to mint exactly 1 share\n3. **Price Manipulation**: The inflated `totalAssets` value causes the share price to become extremely high\n4. **Victim Impact**: Subsequent deposits from legitimate users mint zero shares due to rounding down in the share calculation\n5. **Profit Extraction**: The attacker can later redeem their single share for a disproportionate amount of the total assets\n\n\n```python\ndef test_inflation_attack(gauge_and_lp_token):\n    gauge, lp_token, reward_token, YB_token, gauge_controller = gauge_and_lp_token\n    \n    # Attacker (USER2) performs inflation attack\n    with boa.env.prank(USER2):\n        gauge = boa.load(\"contracts/dao/LiquidityGauge.vy\", lp_token.address, YB_token, ADMIN, gauge_controller)\n        # Step 1: Transfer tokens directly to inflate totalAssets\n        lp_token.transfer(gauge.address, 2500 * 10**18)\n    \n    with boa.env.prank(USER2):\n        lp_token.approve(gauge.address, 5000 * 10**18)\n        # Step 2: Deposit minimal amount to mint 1 share\n        gauge.deposit(2500*10**18+1, USER2)\n        print(\"Attacker shares:\", gauge.balanceOf(USER2))\n        \n    # Victim (USER) attempts to deposit\n    with boa.env.prank(USER):\n        lp_token.approve(gauge.address, 10000 * 10**18)\n        # Multiple deposits that mint zero shares due to inflated price\n        gauge.deposit(2000*10**18, USER)\n        gauge.deposit(2000*10**18, USER)\n        gauge.deposit(2000*10**18, USER)\n        gauge.deposit(2000*10**18, USER)\n        gauge.deposit(2000*10**18, USER)\n        print(\"Victim shares:\", gauge.balanceOf(USER))\n    \n    # Attacker redeems their single share\n    with boa.env.prank(USER2):\n        gauge.redeem(1, USER2, USER2)\n        print(\"Attacker LP tokens balance:\", lp_token.balanceOf(USER2))\n        print(\"Victim LP tokens balance:\", lp_token.balanceOf(USER))\n        print(\"LP tokens stuck in gauge:\", lp_token.balanceOf(gauge.address))\n```\n\n**Expected Output:**\n```\nAttacker shares: 1\nVictim shares: 0\nAttacker LP tokens balance: 12500000000000000000000\nVictim LP tokens balance: 0\nLP tokens stuck in gauge: 7500000000000000000000\n```\n\n#### Impact\n\nMalicious users can manipulate the share price to steal funds from legitimate depositors. Victims' deposits mint zero shares, locking their funds with no claim on withdrawals. While attackers cannot fully drain the contract due to the `totalSupply + 1` denominator protection, they can still achieve significant profits by frontrunning deposits.\n\n#### Recommendation\n\nImplement a protected balance mechanism that maintains separate accounting for total deposited assets or mint dead shares and pre-deposit in the vault at deployment time.\n\n#### Developer Response\n\nFixed in : [c0d12d65ec3121e3505053f0675ba0370d3087d9](https://github.com/yield-basis/yb-core/commit/c0d12d65ec3121e3505053f0675ba0370d3087d9)"
+    },
+    {
+      "number": 13,
+      "title": "Spelling error in `CliffEscrow.vy`",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nThe Cliff Escrow contract contains a spelling error in the `init` parameter declaration.\n\n```\n@deploy\ndef __init__(token: IERC20, unlock_time: uint256, ve: VotingEscrow, gc: GaugeController, recepient: address):\n    RECIPIENT = recepient\n    YB = token\n    VE = ve\n    GC = gc\n    assert unlock_time > block.timestamp\n    UNLOCK_TIME = unlock_time\n    extcall token.approve(ve.address, max_value(uint256))\n```\n\nIncorrect spelling: recepient\nCorrect spelling: recipient\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nRename the parameter.\n\n#### Developer Response\n\nFixed."
+    },
+    {
+      "number": 14,
+      "title": "Killed Gauges Continue to receive Emissions",
+      "severity": "Low",
+      "body": "#### Technical Details\n\nThe [`set_killed()`](https://github.com/yield-basis/yb-core/blob/74dcb46765081ef5170aa0cffcb8925f98cf84b6/contracts/dao/GaugeController.vy#L350-L350) function marks a gauge address in `is_killed[gauge] = true`.\n\nThe only place this `is_killed[gauge]` flag is consulted is in [`vote_for_gauge_weights()`](https://github.com/yield-basis/yb-core/blob/74dcb46765081ef5170aa0cffcb8925f98cf84b6/contracts/dao/GaugeController.vy#L211-L211), preventing new votes on a killed gauge.\n\n[`_checkpoint_gauge()`](https://github.com/yield-basis/yb-core/blob/74dcb46765081ef5170aa0cffcb8925f98cf84b6/contracts/dao/GaugeController.vy#L156-L156), the sole place where fresh YB are minted and a gauge’s weight is refreshed, never reads that flag. \nThe first assert doesn't guard against the killed ones so the function proceeds for killed gauges exactly as for live ones.\n\nLikewise, emit which is the public entry-point gauges use to pull their share, also omits any kill check. It calls `_checkpoint_gauge(msg.sender)` and pays out whatever weight the controller calculated.\n\nConsequently, killed gauges continue to accrue emissions and allow users to claim tokens, bypassing the kill mechanism entirely.\n\n#### Impact\n\nLow. Killed gauges continue to draw from the inflation reserve for the full lifespan of any residual vote weight, diluting live gauges and miss-allocating YB.\n\nIf a malicious user or bribed voters pushes significant weight just before an admin kill, that gauge continues to receive emissions for months despite it being deprecated.\n\n#### Recommendation\n\nGuard Emissions in `_checkpoint_gauge()`. Before any emission logic add `assert not self.is_killed[gauge], \"Gauge is killed\"` \n\nPrevent claims on killed Gauges. In `emit()`, likewise add extra validation `assert not self.is_killed[msg.sender], \"Gauge is killed\"`\n\nAlternatively, in `set_killed()` immediately zero out that gauge’s weight (and adjust the global sums) so even if any existing guard is bypassed, the killed gauge has no residual bias left to harvest.\n\n#### Developer Response\n\nAcknowledged, this is by design to be able to reverse the killing. Same logic is present in Curve."
+    },
+    {
+      "number": 15,
+      "title": "`toggle_disable()` function variables are named in the reversed order",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nInside [`toggle_disable()`](https://github.com/yield-basis/yb-core/blob/74dcb46765081ef5170aa0cffcb8925f98cf84b6/contracts/dao/VestingEscrow.vy#L110-L110) when the address is disabled from claiming, `is_disabled` should be true; and in the reverse scenario (address enabled to claim), `is_disabled` should be `false`. As of now, `is_disabled` holds the boolean value for the currently \"not disabled\" address as true instead of false.\n\nThis does not impact the function to toggle, but the state described by the variable is the opposite of what it truly is.\n\n#### Impact\n\nInformational: Improve code readability and monitoring via event emissions.\n\n#### Recommendation\n\nRename `is_disabled` to `currently_enabled` OR flip the booleans stored.\n\n#### Developer Response\n\nFixed in [3b0dc8871f58d5d31aec09120a0208557b7294a3](https://github.com/yield-basis/yb-core/commit/3b0dc8871f58d5d31aec09120a0208557b7294a3)."
+    },
+    {
+      "number": 16,
+      "title": "Disabled user's unvested tokens can't be reallocated",
+      "severity": "Low",
+      "body": "#### Technical Details\n\nIn VestingEscrow, when the owner disables a recipient during the vesting period, the unvested tokens allocated to that recipient become permanently locked in the contract.\n\nWhen tokens are funded to a recipient via [`fund()`](https://github.com/yield-basis/yb-core/blob/74dcb46765081ef5170aa0cffcb8925f98cf84b6/contracts/dao/VestingEscrow.vy#L86-L86), the `unallocated_supply` is decreased by the full allocation amount. If a recipient is later disabled, they can only claim tokens that have already vested.\nThe remaining unvested tokens cannot be reallocated to other recipients because `unallocated_supply` was already reduced to account for the full original allocation, these unvested tokens become permanently inaccessible.\n\n#### Impact\n\nLow. Unvested tokens allocated to disabled recipients become permanently locked in the contract, preventing their reallocation to other recipients.\n\n#### Recommendation\n\nAdd a function to reclaim unvested tokens from disabled recipients and withdraw them or return them to the `unallocated_supply` for reallocation.\n\n#### Developer Response"
+    },
+    {
+      "number": 17,
+      "title": "Missing Event for `recover_token()` in CliffEscrow",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nThe [`recover_token()`](https://github.com/yield-basis/yb-core/blob/74dcb46765081ef5170aa0cffcb8925f98cf84b6/contracts/dao/CliffEscrow.vy#L103-L103) function in CliffEscrow allows the designated `RECIPIENT` to sweep any ERC-20 (except YB) out of the contract, but it emits no event to record this action. As a result, any token recovery is completely invisible on-chain.\n\n#### Impact\n\nInformational. Missing on-chain evidence makes it impossible for off-chain watchers or block explorers to detect token sweeps.\n\n#### Recommendation\n\nEmit an event indicating token recoveries `log TokenRecovered(token=token.address, to=to, amount=amount)`.\n\n#### Developer Response\n\nFixed in [cf785ae276f308ba66e40fee8dc3da7bc97dff6c](https://github.com/yield-basis/yb-core/commit/cf785ae276f308ba66e40fee8dc3da7bc97dff6c)."
+    },
+    {
+      "number": 18,
+      "title": "Unused `NewGaugeWeight` Event in `GaugeController`",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\n`GaugeController` defines a `NewGaugeWeight` event but never emits it. Neither [`_checkpoint_gauge()`](https://github.com/yield-basis/yb-core/blob/74dcb46765081ef5170aa0cffcb8925f98cf84b6/contracts/dao/GaugeController.vy#L156-L156) nor [`vote_for_gauge_weights()`](https://github.com/yield-basis/yb-core/blob/74dcb46765081ef5170aa0cffcb8925f98cf84b6/contracts/dao/GaugeController.vy#L211-L211) ever logs `NewGaugeWeight`. Observers cannot reconstruct historic weight adjustments except via indirect state reads.\n\n#### Impact\n\nEmit the logs to ensure greater on-chain transparency.\n\n#### Recommendation\n\nEmit `NewGaugeWeight` after the gauge weights are updated.\n\n#### Developer Response\n\nRemoved the event. Fixed in [37f008a2edcea23b264fe5301ed9c370754740b0](https://github.com/yield-basis/yb-core/commit/37f008a2edcea23b264fe5301ed9c370754740b0)."
+    },
+    {
+      "number": 19,
+      "title": "Transfer clearance checker should be enforced during deployment",
+      "severity": "Informational",
+      "body": "The VotingEscrow contract allows veNFT transfers only when both sender and receiver hold max-duration locks and the sender has zero active votes. However, the zero-vote validation relies on an optional external checker that may not be set during deployment.\n\n#### Technical Details\n\nThe [`_ve_transfer_allowed()`](https://github.com/yield-basis/yb-core/blob/74dcb46765081ef5170aa0cffcb8925f98cf84b6/contracts/dao/VotingEscrow.vy#L507-L507) function delegates zero-vote validation to an external `TransferClearanceChecker`:\n\nWhen `transfer_clearance_checker` is unset (zero address), the zero-vote check is silently skipped, and only the max-lock condition is enforced.\n\n#### Impact\n\nInformational. If the deployer forgets to set the transfer clearance checker, the intended zero-vote requirement for transfers will not be enforced, potentially allowing transfers with active votes.\n\n#### Recommendation\n\nConsider requiring the transfer clearance checker to be set during deployment to ensure the intended transfer restrictions are always enforced. This can be done by:\n\n- Adding the checker address as a constructor parameter\n- Adding a check to ensure the checker is set before allowing transfers\n- Or implementing the zero-vote validation directly in the contract rather than delegating to an external checker\n\n#### Developer Response\n\nFixed in [2be7c58453159370c70dab6199250ddfe0b08a17](https://github.com/yield-basis/yb-core/commit/2be7c58453159370c70dab6199250ddfe0b08a17)."
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "repo": "yAudit/resupply-curvelend-report",
+  "githubUrl": "https://github.com/yAudit/resupply-curvelend-report",
+  "title": "Resupply CurveLend Operator",
+  "protocolName": "Resupply",
+  "protocolOverview": "The CurveLend Operator is a factory model for lending stables (crvUSD) into Curve lending markets (ERC-4626 vaults).",
+  "auditScope": "This audit covers 2 smart contracts totaling approximately 120 lines of code across 1.5 days of review.",
+  "overallAssessment": "The protocol presents a straightforward design for managing crvUSD allocation in a planned and permissioned fashion through its factory and operator architecture.",
+  "startDate": "2025-09-09",
+  "finishDate": "2025-09-10",
+  "auditors": [
+    "HHK",
+    "adriro"
+  ],
+  "commits": [
+    {
+      "label": null,
+      "hash": "650fe16b9b45abd56e2f064da19cebdd2c9a9c0b",
+      "url": "https://github.com/resupplyfi/resupply/commit/650fe16b9b45abd56e2f064da19cebdd2c9a9c0b"
+    },
+    {
+      "label": null,
+      "hash": "968bb07dc2e17fa30c7687c162460f872151fa2a",
+      "url": "https://github.com/resupplyfi/resupply/commit/968bb07dc2e17fa30c7687c162460f872151fa2a"
+    }
+  ],
+  "finalCommits": [],
+  "repositories": [
+    "https://github.com/resupplyfi/resupply"
+  ],
+  "auditResources": [
+    "Code repositories and documentation"
+  ],
+  "treeOfAuditedFiles": "src/dao/\n├── CurveLendMinterFactory.sol\n└── CurveLendOperator.sol",
+  "finalRemarks": "No major issues were detected during the review. Auditors recommend exercising caution when interacting with vaults susceptible to share price manipulation, to avoid sandwich attacks or precision issues while deploying capital.",
+  "nsloc": 120,
+  "evaluations": [],
+  "issues": [
+    {
+      "number": 2,
+      "title": "Limit reduction amount",
+      "severity": "Low",
+      "body": "#### Technical Details\n\nThe [`reduceAmount()`](https://github.com/resupplyfi/resupply/blob/650fe16b9b45abd56e2f064da19cebdd2c9a9c0b/src/dao/CurveLendOperator.sol#L80) function can be used to withdraw an arbitrary amount of assets from the market permissionlessly. The implementation refunds the factory only the difference with respect to the limit, and then returns any leftovers to the vault.\n\nThis withdrawal and redeposit cycle could have a negative impact on the operator's assets if the vault implements entry and/or exit fees, or due to rounding issues during share conversion, depending on the attacker's capacity to inflate share value.\n\n#### Impact\n\nLow.\n\n#### Recommendation\n\nValidate the reduction amount is within the intended difference (i.e., `amount <= mintedAmount - mintLimit`).\n\n#### Developer Response\n\nFixed in commit [002d863414af4c63f9b48e58d196049af91099dc](https://github.com/resupplyfi/resupply/commit/002d863414af4c63f9b48e58d196049af91099dc)."
+    },
+    {
+      "number": 3,
+      "title": "Consider using `previewRedeem()` to measure the operator's equity",
+      "severity": "Informational",
+      "body": "The implementation utilizes `convertToAssets()` to calculate the total assets held, which may not accurately reflect the actual effects of a share redemption.\n\n#### Technical Details\n\n[CurveLendMinterFactory.sol#L24](https://github.com/resupplyfi/resupply/blob/650fe16b9b45abd56e2f064da19cebdd2c9a9c0b/src/dao/CurveLendMinterFactory.sol#L24).\n[CurveLendOperator#L110](https://github.com/resupplyfi/resupply/blob/650fe16b9b45abd56e2f064da19cebdd2c9a9c0b/src/dao/CurveLendOperator.sol#L110-L110).\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nChange `convertToAssets()` for `previewRedeem()`.\n\n#### Developer Response\n\nFixed in commit [002d863414af4c63f9b48e58d196049af91099dc](https://github.com/resupplyfi/resupply/commit/002d863414af4c63f9b48e58d196049af91099dc)."
+    },
+    {
+      "number": 4,
+      "title": "Add a `shutdown` option when removing a market operator",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nWhen removing or replacing a market operator through [`addMarketOperator()`](https://github.com/resupplyfi/resupply/blob/650fe16b9b45abd56e2f064da19cebdd2c9a9c0b/src/dao/CurveLendMinterFactory.sol#L73-L73) or [`removeMarketOperator()`](https://github.com/resupplyfi/resupply/blob/650fe16b9b45abd56e2f064da19cebdd2c9a9c0b/src/dao/CurveLendMinterFactory.sol#L95-L95) the operator then needs to be called manually, once to reset the mint limit back to 0 through `setMintLimit()`, then to reimburse borrowed funds through `reduceAmount()` and finally `withdraw_profit()` to remove profits.\n\nWhile this could batched through a script and gnosis safe interface, it might be easier and less prone to errors to directly update the functions.\n\nTo simplify DAO operations during operator removal/replacement, consider adding a `bool shutdown` parameter to [`addMarketOperator()`](https://github.com/resupplyfi/resupply/blob/650fe16b9b45abd56e2f064da19cebdd2c9a9c0b/src/dao/CurveLendMinterFactory.sol#L73-L73) and [`removeMarketOperator()`](https://github.com/resupplyfi/resupply/blob/650fe16b9b45abd56e2f064da19cebdd2c9a9c0b/src/dao/CurveLendMinterFactory.sol#L95-L95), if set to `true` then call `setMintLimit(0)`, `reduceAmount(mintedAmount())` and `withdraw_profit()` on the operator.\n\nInside the operator contract, consider allowing `setMintLimit()` to be called by the factory and not only the owner.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nImplement the suggested changes.\n\n#### Developer Response\n\nAcknowledged."
+    }
+  ]
+}

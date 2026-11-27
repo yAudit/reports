@@ -1,6 +1,7 @@
 ---
 tags: ["vyper", "yearn"]
 title: 2026-06-Yearn-Vaults-v3.1.0
+repo: yAudit/yearn-vaults-v310-report
 description: Yearn Vaults v3.1.0
 ---
 

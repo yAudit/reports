@@ -1,6 +1,7 @@
 ---
 tags: ["solidity"]
 title: 2026-09-Tenka-Fi
+repo: yAudit/tenka-report
 description: Tenka Fi
 ---
 

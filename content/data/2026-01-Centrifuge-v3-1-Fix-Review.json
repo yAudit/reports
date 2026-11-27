@@ -1,0 +1,82 @@
+{
+  "repo": "yAudit/centrifuge-sherlock-fixes-report",
+  "githubUrl": "https://github.com/yAudit/centrifuge-sherlock-fixes-report",
+  "title": "Centrifuge v3.1 Fix Review",
+  "protocolName": "Centrifuge",
+  "protocolOverview": "Centrifuge v3.1 implements a decentralized protocol for on-chain asset management. It provides foundations for permissionless deployment and management of highly customizable tokenization solutions.",
+  "auditScope": "This audit covers 20 pull requests across 4 engineering days. The client's pull requests were reviewed in two separate batches: the first 16 pull requests were reviewed between December 3rd, 2025 and December 5th, 2025. The remaining 4 pull requests were submitted at a later date by the client and reviewed by the yAudit team on January 16th, 2026.",
+  "overallAssessment": "Centrifgue v3.1 represents a mature codebase with strong focus on its security stance. The fixes implemented to address findings identified in Centrifuge v3.1's audit competition were found to be correctly implemented, with researchers identifying only minor gas optimizations and styling recommendations to apply a final layer of polish to the codebase.",
+  "startDate": "2025-12-3",
+  "finishDate": "2026-01-18",
+  "auditors": [
+    "HHK",
+    "Watermelon"
+  ],
+  "commits": [
+    {
+      "label": null,
+      "hash": "34ff1f82806fb22680ef694eadca62fb86b62679",
+      "url": "commit [34ff1f82](https://github.com/centrifuge/protocol-internal/tree/34ff1f82806fb22680ef694eadca62fb86b62679)"
+    },
+    {
+      "label": null,
+      "hash": "6b9d36eabee48728486f377ea2766a5cd233c555",
+      "url": "[PR 10](https://github.com/centrifuge/protocol-internal/pull/10)"
+    }
+  ],
+  "finalCommits": [],
+  "repositories": [
+    "https://github.com/centrifuge/protocol-internal/"
+  ],
+  "auditResources": [
+    "Code repositories and documentation"
+  ],
+  "treeOfAuditedFiles": null,
+  "finalRemarks": "The reviewed pull requests were found to correctly address the related issues identified within the latest audit competition held by the Centrifuge team, uncovering a small set of issues related with gas consumption optimization and code readability.",
+  "nsloc": null,
+  "evaluations": [],
+  "issues": [
+    {
+      "number": 1,
+      "title": "Salt reuse check may be executed earlier to save gas in revert case",
+      "severity": "Gas",
+      "body": "#### Technical Details\n\n[`ShareClassManager.addShareClass`](https://github.com/centrifuge/protocol-internal/blob/34ff1f82806fb22680ef694eadca62fb86b62679/src/core/hub/ShareClassManager.sol#L36-L55) now requires the `salt` parameter's first 8 bytes to match the provided `poolId` value, in order to prevent `salt` values previously used for a pool from being used for a different pool.\n\nThe method also ensures that a given `salt` is used only once, by storing used values in its [`ShareClassManager.salts`](https://github.com/centrifuge/protocol-internal/blob/34ff1f82806fb22680ef694eadca62fb86b62679/src/core/hub/ShareClassManager.sol#L18) mapping and checking a new `salt` against such set: if the `salt` has already been used, a `AlreadyUsedSalt` error is returned.\n\nBoth checks may be moved to the beginning of the method, in order to marginally reduce the gas consumed by the method in both unhappy paths.\n\n#### Impact\n\nGas optimization.\n\n#### Recommendation\n\nMove the code related to the mentioned checks to the beginning of the method:\n\n```diff\n@@ -38,6 +38,10 @@ contract ShareClassManager is Auth, IShareClassManager {\n         auth\n         returns (ShareClassId scId_)\n     {\n+        PoolId prefixedPoolId = PoolId.wrap(uint64(bytes8(salt)));\n+        require(poolId == prefixedPoolId, InvalidSalt());\n+        require(!salts[salt], AlreadyUsedSalt());\n+\n         scId_ = previewNextShareClassId(poolId);\n \n         uint32 index = ++shareClassCount[poolId];\n@@ -45,9 +49,6 @@ contract ShareClassManager is Auth, IShareClassManager {\n \n         ShareClassMetadata storage meta = _updateMetadata(poolId, scId_, name, symbol);\n \n-        PoolId prefixedPoolId = PoolId.wrap(uint64(bytes8(salt)));\n-        require(poolId == prefixedPoolId, InvalidSalt());\n-        require(!salts[salt], AlreadyUsedSalt());\n         salts[salt] = true;\n         meta.salt = salt;\n```\n\n#### Developer Response\n\nFixed by [9eb2a2d](https://github.com/centrifuge/protocol-internal/commit/9eb2a2d73e2863bed6cdc854e1c50176e0d896ae)."
+    },
+    {
+      "number": 2,
+      "title": "Missing event emission in `BatchRequestManager.setEpochIds`",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\n[`BatchRequestManager.setEpochIds`](https://github.com/centrifuge/protocol-internal/blob/34ff1f82806fb22680ef694eadca62fb86b62679/src/vaults/BatchRequestManager.sol#L98-L100) implements functionality for a `BatchRequestManager` ward to override values in `epochId` mapping during a migration from V3's `ShareClassManager` to V3.1's `BatchRequestManager`. \n\nThe method could benefit from an event emission in order for off-chain components to be able to track calls to the highlighted method.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nDefine an `EpochIdModified(PoolId pool)` event and log it within the highlighted method:\n\n```diff\n@@ -94,9 +94,12 @@ contract BatchRequestManager is Auth, BatchedMulticall, IBatchRequestManager {\n         _;\n     }\n \n+    event EpochIdModified(PoolId poolId, ShareClassId scId, AssetId assetId, EpochId epochIdData);\n+\n     /// @dev used only for migrations\n     function setEpochIds(PoolId poolId, ShareClassId scId, AssetId assetId, EpochId memory epochIdData) external auth {\n         epochId[poolId][scId][assetId] = epochIdData;\n+        emit EpochIdModified(poolId, scId, assetId, epochIdData);\n     }\n```\n\n#### Developer Response\n\nFixed by [0eb5d40](https://github.com/centrifuge/protocol-internal/pull/75/commits/0eb5d404d56233f2e594b4b696f6908817f023b1)"
+    },
+    {
+      "number": 3,
+      "title": "Missing nastpec documentation for `extraGasLimit` param in `ISpoke.request`",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\n[`ISpoke.request`](https://github.com/centrifuge/protocol-internal/blob/34ff1f82806fb22680ef694eadca62fb86b62679/src/core/spoke/interfaces/ISpoke.sol#L236-L251) now accepts an `extraGasLimit` parameter in order for callers to provide an additional gas stipend for cross-chain execution.\n\nThe highlighted method's natspec documentation is missing a description for the `extraGasLimit` parameter.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nAdd a description for the `extraGasLimit` to the highlighted method's documentation.\n\n#### Developer Response\n\nFixed by [740efd3](https://github.com/centrifuge/protocol-internal/pull/75/commits/740efd3c2f69dc3d950fabe6f47b1078a494ba63)."
+    },
+    {
+      "number": 4,
+      "title": "Missing event inside `SubsidyManager`",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nThe `SubsidyManager` contract emits a `WithdrawSubsidy` event inside [`withdraw()`](https://github.com/centrifuge/protocol-internal/blob/34ff1f82806fb22680ef694eadca62fb86b62679/src/utils/SubsidyManager.sol#L42-L42) but not inside [`withdrawAll()`](https://github.com/centrifuge/protocol-internal/blob/34ff1f82806fb22680ef694eadca62fb86b62679/src/utils/SubsidyManager.sol#L53-L53). \n\nSince both functions have similar behavior, with the main difference being that [`withdrawAll()`](https://github.com/centrifuge/protocol-internal/blob/34ff1f82806fb22680ef694eadca62fb86b62679/src/utils/SubsidyManager.sol#L53-L53) withdraws the entire available balance, it seems expected that it would also emit the `WithdrawSubsidy` event.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nEmit `WithdrawSubsidy` event inside [`withdrawAll()`](https://github.com/centrifuge/protocol-internal/blob/34ff1f82806fb22680ef694eadca62fb86b62679/src/utils/SubsidyManager.sol#L53-L53).\n\n```diff\nfunction withdrawAll(PoolId poolId, address to) external auth returns (address, uint256) {\n...\n   refund.withdrawFunds(to, amount);\n+  emit WithdrawSubsidy(poolId, to, amount);\n\n   return (address(refund), amount);\n}\n```\n\n#### Developer Response\n\nFixed by [7934e82](https://github.com/centrifuge/protocol-internal/pull/75/changes/7934e8268c4489609e8d9ef5c1c678be16e4156b)."
+    },
+    {
+      "number": 5,
+      "title": "Cache `reservedBy` mapping to avoid duplicate storage reads",
+      "severity": "Gas",
+      "body": "#### Technical Details\n\nThe [`reserve()`](https://github.com/centrifuge/protocol-internal/blob/34ff1f82806fb22680ef694eadca62fb86b62679/src/core/spoke/PoolEscrow.sol#L54-L54) and [`unreserve()`](https://github.com/centrifuge/protocol-internal/blob/34ff1f82806fb22680ef694eadca62fb86b62679/src/core/spoke/PoolEscrow.sol#L68-L68) functions load the `reservedBy` mapping twice when they could load it once by declaring `newReservedAmount` earlier in the function.\n\n#### Impact\n\nGas savings.\n\n#### Recommendation\n\nDeclare `newReservedAmount` earlier and use it instead of incrementing.\n\n```diff\nfunction reserve(...) external auth {\n+   uint128 newReservedAmount = reservedBy[scId][caller][reason][asset][tokenId] + value;\n-   reservedBy[scId][caller][reason][asset][tokenId] += value;\n+   reservedBy[scId][caller][reason][asset][tokenId] = newReservedAmount;\n    holding_.reserved += value;\n\n-   uint128 newReservedAmount = reservedBy[scId][caller][reason][asset][tokenId];\n    emit IncreaseReserve(asset, tokenId, poolId, scId, caller, reason, value, newReservedAmount);\n}\n```\n\n```diff\nfunction unreserve(...) external auth {\n+   uint128 newReservedAmount = reservedBy[scId][caller][reason][asset][tokenId] - value;\n-   reservedBy[scId][caller][reason][asset][tokenId] -= value;\n+   reservedBy[scId][caller][reason][asset][tokenId] = newReservedAmount;\n    holding_.reserved -= value;\n\n-   uint128 newReservedAmount = reservedBy[scId][caller][reason][asset][tokenId];\n    emit DecreaseReserve(asset, tokenId, poolId, scId, caller, reason, value, newReservedAmount);\n}\n```\n\n#### Developer Response\n\nFixed by [85efcfc](https://github.com/centrifuge/protocol-internal/pull/75/commits/85efcfc9391241702489079405ad7ca1ea5be700)."
+    },
+    {
+      "number": 6,
+      "title": "Outdated README references global escrow",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nThe vault [README.md](https://github.com/centrifuge/protocol-internal/blob/34ff1f82806fb22680ef694eadca62fb86b62679/src/vaults/README.md#L11-L11) still mentions global escrow even though it has been replaced with pool-specific escrow, which can be confusing for future auditors and integrators:\n\n- \"The vault enforces controller/owner validation for all operations and integrates with the global escrow for asset custody\"\n- \"coordinating with BalanceSheet for share issuance/burning and the global escrow for asset custody.\"\n- Also still present in some diagrams\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nUpdate the README and diagrams to reference pool-specific escrow changes made.\n\n#### Developer Response\n\nFixed by [bd06c52](https://github.com/centrifuge/protocol-internal/pull/75/commits/bd06c52ed3011c991fc1b43f9f79e46f50d7a208)."
+    },
+    {
+      "number": 7,
+      "title": "Unused named return parameter in `AsyncRequestManager.maxMint`",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\n[`AsyncRequestManager.maxMint`](https://github.com/centrifuge/protocol-internal/blob/34ff1f82806fb22680ef694eadca62fb86b62679/src/vaults/AsyncRequestManager.sol#L553-L558) defines the `shares` named return parameter but fails to assign a value to it.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nMaintain consistency with the rest of the `max*` methods and assign the return value to `shares`:\n\n```diff\n@@ -554,7 +554,7 @@ contract AsyncRequestManager is Auth, IAsyncRequestManager, ITrustedContractUpda\n         if (!_canTransfer(\n                 vault_, address(balanceSheet.escrow(vault_.poolId())), user, uint256(investments[vault_][user].maxMint)\n             )) return 0;\n-        return uint256(investments[vault_][user].maxMint);\n+        shares = uint256(investments[vault_][user].maxMint);\n     }\n \n     /// @inheritdoc IRedeemManager\n```\n\n#### Developer Response\n\nFixed by [2706805](https://github.com/centrifuge/protocol-internal/pull/75/commits/27068057a18be7e12a47d3df3450e09f8985a9e0)."
+    }
+  ]
+}

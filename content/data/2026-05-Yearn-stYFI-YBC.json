@@ -1,0 +1,112 @@
+{
+  "repo": "yAudit/yearn-stYFI-YBC",
+  "githubUrl": "https://github.com/yAudit/yearn-stYFI-YBC",
+  "title": "Yearn stYFI - YBC",
+  "protocolName": "Yearn",
+  "protocolOverview": "The system introduces stYFI and llYFI middlewares that sync staked balances to a WeightAggregator with a weight ramping mechanism. It also implements the Yearn Blue Chip (YBC) collective, featuring a dedicated WeightAggregator for member-only reward tracking and voting, a reward distribution system, and an internal election contract for membership management.",
+  "auditScope": "This audit covers 9 smart contracts totaling approximately 1040 lines of code across 4 days of review.",
+  "overallAssessment": "The codebase is clean, modular, and builds upon mature stYFI primitives. It features robust role-based access control and solid test coverage. While the mathematics are generally accurate, minor edge cases exist in the voting weight ramping logic. Documentation and monitoring are well-implemented, ensuring a high-quality integration with Yearn infrastructure.",
+  "startDate": "2026-04-27",
+  "finishDate": "2026-05-01",
+  "auditors": [
+    "Panda",
+    "Watermelon"
+  ],
+  "commits": [
+    {
+      "label": null,
+      "hash": "26001f97757e092fb65979665679b49f713c45da",
+      "url": "https://github.com/yearn/stYFI/tree/26001f97757e092fb65979665679b49f713c45da"
+    }
+  ],
+  "finalCommits": [],
+  "repositories": [
+    "https://github.com/yearn/stYFI/"
+  ],
+  "auditResources": [
+    "Code repositories and documentation",
+    "Additional resources: whitepaper, previous audits, etc."
+  ],
+  "treeOfAuditedFiles": "├── ybc\n│   ├── YBC.vy\n│   ├── YBCBonusRecipient.vy\n│   ├── YBCElection.vy\n│   ├── YBCRewardDistributor.vy\n│   └── YBCWeightAggregator.vy\n├── LiquidLockerMiddleware.vy\n├── SnapshotMeasure.vy\n├── StakingMiddleware.vy\n└── WeightAggregator.vy",
+  "finalRemarks": null,
+  "nsloc": 1040,
+  "evaluations": [
+    {
+      "category": "access_control",
+      "score": "Good",
+      "description": "Robust role-based access control, though some management functions could be more restrictive."
+    },
+    {
+      "category": "mathematics",
+      "score": "Good",
+      "description": "Accurate calculations generally, with minor edge cases in voting weight ramping logic."
+    },
+    {
+      "category": "complexity",
+      "score": "Excellent",
+      "description": "Clean and modular architecture, keeping the system easy to reason about."
+    },
+    {
+      "category": "libraries",
+      "score": "Excellent",
+      "description": "Effective use of standard Vyper patterns and established Yearn infrastructure."
+    },
+    {
+      "category": "decentralization",
+      "score": "Good",
+      "description": "Balanced governance model with typical Yearn management controls."
+    },
+    {
+      "category": "code_stability",
+      "score": "Excellent",
+      "description": "Mature codebase building upon proven stYFI primitives."
+    },
+    {
+      "category": "documentation",
+      "score": "Good",
+      "description": "Clear code and reasonably well-documented interfaces and logic."
+    },
+    {
+      "category": "monitoring",
+      "score": "Good",
+      "description": "Adequate event emission for tracking state changes and reward distributions."
+    },
+    {
+      "category": "testing",
+      "score": "Good",
+      "description": "Solid test coverage supported by functional proofs of concept for reported issues."
+    }
+  ],
+  "issues": [
+    {
+      "number": 1,
+      "title": "Epoch boundary arithmetic overhead",
+      "severity": "Gas",
+      "body": "#### Technical Details\n\nveYFI unlock times are rounded to weekly boundaries. The stYFI `genesis` is also week-aligned, and each stYFI epoch is two weeks, so epoch boundaries are a subset of veYFI unlock boundaries.\n\n`SnapshotMeasure._weight()` still computes the next epoch boundary on each `balanceOf()` call before checking `unlock_time >= epoch_end`.\n\n#### Impact\n\nGas savings.\n\n#### Recommendation\n\nRemove the unnecessary code.\n\n#### Developer Response\n\nACK, but this contract is only used for offchain purposes (voting on snapshot.org) so we are not concerned with gas usage"
+    },
+    {
+      "number": 2,
+      "title": "`YBCRewardDistributor.sweep()` shouldn't be allowed to sweep rewards",
+      "severity": "Medium",
+      "body": "#### Technical Details\n\n`YBCRewardDistributor.sweep()` allows management to transfer out any token held by the contract, including the configured reward token.\n\nThe reward token balance is part of the distributor's accounting. `last_balance` tracks the amount of reward tokens backing already-accounted rewards, and `pending_rewards` tracks member claims against that balance. If management sweeps the reward token while the distributor is still live, the on-chain token balance can become lower than `last_balance` and/or lower than the amount needed to satisfy pending member claims.\n\nThis can cause future claims to revert due to insufficient token balance. It can also cause future reward synchronization to revert when `_sync_integral()` computes `balance - self.last_balance` after the reward token balance has been reduced externally.\n\nSweeping the reward token is only safe after the distributor has been killed, because `kill()` permanently disables new reward claims from the YBC while preserving access to rewards that were already accounted.\n\n#### Impact\n\nManagement can accidentally or intentionally remove reward tokens that are still needed for live distribution, causing member claims and reward synchronization to fail.\n\n#### Recommendation\n\nPrevent sweeping the configured reward token unless `killed` is true.\n\nFor example, add a guard in `sweep()`:\n\n```vyper\nassert _token != token.address or self.killed\n```\n\nIf sweeping reward tokens after kill is intended to recover only excess funds, consider also documenting the operational requirement to avoid sweeping tokens needed for already-accrued member claims.\n\n#### Developer Response\n\nFixed in [bed5c0c](https://github.com/yearn/stYFI/pull/4/changes/bed5c0cd4a7f546b79ba079dd8cffba9ebdbc764)."
+    },
+    {
+      "number": 3,
+      "title": "Inconsistent naming of the `Hooks` interface across contracts",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nThe same `Hooks` interface is referred to as `IHooks` in most contracts, but as `IStakedHooks` in the YBC contracts. Specifically, the interface is declared as `IHooks` in:\n\n- [`StakingMiddleware.vy#L15`](https://github.com/yearn/stYFI/blob/26001f97757e092fb65979665679b49f713c45da/contracts/StakingMiddleware.vy#L15)\n- [`LiquidLockerMiddleware.vy#L11`](https://github.com/yearn/stYFI/blob/26001f97757e092fb65979665679b49f713c45da/contracts/LiquidLockerMiddleware.vy#L11)\n- [`DelegatedStakingRewardDistributor.vy#L15`](https://github.com/yearn/stYFI/blob/26001f97757e092fb65979665679b49f713c45da/contracts/DelegatedStakingRewardDistributor.vy#L15)\n- [`StakedYFI.vy#L18`](https://github.com/yearn/stYFI/blob/26001f97757e092fb65979665679b49f713c45da/contracts/StakedYFI.vy#L18)\n- [`WeightAggregator.vy#L18`](https://github.com/yearn/stYFI/blob/26001f97757e092fb65979665679b49f713c45da/contracts/WeightAggregator.vy#L18)\n- [`LiquidLockerRewardDistributor.vy#L16`](https://github.com/yearn/stYFI/blob/26001f97757e092fb65979665679b49f713c45da/contracts/LiquidLockerRewardDistributor.vy#L16)\n- [`LiquidLockerDepositor.vy#L20`](https://github.com/yearn/stYFI/blob/26001f97757e092fb65979665679b49f713c45da/contracts/LiquidLockerDepositor.vy#L20)\n- [`StakingRewardDistributor.vy#L16`](https://github.com/yearn/stYFI/blob/26001f97757e092fb65979665679b49f713c45da/contracts/StakingRewardDistributor.vy#L16)\n- [`DelegatedStakedYFI.vy#L21`](https://github.com/yearn/stYFI/blob/26001f97757e092fb65979665679b49f713c45da/contracts/DelegatedStakedYFI.vy#L21)\n\nWhile it is declared as `IStakedHooks` in:\n\n- [`ybc/YBCRewardDistributor.vy#L23`](https://github.com/yearn/stYFI/blob/26001f97757e092fb65979665679b49f713c45da/contracts/ybc/YBCRewardDistributor.vy#L23)\n- [`ybc/YBCWeightAggregator.vy#L17`](https://github.com/yearn/stYFI/blob/26001f97757e092fb65979665679b49f713c45da/contracts/ybc/YBCWeightAggregator.vy#L17)\n\nUsing two different names for the same interface forces readers to mentally reconcile the two identifiers when navigating the codebase, and obscures the fact that YBC contracts implement and consume the very same hooks contract used by the rest of the system.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nAdopt a single name for the interface across all contracts. Renaming the `IStakedHooks` declarations in `YBCRewardDistributor.vy` and `YBCWeightAggregator.vy` to `IHooks` will align the YBC contracts with the convention already used throughout the rest of the codebase.\n\n#### Developer Response\n\nUpdated in [b4440bc](https://github.com/yearn/stYFI/pull/4/changes/b4440bc67f83c057b1c0387adbdf4bc809d6b5ad)."
+    },
+    {
+      "number": 4,
+      "title": "Single ramping bucket lets hooks distort voting weight",
+      "severity": "High",
+      "body": "#### Technical Details\n\n`WeightAggregator` and `YBCWeightAggregator` track each account's immature stake with a single `(ramping, time)` bucket. On every increment, `_update_staked()` decays the existing `ramping` value, adds the incoming amount, and then sets `time = block.timestamp` for the entire combined remainder.\n\nThis means any increment hook can rewrite the ramp schedule for stake that was already immature. The newly added amount should start ramping from the current timestamp, but the account's previous immature balance should keep its existing ramp schedule. Zero or net-neutral hooks should not refresh prior ramping state at all.\n\nThis creates two related attack vectors:\n\n1. **Same-epoch self-inflation:** a user can trigger a zero-amount deposit/mint, or stake and unstake dust in the same epoch. If the user's net stake is not greater than the epoch-start stake, `weight()` uses the refreshed current packed state, allowing post-snapshot ramp progress to increase current-epoch voting weight.\n2. **Future-epoch dust griefing:** a third party can transfer dust staking shares to a victim before maturation. The victim cannot reject the inbound transfer, and the hook refreshes the timestamp for the victim's whole remaining immature balance, delaying future voting-weight maturation.\n\nExample:\n\n1. Alice has `100 YFI` still ramping.\n2. Alice can use a zero or net-neutral hook after the epoch snapshot to inflate her current-epoch weight.\n3. Bob can instead transfer `1 wei` of staking shares to Alice before later snapshots, resetting the remaining ramp for Alice's existing immature balance and suppressing her future weight.\n\nAffected paths:\n\n- `WeightAggregator.on_transfer()` and `on_stake()` call `_update_staked(..., INCREMENT)` for recipients and stakers.\n- `WeightAggregator._update_staked()` rewrites `time = block.timestamp` for the combined ramping amount.\n- `YBCWeightAggregator.on_transfer()` and `on_stake()` repeat the same pattern for YBC voting weight.\n\n#### Impact\n\nHigh. Voting weight can be distorted without a meaningful stake change. Users can increase their own current-epoch weight above the intended snapshot, while third parties can suppress a victim's future global or YBC voting weight with dust transfers.\n\n#### Recommendation\n\nDo not collapse all immature stake into one timestamped bucket. Track new inflows separately from previously immature stake, for example with per-epoch or per-deposit ramp buckets, and compute weight as the sum of those buckets. This ensures an inbound transfer only ramps the transferred amount and cannot reset prior vesting progress.\n\nAlso ignore zero-amount hooks before mutating aggregator state, and add regression tests for same-epoch zero/net-neutral hooks and dust transfers into both aggregators.\n\n#### Developer Response\n\nBecause of this and other issues independently found with the ramping mechanism we have opted to replace it entirely and store weights for 4 sequential epochs instead, see commit [0f0f779](https://github.com/yearn/stYFI/pull/4/commits/0f0f7799b2a433283910158163180072a81a8fee)"
+    },
+    {
+      "number": 5,
+      "title": "`set_ramp_length` dilutes already accrued ramping for existing members",
+      "severity": "Low",
+      "body": "#### Technical Description\n\nBoth `WeightAggregator.set_ramp_length` and `YBCWeightAggregator.set_ramp_length` update the global `ramp_length` value that is read live from storage by `_staked` and `_update_staked` rather than being snapshotted at the time of each member's last stake update.\n\nBoth contracts' `_staked` method computes a member's weighted balance by scaling the still-ramping portion by the ratio of elapsed time over `ramp_length`. `_update_staked` similarly recomputes the residual ramping against the current `ramp_length` on every stake change. Since both methods read the live global value, any update to `ramp_length` immediately changes the result of these computations for every member who is still mid-ramp.\n\nAs a consequence, if `management` increases `ramp_length`, the elapsed-time fraction shrinks for every active member, retroactively diluting ramping that has already been accrued.\n\n#### Impact\n\nLow.\n\n#### Recommendation\n\nImplement a ramp length snapshotting mechanism in both contracts so that members continue to ramp under the value in effect at the time of their most recent stake update, while new stake actions adopt the updated `ramp_length`.\n\nA possible approach is to extend the per-account packed state to include the `ramp_length` that applied at the time of the last `_update_staked` call, and read that snapshotted value within `_staked` and on the next `_update_staked` invocation rather than the current global value.\n\n#### Developer Response\n\nThis is no longer relevant, because of issues found with the ramping mechanism we have opted to replace it entirely and store weights for 4 sequential epochs instead, see commit [0f0f779](https://github.com/yearn/stYFI/pull/4/commits/0f0f7799b2a433283910158163180072a81a8fee)."
+    }
+  ]
+}

@@ -1,0 +1,108 @@
+{
+  "repo": "yAudit/twyne-aave-report",
+  "githubUrl": "https://github.com/yAudit/twyne-aave-report",
+  "title": "Twyne Aave Integration",
+  "protocolName": "Twyne",
+  "protocolOverview": "Twyne is a credit delegation protocol that lets borrowers rent unused borrowing power from other lenders to boost their Liquidation LTV. Lenders earn additional yield while borrowers get to ramp up their leverage or insulate their debt.",
+  "auditScope": "This audit covers 9 smart contracts totaling approximately 1150 lines of code across 3.5 days of review.",
+  "overallAssessment": "The audit of Twyne's Aave V3 integration identified no critical or high-severity vulnerabilities, indicating a solid implementation that maintains the security standards of the protocol's foundation. Two medium-severity findings were discovered, primarily related to operational issues under high utilization scenarios and incompatibilities between Aave's reward mechanism and Twyne's multi-vault architecture.",
+  "startDate": "2025-11-03",
+  "finishDate": "2025-11-06",
+  "auditors": [
+    "HHK",
+    "adriro"
+  ],
+  "commits": [],
+  "finalCommits": [],
+  "repositories": [
+    "https://github.com/0xTwyne/twyne-contracts",
+    "https://github.com/0xTwyne/aave-v3-aToken-wrapper"
+  ],
+  "auditResources": [
+    "Code repositories and documentation"
+  ],
+  "treeOfAuditedFiles": "0xTwyne/twyne-contracts/src\n├── Periphery\n│   └── AaveV3Wrapper.sol\n├── TwyneFactory\n│   └── CollateralVaultFactory.sol\n└── twyne\n    ├── AaveV3ATokenWrapperOracle.sol\n    ├── AaveV3CollateralVault.sol\n    ├── CollateralVaultBase.sol\n    ├── EulerCollateralVault.sol\n    └── VaultManager.sol\n\n0xTwyne/aave-v3-aToken-wrapper/src\n├── AaveV3ATokenWrapper.sol\n└── CustomERC4626StataTokenUpgradeable.sol",
+  "finalRemarks": "TODO",
+  "nsloc": 1150,
+  "evaluations": [],
+  "issues": [
+    {
+      "number": 1,
+      "title": "Avoid unnecessary zero transfer in `rebalanceATokens_CV()`",
+      "severity": "Gas",
+      "body": "#### Technical Details\n\nIn [`rebalanceATokens_CV()`](https://github.com/0xTwyne/aave-v3-aToken-wrapper/blob/ae1ca5641f7c148f97084640017cf6140a899183/src/AaveV3ATokenWrapper.sol#L131), the function transfers aTokens to the collateral vault when `shares >= actualScaledBalance`. When both values are equal, this results in a zero transfer operation.\n\n#### Impact\n\nGas savings.\n\n#### Recommendation\n\nReplace the `else` condition with `else if (shares > actualScaledBalance)`.\n\n#### Developer Response\n\nFixed in commit [2f0f014171b9ecfef7ea6d88d719e536d69d3098c36be4c3aa19559f18db9015L138](https://github.com/0xTwyne/aave-v3-aToken-wrapper/pull/2/files#diff-2f0f014171b9ecfef7ea6d88d719e536d69d3098c36be4c3aa19559f18db9015L138)."
+    },
+    {
+      "number": 2,
+      "title": "Broken reward accounting in wrapped aToken contract",
+      "severity": "Medium",
+      "body": "The wrapped aToken contract's reward accounting system is incompatible with the protocol's architecture, leading to lost farming rewards and incorrect reward distribution.\n\n#### Technical Details\n\nWhen users borrow wrapped aTokens from the intermediate vault, [`rebalanceATokens_CV()`](https://github.com/0xTwyne/aave-v3-aToken-wrapper/blob/ae1ca5641f7c148f97084640017cf6140a899183/src/AaveV3ATokenWrapper.sol#L131-L131) unwraps them on the collateral vault so AAVE recognizes the collateral. This leaves the wrapped aToken contract virtually backed rather than physically backed, as the underlying aTokens are held by the collateral vault.\n\nThe forked StataToken reward accounting assumes 100% of aTokens remain in the wrapped contract. However, aTokens used for borrowing are held by the collateral vault, which receives their farming rewards.\n\nThe contract `ERC20AaveLMUpgradeable` that is inherited by the wrapped aToken uses the `INCENTIVES_CONTROLLER`'s [`getAssetIndex()`](https://github.com/0xTwyne/aave-v3-aToken-wrapper/blob/ae1ca5641f7c148f97084640017cf6140a899183/lib/aave-v3-origin/src/contracts/extensions/stata-token/ERC20AaveLMUpgradeable.sol#L119-L119) function to determine rewards. When looking at the [`INCENTIVES_CONTROLLER` function code](https://github.com/aave-dao/aave-v3-origin/blob/f53f03cf95ea5c3528016e849bf98210abdd5bcb/src/contracts/rewards/RewardsDistributor.sol#L487), we can observe that this value is determined using the total value of the aToken.\n\n```solidity\n_getAssetIndex(\n        rewardData,\n        IScaledBalanceToken(asset).scaledTotalSupply(),\n        10 ** _assets[asset].decimals\n      );\n```\n\nThis creates several issues:\n\n- The wrapped contract incorrectly tracks rewards for aTokens it no longer holds\n- Collateral vaults receive farming rewards but cannot claim them\n- Users claiming rewards from the wrapped contract receive inflated amounts on a first-come-first-serve basis\n- Wrapped aTokens lent on the intermediate vault generate rewards that the vault cannot claim\n\n#### Impact\n\nMedium. The farming rewards system is broken, resulting in lost rewards and incorrect distributions.\n\n#### Recommendation\n\nRemove the current farming reward system from the wrapped aToken contract. \n\nInstead, implement an `onlyOwner()` function allowing the Twyne admin to claim farming rewards from both the wrapped contract and collateral vaults. Consider redistributing rewards through a simpler system like Merkl that is compatible with intermediate vaults.\n\n#### Developer Response\n\nFixed in [PR#2](https://github.com/0xTwyne/aave-v3-aToken-wrapper/pull/2) & [PR#194](https://github.com/0xTwyne/twyne-contracts/pull/194)."
+    },
+    {
+      "number": 3,
+      "title": "Unused `AAVE_POOL` variable",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nThe variable `AAVE_POOL` is never used in the [AaveV3Wrapper](https://github.com/0xTwyne/twyne-contracts/blob/d83d60155f64a1f0fcd98a813038f6b37d2dd101/src/Periphery/AaveV3Wrapper.sol#L31) contract.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nRemove the variable.\n\n#### Developer Response\n\nFixed in [PR#192](https://github.com/0xTwyne/twyne-contracts/pull/192)."
+    },
+    {
+      "number": 4,
+      "title": "Inconsistent contract versions",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nThe [`CollateralVaultFactory`](https://github.com/0xTwyne/twyne-contracts/blob/d83d60155f64a1f0fcd98a813038f6b37d2dd101/src/TwyneFactory/CollateralVaultFactory.sol#L57-L57) contract was updated to return `2` as its version, but the [`VaultManager`](https://github.com/0xTwyne/twyne-contracts/blob/d83d60155f64a1f0fcd98a813038f6b37d2dd101/src/twyne/VaultManager.sol#L62-L62) and [`EulerCollateralVault`](https://github.com/0xTwyne/twyne-contracts/blob/d83d60155f64a1f0fcd98a813038f6b37d2dd101/src/twyne/EulerCollateralVault.sol#L53-L53) contracts still return `1` in `version()` despite being updated since the last deployment.\n\n#### Impact\n\nInformational. Inconsistent versioning between contracts.\n\n#### Recommendation\n\nAlign contract versions for contracts that were deployed previously then modified.\n\n#### Developer Response\n\nFixed in [PR#192](https://github.com/0xTwyne/twyne-contracts/pull/192)."
+    },
+    {
+      "number": 5,
+      "title": "Redemption may fail due to unavailable aToken backing",
+      "severity": "Medium",
+      "body": "#### Technical Details\n\nIn [`redeemUnderlying()`](https://github.com/0xTwyne/twyne-contracts/blob/d83d60155f64a1f0fcd98a813038f6b37d2dd101/src/twyne/CollateralVaultBase.sol#L342-L342) and [`handleExternalLiquidation()`](https://github.com/0xTwyne/twyne-contracts/blob/d83d60155f64a1f0fcd98a813038f6b37d2dd101/src/twyne/AaveV3CollateralVault.sol#L212), the functions attempt to redeem wrapped aTokens for underlying assets and transfer them to the user. However, during periods of high utilization of the intermediate pool, most aTokens may be transferred to collateral vaults and are unavailable on the wrapped contract.\n\nBoth functions call `redeem()` before `rebalanceATokens_CV()`, which requires the wrapped tokens to be redeemed without first retrieving aTokens from the collateral vault. During high intermediate vault utilization, this causes redemption to fail and the transaction to revert, even though the tokens are technically available on the collateral vault.\n\n#### Impact\n\nMedium. `redeemUnderlying()` and `handleExternalLiquidation()` may revert when intermediate vault utilization is high.\n\n#### Recommendation\n\nCall `rebalanceATokens_CV()` before `redeem()` in `handleExternalLiquidation()`. \nOverride `redeemUnderlying()` in the AAVE integration vault and call `_handleExcessCredit()` before `redeem()`.\n\n#### Developer Response\n\nFixed in [PR#189](https://github.com/0xTwyne/twyne-contracts/pull/189/files)."
+    },
+    {
+      "number": 6,
+      "title": "Insufficient precision in `categoryId` mapping for future AAVE market integrations",
+      "severity": "Low",
+      "body": "The `categoryId` mapping may lack precision for future AAVE market integrations on the same chain.\n\n#### Technical Details\n\nThe [`CollateralVaultFactory`](https://github.com/0xTwyne/twyne-contracts/blob/d83d60155f64a1f0fcd98a813038f6b37d2dd101/src/TwyneFactory/CollateralVaultFactory.sol#L27)] has an internal mapping `categoryId` that can be set through `setCategoryId()` by the owner. This mapping defines which category ID new AAVE collateral vaults should use based on collateral and target asset. Category 0 uses the default LTV, while other categories enable eMode for higher LTV on specific assets.\n\nThe contract doesn't account for AAVE having multiple markets on some chains. For example, mainnet has Core, Prime, Horizon RWA, and EtherFi markets. While Twyne currently targets only Core, future support for other AAVE markets would cause the factory to use the same category ID for all collateral/target asset pairs across different markets, potentially resulting in invalid IDs or unintended categories.\n\n#### Impact\n\nLow. Future AAVE integrations on the same chain may cause issues.\n\n#### Recommendation\n\nAdd a `targetVault` parameter to the mapping:\n\n```diff\n- mapping(address collateralAsset => mapping( address targetAsset => uint8 categoryId)) public categoryId;\n+ mapping(address targetVault => mapping( address collateralAsset => mapping( address targetAsset => uint8 categoryId))) public categoryId;\n```\n\nAnd update the `setCategoryId()` function.\n\n#### Developer Response\n\nFixed in [PR#191](https://github.com/0xTwyne/twyne-contracts/pull/191)."
+    },
+    {
+      "number": 7,
+      "title": "Update natspec documentation",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nNatspec can be updated throughout the code to improve documentation:\n\n- Natspec for [`handleExternalLiquidation()`](https://github.com/0xTwyne/twyne-contracts/blob/d83d60155f64a1f0fcd98a813038f6b37d2dd101/src/twyne/AaveV3CollateralVault.sol#L212) can be changed for AAVE integration:\n```diff\n- to be called if the vault is liquidated by Euler\n+ to be called if the vault is liquidated by AAVE\n```\n- Missing natspec for [`setOracleResolvedVaultForOracleRouter()`](https://github.com/0xTwyne/twyne-contracts/blob/d83d60155f64a1f0fcd98a813038f6b37d2dd101/src/twyne/VaultManager.sol#L177).\n- Missing `VaultType _vaultType` natspec in [`createCollateralVault()`](https://github.com/0xTwyne/twyne-contracts/blob/d83d60155f64a1f0fcd98a813038f6b37d2dd101/src/TwyneFactory/CollateralVaultFactory.sol#L104).\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nUpdate the natspec.\n\n#### Developer Response\n\nFixed in [PR#192](https://github.com/0xTwyne/twyne-contracts/pull/192)."
+    },
+    {
+      "number": 8,
+      "title": "Missing event in `setCategoryId()`",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nThe [`setCategoryId()`](https://github.com/0xTwyne/twyne-contracts/blob/d83d60155f64a1f0fcd98a813038f6b37d2dd101/src/TwyneFactory/CollateralVaultFactory.sol#L84) function doesn't emit an event when updating the category configuration.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nEmit an event in `setCategoryId()`.\n\n#### Developer Response\n\nFixed in [PR#192](https://github.com/0xTwyne/twyne-contracts/pull/192)."
+    },
+    {
+      "number": 9,
+      "title": "`skim()` can use modifier `onlyBorrowerAndNotExtLiquidated`",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nGiven the refactor of `_isNotExternallyLiquidated()`, the [`skim()`](https://github.com/0xTwyne/twyne-contracts/blob/d83d60155f64a1f0fcd98a813038f6b37d2dd101/src/twyne/CollateralVaultBase.sol#L300) function can avoid duplicating the validation logic, as there is no benefit in re-using cached variables.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\n```diff\n-   function skim() external callThroughEVC whenNotPaused nonReentrant {\n-       // copied from onlyBorrowerAndNotExtLiquidated modifier to cache balanceOf\n-       require(_msgSender() == borrower, ReceiverNotBorrower());\n-       require(_isNotExternallyLiquidated(), ExternallyLiquidated());\n+   function skim() external onlyBorrowerAndNotExtLiquidated whenNotPaused nonReentrant {\n```\n\n#### Developer Response\n\nFixed in [PR#192](https://github.com/0xTwyne/twyne-contracts/pull/192)."
+    },
+    {
+      "number": 10,
+      "title": "Provide multiple factory functions instead of switching on VaultType",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nThe implementation of [`createCollateralVault()`](https://github.com/0xTwyne/twyne-contracts/blob/d83d60155f64a1f0fcd98a813038f6b37d2dd101/src/TwyneFactory/CollateralVaultFactory.sol#L104) uses a VaultType enum to determine the creation logic between Euler and Aave.\n\nThis can lead to a confusing interface, given that the creation logic differs between the two protocols. One example is the `_targetAsset` parameter, which is required for Aave but not used in Euler.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nSplit the creation functionality between separate functions, such as `createEulerCollateralVault()` and `createAaveCollateralVault()`.\n\n#### Developer Response\n\nAcknowledged."
+    },
+    {
+      "number": 11,
+      "title": "Overridden `max*` functions break ERC-4626 specifications",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nThe CustomERC4626StataTokenUpgradeable is a copy of Aave's ERC4626StataTokenUpgradeable with the `max*` functions re-defined to skip checks and allow any amount. While this saves gas, it should be noted that it breaks the ERC-4626 standard.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nNotify integrators about this behavior.\n\n#### Developer Response\n\nAcknowledged. This wrapper is an internal complexity."
+    },
+    {
+      "number": 12,
+      "title": "Stale liquidation threshold if E-mode gets disabled",
+      "severity": "Low",
+      "body": "#### Technical Details\n\nWhen querying the external liquidation LTV, the implementation of [`_getAaveLiqLTV()`](https://github.com/0xTwyne/twyne-contracts/blob/d83d60155f64a1f0fcd98a813038f6b37d2dd101/src/twyne/AaveV3CollateralVault.sol#L102) uses the corresponding E-mode liquidation threshold if a category is configured in the vault.\n\n```solidity\n102:     function _getAaveLiqLTV() internal view returns (uint) {\n103:         if (categoryId == 0) {\n104:             (,,uint currentLiquidationThreshold,,,,,,,) = aaveDataProvider.getReserveConfigurationData(underlyingAsset);\n105:             return currentLiquidationThreshold;\n106:         } else {\n107:             return IAaveV3Pool(targetVault).getEModeCategoryCollateralConfig(categoryId).liquidationThreshold;\n108:         }\n109:     }\n```\n\nHowever, Aave internally checks if the selected E-mode is actually enabled for the asset. The function [`calculateUserAccountData()`](https://github.com/aave-dao/aave-v3-origin/blob/f53f03cf95ea5c3528016e849bf98210abdd5bcb/src/contracts/protocol/libraries/logic/GenericLogic.sol#L67) checks if the collateral is associated with the borrower's E-mode to apply the category configuration.\n\n```solidity\n121:             vars.isInEModeCategory =\n122:               params.userEModeCategory != 0 &&\n123:               EModeConfiguration.isReserveEnabledOnBitmap(vars.eModeCollateralBitmap, vars.i);\n```\n\nWhile it is expected that Twyne configures categories correctly, these settings can be modified at Aave after a vault has been created.\n\n#### Impact\n\nLow. The liquidation threshold might diverge in the unlikely event that an existing category is disabled.\n\n#### Recommendation\n\nConsider also checking if the asset is enabled for the given category to align the implementation with Aave's `getUserAccountData()`.\n\n#### Developer Response\n\nFixed in [PR#193](https://github.com/0xTwyne/twyne-contracts/pull/193/files)."
+    },
+    {
+      "number": 13,
+      "title": "Pausing does not affect `rebalanceATokens_CV()`",
+      "severity": "Low",
+      "body": "#### Technical Details\n\nIn the AaveV3ATokenWrapper contract, the [`rebalanceATokens_CV()`](https://github.com/0xTwyne/aave-v3-aToken-wrapper/blob/ae1ca5641f7c148f97084640017cf6140a899183/src/AaveV3ATokenWrapper.sol#L131) is not affected by the emergency pause since it doesn't rely on `_update()`.\n\n#### Impact\n\nLow.\n\n#### Recommendation\n\nAdd the `whenNotPaused` modifier to enable pauses on this functionality.\n\n#### Developer Response\n\nFixed in [PR#2](https://github.com/0xTwyne/aave-v3-aToken-wrapper/pull/2)."
+    }
+  ]
+}

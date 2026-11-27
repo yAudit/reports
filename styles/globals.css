@@ -18,77 +18,26 @@
   ::file-selector-button {
     border-color: var(--color-gray-200, currentcolor);
   }
+
+  /* Tailwind 4.1's default sans. Tailwind 4.3 falls back to another system
+     font stack here. */
+  html,
+  :host {
+    font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+      "Segoe UI Symbol", "Noto Color Emoji";
+  }
+
+  /* Keep anchor targets clear of the sticky navbar. A scroll-padding on html
+     would also scroll the page whenever a navbar link or button gets focus.
+     In the base layer, so that scroll-mt-* classes win. */
+  [id] {
+    scroll-margin-top: 5rem;
+  }
 }
 
 :root {
   --background: #ffffff;
   --foreground: #000000;
-}
-
-body {
-  color: var(--foreground);
-  background: var(--background);
-}
-
-pre {
-  background: #f5f5f5 !important;
-}
-
-pre code {
-  color: black !important;
-}
-
-a,
-code,
-p {
-  white-space: pre-wrap; /* Preserves spaces and allows wraps */
-  overflow-wrap: break-word; /* Breaks words only if absolutely necessary */
-  word-break: normal; /* Use normal word breaking rules */
-  hyphens: none; /* Remove hyphenation */
-  max-width: 100%;
-}
-
-li {
-  white-space: normal; /* Use normal whitespace handling */
-  overflow-wrap: break-word;
-  word-break: normal;
-  hyphens: none;
-  max-width: 100%;
-}
-
-.prose a {
-  color: #0055FF;
-}
-
-.prose a:hover {
-  text-decoration: underline;
-}
-.prose table {
-  table-layout: auto;
-  font-size: 0.875rem; /* text-sm */
-}
-
-.prose table th {
-  background-color: #f9fafb; /* bg-gray-50 */
-  color: #1f2937; /* text-gray-900 */
-  font-weight: 500; /* font-medium */
-}
-
-.prose table td {
-  border-top: 1px solid #e5e7eb; /* border-gray-200 */
-}
-
-code.inline-code-block::before,
-code.inline-code-block::after {
-  content: "" !important;
-}
-
-code.inline-code-block {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  background-color: rgba(175, 184, 193, 0.2);
-  padding: 0.2em 0.4em;
-  border-radius: 4px;
-  font-size: 0.875em;
 }
 
 /* LaTeX styling */
@@ -106,133 +55,36 @@ code.inline-code-block {
   overflow-y: hidden;
 }
 
-/* LaTeX paragraph styling */
-p:has(.katex:not(.katex-display)) {
-  display: block;
-  text-align: left;
-  margin: inherit;
-  max-width: 100%;
-  white-space: normal;
-}
-
 p:has(.katex-display) {
-  display: block;
   text-align: center;
-  margin: 1rem auto;
-  max-width: 100%;
   overflow-x: auto;
   overflow-y: hidden;
-  white-space: normal;
-  clear: both;
 }
 
-/* For very small screens */
-@media (max-width: 450px) {
-  .prose table {
-    font-size: 0.75rem; /* text-xs */
-  }
-
-  .prose h1 {
-    font-size: 2rem !important;
-    line-height: normal !important;
-  }
-
-  .prose table td,
-  .prose table th {
-    padding-left: 0.5rem; /* px-2 */
-    padding-right: 0.5rem; /* px-2 */
-    padding-top: 0.25rem; /* py-1 */
-    padding-bottom: 0.25rem; /* py-1 */
-  }
-}
-
-/* Hide elements not needed in print */
+/* Print: the report without the navigation. */
 @media print {
-  /* Hide navigation, header, footer, ads, etc */
-  nav,
   header,
   footer,
-  .sidebar,
-  .ads,
-  .navigation,
-  .header,
-  .footer,
-  .no-print {
+  aside,
+  nav,
+  .code-snippet-copy {
     display: none !important;
   }
 
-  pre {
-    background: #f5f5f5 !important;
+  body {
+    background: white !important;
   }
 
-  pre code {
-    color: black !important;
-  }
-
-  code.inline-code-block::before,
-  code.inline-code-block::after {
-    content: "" !important;
-  }
-
-  code.inline-code-block {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-      monospace;
-    background-color: rgba(175, 184, 193, 0.2);
-    padding: 0.2em 0.4em;
-    border-radius: 4px;
-    font-size: 0.875em;
-  }
-
-  /* Ensure the main content takes full width */
   main,
-  .main-content,
-  .report-content {
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    float: none !important;
-  }
-
-  /* Break inside avoidance */
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6,
-  table,
-  figure,
-  img {
-    break-inside: avoid;
-  }
-
-  /* Ensure tables remain readable */
-  table {
-    border-collapse: collapse !important;
-  }
-
-  td,
-  th {
-    border: 1px solid #ddd !important;
-  }
-
-  /* Force page breaks where needed */
-  .page-break {
-    page-break-before: always;
-  }
-
-  /* Remove box shadows and backgrounds */
-  * {
+  section,
+  article {
     box-shadow: none !important;
-    text-shadow: none !important;
   }
-}
 
-/* Keep anchor targets (e.g. finding headings) clear of the sticky navbar. A
-   scroll-padding on html would also scroll the page whenever a navbar link
-   or button gets focus. */
-[id] {
-  scroll-margin-top: 5rem;
+  article {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
 }
 
 /* Always reserve the scrollbar's space, so the navbar sits in the same place

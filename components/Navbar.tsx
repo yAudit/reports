@@ -3,6 +3,7 @@
 import { ChevronDown, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { RefObject, useEffect, useId, useRef, useState } from "react";
+import { spaceGrotesk } from "@/lib/fonts";
 
 // The same navbar as yaudit.dev, so that moving between the yAudit sites
 // feels like one site. All links open in the same tab.
@@ -172,7 +173,9 @@ function DesktopNavbar({
   menuButtonRef,
 }: MenuProps & { menuOpen: boolean }) {
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-zinc-950/10 bg-white/95 text-neutral-950 backdrop-blur">
+    <header
+      className={`${spaceGrotesk.className} sticky top-0 z-40 w-full border-b border-zinc-950/10 bg-white/95 text-neutral-950 backdrop-blur`}
+    >
       <div className="flex h-16 items-center justify-between px-6 lg:px-[max(2rem,min(20vw,calc((100vw_-_1000px)/2)))]">
         <div className="flex items-center gap-3">
           <a href={HOME_HREF} className="block">
@@ -275,7 +278,7 @@ function MobileNavbar({ setMenuOpen, menuButtonRef }: MenuProps) {
       role="dialog"
       aria-modal="true"
       aria-label="Navigation menu"
-      className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-white text-neutral-950"
+      className={`${spaceGrotesk.className} fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-white text-neutral-950`}
     >
       <div className="pt-8 mx-auto flex flex-col p-8 gap-2">
         <button

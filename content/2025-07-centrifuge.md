@@ -1,6 +1,7 @@
 ---
 tags: ["solidity"]
 title: 2025-07-Centrifuge
+repo: yAudit/centrifuge-report-latex
 description: yAudit Centrifuge report
 ---
 

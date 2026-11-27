@@ -1,0 +1,57 @@
+{
+  "repo": "yAudit/origami-cow-swapper-report",
+  "githubUrl": "https://github.com/yAudit/origami-cow-swapper-report",
+  "title": "Origami - CowSwapper",
+  "protocolName": "Origami",
+  "protocolOverview": "Origami CowSwapper is used to swap farmed tokens",
+  "auditScope": "This audit covers 1 smart contracts totaling approximately 120 lines of code across two days of review.",
+  "overallAssessment": "No concerns",
+  "startDate": "2025-07-14",
+  "finishDate": "2025-07-15",
+  "auditors": [
+    "Panda",
+    "Watermelon"
+  ],
+  "commits": [
+    {
+      "label": null,
+      "hash": "5bf4ed59f9716416e7a793e31d2b6f1454c751d5",
+      "url": "https://github.com/TempleDAO/origami/blob/5bf4ed59f9716416e7a793e31d2b6f1454c751d5"
+    }
+  ],
+  "finalCommits": [],
+  "repositories": [
+    "https://github.com/TempleDAO/origami/"
+  ],
+  "auditResources": [],
+  "treeOfAuditedFiles": "origami\n└── apps\n    └── protocol\n        └── contracts\n            └── common\n                └── swappers\n                    └── OrigamiCowSwapper.sol",
+  "finalRemarks": null,
+  "nsloc": 120,
+  "evaluations": [
+    {
+      "category": "access_control",
+      "score": "High",
+      "description": "[good](https://google.com)"
+    }
+  ],
+  "issues": [
+    {
+      "number": 1,
+      "title": "Insufficient minimum validation for CoW Swap order expiry period",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nThe `setOrderConfig()` function only checks that `expiryPeriodSecs` is non-zero:\n\n```solidity\nif (config.expiryPeriodSecs == 0) revert CommonEventsAndErrors.ExpectedNonZero();\n```\n\nA value of 1 second is technically valid but impractical. The CoW Swap Watchtower polls every block, so orders with very short expiry periods will expire before they can be detected and executed.\n\n#### Impact\n\nInformational\n\n#### Recommendation\n\nA minimal value of 5 minutes seems more inline with a reasonable operational window for CoW Swap's infrastructure.\n\n#### Developer Response\n\nAcknowledged - The check is to ensure the caller has at least set it to something non-zero."
+    },
+    {
+      "number": 2,
+      "title": "Reduce post hooks gas limit",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\n\nThe current post hook gas limit is set to 250,000 gas. Analysis of historical transactions from addresses `0x25dd72cc1de50e963948e464c09aeba0d9312349` and `0xeb32f71b700b75ad6bf84c9b0374f388740c266f` using Tenderly shows variable gas consumption based on the stalking contract used in the post hook:\n\n- **SPK → USDS swaps**: ~60,000 gas\n- **SKY → SKY swaps**: ~165,000 gas\n\nIn CoW Swap's fee structure, the full reserved gas amount (250,000) is deducted as a fee regardless of actual consumption, with no refund for unused gas. Overall yield is decreased due to inflated execution costs.\n\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nAdjust the gas limits for the hooks.\n\n#### Developer Response\n\nAcknowledged."
+    },
+    {
+      "number": 3,
+      "title": "`config.limitPriceAdjustmentBps` isn't validated when an oracle is provided",
+      "severity": "Informational",
+      "body": "[`OrigamiCowSwapper.setOrderConfig`](https://github.com/TempleDAO/origami/blob/5bf4ed59f9716416e7a793e31d2b6f1454c751d5/apps/protocol/contracts/common/swappers/OrigamiCowSwapper.sol#L69-L97) is used by an authorized party to set crucial data to be used when creating an order for a given token. [`OrigamiSowSwapper.updateAmountsAndAdjustmentBps`](https://github.com/TempleDAO/origami/blob/5bf4ed59f9716416e7a793e31d2b6f1454c751d5/apps/protocol/contracts/common/swappers/OrigamiCowSwapper.sol#L107-L132) may be used to update selected, existing order configurations.\n\n#### Technical Details\n\nWhen `config.limitPriceOracle != address(0)`, the `setOrderConfig()` method doesn't verify `config.limitPriceAdjustmentBps` to be within an expected range, whether within `[-100%, 100%]` or a stricter one.\n\nWithin `updateAmountsAndAdjustmentBps()`, the same holds: the `limitPriceAdjustmentBps` is only validated to be non zero if `config.limitPriceOracle != address(0)`.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nAdd validation within both mentioned methods to enforce the highlighted config value is within a selected range.\n\n#### Developer Response\n\nUpdated in [PR#1937](https://github.com/TempleDAO/origami/pull/1937)."
+    }
+  ]
+}

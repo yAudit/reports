@@ -1,6 +1,7 @@
 ---
 tags: ["solidity"]
 title: 2026-10-UFG-Factory-and-Treasuries
+repo: yAudit/ufg-yagent-scan
 description: UFG Factory and Treasuries
 ---
 

@@ -1,6 +1,7 @@
 ---
 tags: ["solidity"]
 title: 2025-07-Resupply-Update
+repo: yAudit/resupply-update-report
 description: Resupply post hack fixes Report
 ---
 

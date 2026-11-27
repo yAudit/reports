@@ -1,0 +1,183 @@
+{
+  "repo": "yAudit/yield-basis-report-tex",
+  "githubUrl": "https://github.com/yAudit/yield-basis-report-tex",
+  "title": "Yield Basis DAO Security Review",
+  "protocolName": "Yield Basis",
+  "protocolOverview": "Yield Basis is a protocol that features a new type of AMM that focuses on solving impermanent loss. The current review targets the DAO contracts of the protocol, including the governance token, along with the mechanism to vote, incentivize pools, and distribute rewards.",
+  "auditScope": "This audit covers 6 smart contracts across 5 days of review.",
+  "overallAssessment": "Given the complexity of the contracts and the high number of severe findings present in this report, the auditors recommend strengthening the testing suite and conducting a new security review.",
+  "startDate": "2025-06-02",
+  "finishDate": "2025-06-06",
+  "auditors": [
+    "fedebianu",
+    "adriro"
+  ],
+  "commits": [
+    {
+      "label": null,
+      "hash": "f6104fc017a6022f0ad464bd8d5147850d1166f2",
+      "url": "https://github.com/yield-basis/yb-core/commit/f6104fc017a6022f0ad464bd8d5147850d1166f2"
+    }
+  ],
+  "finalCommits": [],
+  "repositories": [
+    "https://github.com/yield-basis/yb-core"
+  ],
+  "auditResources": [
+    "Code repositories and documentation"
+  ],
+  "treeOfAuditedFiles": "contracts/dao\n├── CliffEscrow.vy\n├── GaugeController.vy\n├── LiquidityGauge.vy\n├── VestingEscrow.vy\n├── VotingEscrow.vy\n└── YB.vy",
+  "finalRemarks": "The DAO contracts of Yield Basis resemble much of the mechanism present in the Curve protocol. While the structure is similar, multiple modifications have been made to simplify the logic and its implementation. Given the complexity of the contracts and the high number of severe findings present in this report, the auditors recommend strengthening the testing suite and conducting a new security review.",
+  "nsloc": null,
+  "evaluations": [
+    {
+      "category": "access_control",
+      "score": "Good",
+      "description": "Correct usage of access control protection."
+    },
+    {
+      "category": "mathematics",
+      "score": "Low",
+      "description": "Several issues related to calculations or scaling were detected."
+    },
+    {
+      "category": "complexity",
+      "score": "Average",
+      "description": "The contracts are well-designed, but contain complex logic, particularly within the GaugeController and LiquidityGauge contracts."
+    },
+    {
+      "category": "libraries",
+      "score": "Good",
+      "description": "The codebase relies on the snekmate library."
+    },
+    {
+      "category": "decentralization",
+      "score": "Good",
+      "description": "The protocol and its emissions are governed by a set of decentralized contracts."
+    },
+    {
+      "category": "code_stability",
+      "score": "Good",
+      "description": "The codebase remained stable during the review."
+    },
+    {
+      "category": "documentation",
+      "score": "Average",
+      "description": "The contracts are decorated with NatSpec metadata. Additional high-level documentation focused on explaining the dynamics of voting and gauges is encouraged."
+    },
+    {
+      "category": "monitoring",
+      "score": "Good",
+      "description": "Monitoring events are in place."
+    },
+    {
+      "category": "testing",
+      "score": "Low",
+      "description": "Despite the presence of fuzzing tests in the codebase, multiple severe issues remained undetected."
+    }
+  ],
+  "issues": [
+    {
+      "number": 1,
+      "title": "`LiquidityGauge.withdraw()` is broken due to incorrect `assert` logic",
+      "severity": "Medium",
+      "body": "`LiquidityGauge.withdraw()` contains an incorrect `assert` statement that validates the wrong account's withdrawal capacity, causing legitimate withdrawal operations to fail when transferring assets to third parties.\n\n#### Technical Details\n\nIn [`LiquidityGauge.withdraw()`](https://github.com/yield-basis/yb-core/blob/f6104fc017a6022f0ad464bd8d5147850d1166f2/contracts/dao/LiquidityGauge.vy#L310) the `assert` checks `_max_withdraw(receiver)` instead of `_max_withdraw(owner)`. The validation should ensure the `owner` has sufficient withdrawable balance, not the `receiver`.\n\n#### Impact\n\nMedium. This bug breaks core functionality, but severity is mitigated because `redeem()` is correct and can be used instead.\n\n#### Recommendation\n\nFix the assert to validate the `owner`'s withdrawal capacity instead of the `receiver`'s.\n\n#### Developer Response\n\nFixed in [58ca825891930e069ad1a1f2c82581399a5004fa](https://github.com/yield-basis/yb-core/commit/58ca825891930e069ad1a1f2c82581399a5004fa)."
+    },
+    {
+      "number": 2,
+      "title": "Missing exports from modules",
+      "severity": "Informational",
+      "body": "There are severals functions inherited from modules which are not re-exported from the contract.\n\n#### Technical Details\n\n- GaugeController.vy:\n  - `owner()`\n- VestingEscrow.vy:\n  - `owner()`\n- VotingEscrow.vy:\n  - `tokenURI()`\n  - `supportsInterface()`\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nAdd the missing exports to expose the functions.\n\n#### Developer Response\n\nFixed in [199646175b42a081f049f1a26e3362c4fa878450](https://github.com/yield-basis/yb-core/commit/199646175b42a081f049f1a26e3362c4fa878450)."
+    },
+    {
+      "number": 3,
+      "title": "Prevent LP token from being registered as rewards",
+      "severity": "Low",
+      "body": "Using the LP token as a reward would conflict with the vault's accounting.\n\n#### Technical Details\n\nLP tokens sent by the distributor would be mixed with staked tokens and treated as the vault's assets, disrupting the accounting.\n\n#### Impact\n\nLow.\n\n#### Recommendation\n\nCheck the reward token is not the LP token in `add_reward()`.\n\n```diff\n    def add_reward(token: IERC20, distributor: address):\n        assert token != YB, \"YB\"\n+       assert token != LP_TOKEN, \"LP_TOKEN\"\n```\n\n#### Developer Response\n\nFixed at [395d1db03e4a9aa892642022c794a7ef9c066105](https://github.com/yield-basis/yb-core/commit/395d1db03e4a9aa892642022c794a7ef9c066105)."
+    },
+    {
+      "number": 4,
+      "title": "Incorrect finish time calculation changes reward distribution rate instead of maintaining it",
+      "severity": "High",
+      "body": "`LiquidityGauge.deposit_reward()` incorrectly calculates the new finish time when adding rewards to an ongoing distribution period, resulting in unintended changes to the reward distribution rate.\n\n#### Technical Details\n\n[`LiquidityGauge.deposit_reward()`](https://github.com/yield-basis/yb-core/blob/f6104fc017a6022f0ad464bd8d5147850d1166f2/contracts/dao/LiquidityGauge.vy#L260) contains logic to extend the finish time when adding rewards to maintain the current rate:\n\n```vyper\n# Keep the reward rate\nassert r.finish_time > block.timestamp, \"Rate unknown\"\nr.finish_time = block.timestamp + (r.finish_time - block.timestamp) * (r.total + amount) // r.total\n```\n\nHowever, this formula uses the cumulative total deposited tokens instead of the remaining undistributed tokens, causing the distribution rate to change:\n\nExample scenario:\n\n- Initial: 1000 tokens over 10 days → rate = 100 tokens/day\n- `r.total = 1000` (cumulative total)\n- After 6 days: 600 tokens distributed, 400 remaining\n- Add 500 tokens using current formula:\n  - `remaining_time = 4 days`\n  - `r.total + amount = 1000 + 500 = 1500`\n  - `ratio = 1500 / 1000 = 1.5`\n  - `new_remaining_time = 4 * 1.5 = 6 days`\n  - New rate = `900 / 6 = 150 tokens/day`\n\nThe formula should use remaining tokens (400) instead of cumulative total (1000) to maintain the same rate:\n\n- Correct ratio = `(400 + 500) / 400 = 2.25`\n- Correct new time = `4 * 2.25 = 9 days`\n- Correct rate = `900 / 9 = 100 tokens/day`\n\n#### Impact\n\nHigh. The reward distribution rate changes unexpectedly when adding tokens to ongoing distributions, violating the stated intention to \"keep the reward rate\".\n\n#### Recommendation\n\nCalculate the extension based on the original rate to maintain consistent distribution: `block.timestamp + (undistributed_reward + amount) / reward_rate`.\n\n#### Developer Response\n\nFixed in [b5a9150825ae440e77a512f90ed3a44d126c63ad](https://github.com/yield-basis/yb-core/commit/b5a9150825ae440e77a512f90ed3a44d126c63ad)."
+    },
+    {
+      "number": 5,
+      "title": "Check for array length mismatch",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\n[`VestingEscrow.fund()`](https://github.com/yield-basis/yb-core/blob/f6104fc017a6022f0ad464bd8d5147850d1166f2/contracts/dao/VestingEscrow.vy#L85) accepts two arrays but only validates the loop bounds against the recipients array.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nAdd explicit length validation for better error messaging:\n\n```vyper\nassert len(_recipients) == len(_amounts), \"Array length mismatch\"\n```\n\n#### Developer Response\n\nFixed in [926621b0e79d8f2c08d7f69f2d24e9b6f02447a7](https://github.com/yield-basis/yb-core/commit/926621b0e79d8f2c08d7f69f2d24e9b6f02447a7)."
+    },
+    {
+      "number": 6,
+      "title": "Incorrect interpretation of released rewards in `LiquidityGauge`",
+      "severity": "Critical",
+      "body": "The LiquidityGauge contract uses the value of the checkpointed reward rate integral to determine the updated amount of released reward tokens, leading to multiple accounting problems.\n\n#### Technical Details\n\nThe implementation of [`_get_vested_rewards()`](https://github.com/yield-basis/yb-core/blob/f6104fc017a6022f0ad464bd8d5147850d1166f2/contracts/dao/LiquidityGauge.vy#L167) takes the value of `reward_rate_integral[token].v` as the amount of released rewards up to the latest checkpointed time (`used_rewards`).\n\n```python\n170:     last_reward_time: uint256 = self.reward_rate_integral[token].t\n171:     used_rewards: uint256 = self.reward_rate_integral[token].v\n172:     finish_time: uint256 = self.rewards[token].finish_time\n173:     total: uint256 = self.rewards[token].total\n174:     if finish_time > last_reward_time:\n175:         new_used: uint256 = (total - used_rewards) * (block.timestamp - last_reward_time) //\\\n176:             (finish_time - last_reward_time) + used_rewards\n177:         return min(new_used, total) - used_rewards\n```\n\nThe `used_rewards` variable is then used to compute the remaining amount (`total - used_rewards`) and to calculate the new value of distributed rewards (`new_used`).\n\nHowever, taking the integral of the reward rate is incorrect, as this value is already scaled by the inverse of the total supply as part of the checkpoint process.\n\n```python\n148:         r.reward_rate_integral = self.reward_rate_integral[reward]\n149:         if block.timestamp > r.reward_rate_integral.t:\n150:             r.reward_rate_integral.v += (r.integral_inv_supply.v - self.integral_inv_supply_4_token[reward]) * d_reward //\\\n151:                (block.timestamp - r.reward_rate_integral.t)\n152:             r.reward_rate_integral.t = block.timestamp\n```\n\n#### Impact\n\nCritical. The issue leads to multiple accounting problems and side effects, potentially bricking the state of the vault.\n\n#### Recommendation\n\nHave a dedicated accumulator to measure the amount of distributed rewards per token. This counter should be incremented by the return value of `_vest_rewards()` whenever the state is persisted to storage (`_checkpoint_user()`, `claim()`, `deposit_reward()`).\n\n#### Developer Response\n\nFixed in [657e8c679cb575f35681fab810ff6615ed113924](https://github.com/yield-basis/yb-core/commit/657e8c679cb575f35681fab810ff6615ed113924)."
+    },
+    {
+      "number": 7,
+      "title": "User checkpoint in `LiquidityGauge` fails to store rewards",
+      "severity": "Critical",
+      "body": "Rewards assigned to users are lost when the user state is checkpointed.\n\n#### Technical Details\n\nUnlike [`claim()`](https://github.com/yield-basis/yb-core/blob/f6104fc017a6022f0ad464bd8d5147850d1166f2/contracts/dao/LiquidityGauge.vy#L211), the implementation of [`_checkpoint_user()`](https://github.com/yield-basis/yb-core/blob/f6104fc017a6022f0ad464bd8d5147850d1166f2/contracts/dao/LiquidityGauge.vy#L193) does not transfer the earned rewards to the user. However, these rewards are not stored in contract state, so they cannot be claimed later.\n\n#### Impact\n\nCritical. Earned rewards are lost when the user interacts with the vault.\n\n#### Recommendation\n\nThe `_checkpoint_user()` function should store earned rewards (`d_user_reward`) in an accumulator of pending rewards, which can be flushed in `claim()`. An alternative would be to use `user_rewards_integral.v` which is the historic accumulated rewards, but this would also require an accumulator to track the withdrawn tokens to calculate the difference.\n\n#### Developer Response\n\nAdded such an accumulator in [1b3b6f49c5c5140ffb2f2f5b97851e578e36f12b](https://github.com/yield-basis/yb-core/commit/1b3b6f49c5c5140ffb2f2f5b97851e578e36f12b)."
+    },
+    {
+      "number": 8,
+      "title": "Incorrect scale in `LiquidityGauge` checkpoint",
+      "severity": "Critical",
+      "body": "The user reward calculation is incorrectly normalized, leading to an overinflated amount.\n\n#### Technical Details\n\nIn [`_checkpoint()`](https://github.com/yield-basis/yb-core/blob/f6104fc017a6022f0ad464bd8d5147850d1166f2/contracts/dao/LiquidityGauge.vy#L139), `integral_inv_supply` is scaled by `1e36` but only normalized by `1e18` when calculating `d_user_reward`.\n\n```python\n139: def _checkpoint(reward: IERC20, d_reward: uint256, user: address) -> RewardIntegrals:\n140:     r: RewardIntegrals = empty(RewardIntegrals)\n141: \n142:     r.integral_inv_supply = self.integral_inv_supply\n143:     if block.timestamp > r.integral_inv_supply.t:\n144:         r.integral_inv_supply.v += unsafe_div(10**36 * (block.timestamp - r.integral_inv_supply.t), erc4626.erc20.totalSupply)\n145:         r.integral_inv_supply.t = block.timestamp\n146: \n147:     if reward.address != empty(address):\n148:         r.reward_rate_integral = self.reward_rate_integral[reward]\n149:         if block.timestamp > r.reward_rate_integral.t:\n150:             r.reward_rate_integral.v += (r.integral_inv_supply.v - self.integral_inv_supply_4_token[reward]) * d_reward //\\\n151:                (block.timestamp - r.reward_rate_integral.t)\n152:             r.reward_rate_integral.t = block.timestamp\n153: \n154:     if user != empty(address):\n155:         r.user_rewards_integral = self.user_rewards_integral[user][reward]\n156:         if block.timestamp > r.user_rewards_integral.t:\n157:             r.d_user_reward = (r.reward_rate_integral.v - self.reward_rate_integral_4_user[user][reward]) *\\\n158:                 erc4626.erc20.balanceOf[user] // 10**18\n159:             r.user_rewards_integral.v += r.d_user_reward\n160:             r.user_rewards_integral.t = block.timestamp\n161: \n162:     return r\n```\n\n#### Impact\n\nCritical. Reward amounts are inflated by a factor of `1e18`.\n\n#### Recommendation\n\nIn `d_user_reward`, divide by `10**36` instead of `10**18`.\n\n#### Developer Response\n\nFixed in [dbc12194da1971ba7a32c459374b9de05a428787](https://github.com/yield-basis/yb-core/commit/dbc12194da1971ba7a32c459374b9de05a428787)."
+    },
+    {
+      "number": 9,
+      "title": "`VotingEscrow.getPastVotes()` should not return future voting power",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\n[`VotingEscrow.getPastVotes()`](https://github.com/yield-basis/yb-core/blob/main/contracts/dao/VotingEscrow.vy#L378) allows querying voting power at any timestamp without proper validation. However, the function's purpose is to return voting power from the past only.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nAdd proper `timepoint` validation check:\n\n```vyper\nassert timepoint <= block.timestamp, \"Timepoint in the future\"\n```\n\n#### Developer Response\n\nAcknowledged. It's a view method which is to be called from frontend. Sometimes RPCs are using multiple nodes behind a load balancer which could be not entirely at sync (one can be ahead of another by 1 block). So, I can imagine a situation that check <= block.timestamp will actually fail after reading the current timestamp worked. Moreover, this function DOES work for the nearest future as well. Overall, I think better leave it without this assert."
+    },
+    {
+      "number": 10,
+      "title": "Token emission calculations use stale weights for non-checkpointed gauges",
+      "severity": "High",
+      "body": "When checkpointing a specific gauge, the global emission rate calculation uses potentially stale weights from other gauges that haven't been recently checkpointed.\n\n#### Technical Details\n\n[`GaugeController._checkpoint_gauge()`](https://github.com/yield-basis/yb-core/blob/f6104fc017a6022f0ad464bd8d5147850d1166f2/contracts/dao/GaugeController.vy#L155) updates weights only for the target gauge, but then uses global weight sums (`aw_sum`, `w_sum`) to calculate the emission rate factor.\n\nIf other gauges have changed their weights but haven't been checkpointed, their stale weights are still included in the global sums, leading to incorrect emission rate calculations.\n\n#### Impact\n\nHigh. Incorrect emission rates affect the entire protocol's token distribution, potentially over-minting or under-minting tokens based on outdated weight information.\n\n#### Recommendation\n\nImplement global gauge aggregation and update it during gauge checkpoints, similar to Curve's [`_get_total()`](https://github.com/curvefi/curve-dao-contracts/blob/fa127b1cb7bf83e4f3d605f7244b7b4ed5ebe053/contracts/GaugeController.vy#L220) approach, adapted for Yield Basis with no gauge types.\n\n#### Developer Response\n\nDisagree. That's the thing. Weights are only ever updated with per-gauge checkpoint.\n\nThat checkpoint happens at voting as well as at claim. But if gauge, for example, had adjustment number changed somehow - a stale number is applied all across the board before chekpoint or claim happens.\n\nIt is by design. So weights CANNOT actually update without being checkpointed. Disadvantage of this approach is that weights cannot be a pure function of time: they are only updated in actions which cause checkpoints. But this is not a big disadvantage because timescale of vote weight changes (years) is much larger than times between checkpoints (e.g. between claims, or deposits/withdrawals)."
+    },
+    {
+      "number": 11,
+      "title": "Wrong condition in `preview_emissions()`",
+      "severity": "Low",
+      "body": "The ealy return in [`preview_emissions()`](https://github.com/yield-basis/yb-core/blob/f6104fc017a6022f0ad464bd8d5147850d1166f2/contracts/dao/GaugeController.vy#L321) implements the wrong condition.\n\n#### Technical Details\n\nThe implementation of `preview_emissions()` early returns with zero using the wrong condition. A gauge isn't registered when `time_weight[gauge] == 0`, a positive value means the gauge has been enabled.\n\n```python\n325:     if self.time_weight[gauge] > 0:\n326:         return 0\n```\n\n#### Impact\n\nLow. `preview_emissions()` always returns zero for registered gauges.\n\n#### Recommendation\n\nChange the condition to `if self.time_weight[gauge] == 0`.\n\n#### Developer Response\n\nFixed in [7192d1b8f7f7d303c3fd6fe39ae2358591ff995b](https://github.com/yield-basis/yb-core/commit/7192d1b8f7f7d303c3fd6fe39ae2358591ff995b)."
+    },
+    {
+      "number": 12,
+      "title": "Remove unused variables in `VotingEscrow._merge_positions()`",
+      "severity": "Gas",
+      "body": "#### Technical Details\n\nIn [`VotingEscrow._merge_positions()`](https://github.com/yield-basis/yb-core/blob/f6104fc017a6022f0ad464bd8d5147850d1166f2/contracts/dao/VotingEscrow.vy#L488) two variables `pt` and `to_pt` are declared and assigned but never used, resulting in unnecessary gas consumption.\n\n#### Impact\n\nGas savings.\n\n#### Recommendation\n\nRemove the unused variables.\n\n#### Developer Response\n\nFixed in [cdf753d798f7bb8ca2f7c894ee50a54408878072](https://github.com/yield-basis/yb-core/commit/cdf753d798f7bb8ca2f7c894ee50a54408878072)."
+    },
+    {
+      "number": 13,
+      "title": "NFT reentrancy allows using voting power when transferring token",
+      "severity": "Critical",
+      "body": "A reentrancy in `safeTransferFrom()` would allow an attacker to use their voting power just before being merged with the recipient.\n\n#### Technical Details\n\nThe implementation of [`safeTransferFrom()`](https://github.com/yield-basis/yb-core/blob/f6104fc017a6022f0ad464bd8d5147850d1166f2/contracts/dao/VotingEscrow.vy#L538) does the transfer with the callback after performing the check but before clearing the owner's voting power.\n\n```vyper\n538: def safeTransferFrom(owner: address, to: address, token_id: uint256, data: Bytes[1_024] = b\"\"):\n539:     assert erc721._is_approved_or_owner(msg.sender, token_id), \"erc721: caller is not token owner or approved\"\n540:     assert self._ve_transfer_allowed(owner, to), \"Need max veLock\"\n541:     erc721._safe_transfer(owner, to, token_id, data)\n542:     self._merge_positions(owner, to)\n543:     erc721._burn(token_id)\n```\n\nThis would allow a malicious user to exercise their voting power in between the transfer, as the check is done before the callback and their votes are reset after the callback.\n\n#### Impact\n\nCritical. Voting power can be reused multiple times by performing the described attack.\n\n#### Recommendation\n\nSince the token is immediately burned after transferring, the underlying transfer operation is not really needed, the token can be just burned.\n\n#### Developer Response\n\nFixed for both `transferFrom()` and `safeTransferFrom()` in [4d6cd7183e39487a80dc51b7976099b156f440a0](https://github.com/yield-basis/yb-core/commit/4d6cd7183e39487a80dc51b7976099b156f440a0)."
+    },
+    {
+      "number": 14,
+      "title": "`VotingEscrow.increase_amount()` has parameter inconsistency that could lead to unauthorized lock modifications",
+      "severity": "High",
+      "body": "`VotingEscrow.increase_amount()` has a critical parameter inconsistency that creates a mismatch between validation and execution.\n\n#### Technical Details\n\n[`VotingEscrow.increase_amount()`](https://github.com/yield-basis/yb-core/blob/f6104fc017a6022f0ad464bd8d5147850d1166f2/contracts/dao/VotingEscrow.vy#L294) performs validation checks against `msg.sender`'s lock data but then calls `_deposit_for(_for, ...)`, which modifies the lock for the `_for` address. This creates a scenario where the actual token deposit and lock modification occurs for the `_for` address, while the validation is done with `msg.sender`'s lock data and the `_locked` parameter passed to `_deposit_for` contains `msg.sender`'s lock data, not `_for`'s.\n\n#### Impact\n\nHigh. This vulnerability allows:\n\n- Users to call the function for addresses that don't have existing locks\n- Bypassing validation that the target lock is valid and non-expired\n- Creating inconsistent lock states where the wrong lock parameters are used\n- Potential manipulation of the voting escrow system by depositing for invalid targets\n\n#### Recommendation\n\nFix the parameter inconsistency by ensuring validation and operation target the same address:\n\n```diff\n    @external\n    @nonreentrant\n    def increase_amount(_value: uint256, _for: address = msg.sender):\n-       _locked: LockedBalance = self.locked[msg.sender]\n+       _locked: LockedBalance = self.locked[_for]\n\n        assert _value > 0  # dev: need non-zero value\n        assert _locked.amount > 0, \"No existing lock found\"\n        assert _locked.end > block.timestamp, \"Cannot add to expired lock. Withdraw\"\n\n        self._deposit_for(_for, _value, 0, _locked, LockActions.INCREASE_AMOUNT)\n```\n\nOr alternatively, remove the `_for` parameter if it's not needed.\n\n#### Developer Response\n\nFixed in [80137af5ce7e969f2a10d254b0a05756f3c2c6ce](https://github.com/yield-basis/yb-core/commit/80137af5ce7e969f2a10d254b0a05756f3c2c6ce)."
+    },
+    {
+      "number": 15,
+      "title": "Fix typos",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nThe `CliffEscrow.vy` contract contains a spelling error in an immutable variable name:\n\n```python\nRECEPIENT: public(immutable(address))\n```\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nFix typos.\n\n#### Developer Response\n\nFixed in [d3dd301fe26e47cf575b844c4bd2a2c6efbc50b2](https://github.com/yield-basis/yb-core/commit/d3dd301fe26e47cf575b844c4bd2a2c6efbc50b2)."
+    },
+    {
+      "number": 16,
+      "title": "Follow CEI pattern",
+      "severity": "Informational",
+      "body": "Some functions updates the contract state after making an external call, violating the Checks-Effects-Interactions (CEI) pattern.\n\n#### Technical Details\n\n[`VotingEscrow.withdraw()`](https://github.com/yield-basis/yb-core/blob/f6104fc017a6022f0ad464bd8d5147850d1166f2/contracts/dao/VotingEscrow.vy#L330) performs the state update `erc721._burn(convert(msg.sender, uint256))` before making the external call to `TOKEN.transfer()`.\n\n[`LiquidityGauge.deposit_reward()`](https://github.com/yield-basis/yb-core/blob/f6104fc017a6022f0ad464bd8d5147850d1166f2/contracts/dao/LiquidityGauge.vy#L260) performs the state update `self.rewards[token] = r` before making the external call to `token.transferFrom()`.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nFollow CEI pattern as a best practice.\n\n#### Developer Response\n\nFixed in [7c28c5b3cff00a71b5c598507b99ea4a8e16e389](https://github.com/yield-basis/yb-core/commit/7c28c5b3cff00a71b5c598507b99ea4a8e16e389)."
+    },
+    {
+      "number": 17,
+      "title": "Incorrect emissions rate in YB token",
+      "severity": "High",
+      "body": "The emission rate in the Yield Basis token is incorrectly scaled.\n\n#### Technical Details\n\nThe emissions calculation is given by the implementation of [`_emissions()`](https://github.com/yield-basis/yb-core/blob/f6104fc017a6022f0ad464bd8d5147850d1166f2/contracts/dao/YB.vy#L50):\n\n```python\n50: def _emissions(t: uint256, rate_factor: uint256) -> uint256:\n51:     assert rate_factor <= 10**18\n52:     dt: int256 = convert(t - self.last_minted, int256)\n53:     rate: int256 = convert(max_mint_rate * rate_factor // 10**18, int256)\n54:     reserve: int256 = convert(self.reserve, int256)\n55:     return convert(\n56:         reserve * (10**18 - math._wad_exp(-dt * rate // 10**18)) // 10**18,\n57:         uint256)\n```\n\nThe `rate` variable is calculated as the `max_mint_rate` (max rate per second) scaled by the `rate_factor`. However, the `rate` variable is then normalized again by `10**18` in the expression of `-dt * rate // 10**18` (line 56). Given `dt` and `rate` are denominated in seconds, dividing by `10**18` will yield the incorrect result.\n\n#### Impact\n\nHigh. Emission rate in YB token is incorrect and will likely result in zero emissions.\n\n#### Recommendation\n\nThe exponential term should multiply `dt` (elapsed seconds) by `rate` (emissions per second).\n\n```python\nreserve * (10**18 - math._wad_exp(-dt * rate)) // 10**18\n```\n\n#### Developer Response\n\nFixed in [14ff742f630a64f786beb5589ee978f541950768](https://github.com/yield-basis/yb-core/commit/14ff742f630a64f786beb5589ee978f541950768)."
+    }
+  ]
+}

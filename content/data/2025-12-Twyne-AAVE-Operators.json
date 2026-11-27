@@ -1,0 +1,71 @@
+{
+  "repo": "yAudit/twyne-aave-operators-report",
+  "githubUrl": "https://github.com/yAudit/twyne-aave-operators-report",
+  "title": "Twyne AAVE operators",
+  "protocolName": "Twyne",
+  "protocolOverview": "Twyne is a credit delegation protocol that lets borrowers rent unused borrowing power from other lenders to boost their Liquidation LTV. Lenders earn additional yield while borrowers get to ramp up their leverage or insulate their debt.",
+  "auditScope": "This audit covers 5 smart contracts totaling approximately 541 lines of code across 1 day of review.",
+  "overallAssessment": "The audit of Twyne's Aave operators identified no critical or high-severity vulnerabilities, indicating a solid implementation that maintains the security standards of the protocol's foundation. The informational and gas findings outlined mostly minor improvements, with the exception of one finding where the Euler controller was not deactivated properly. No funds were at risk from this issue.",
+  "startDate": "2025-11-24",
+  "finishDate": "2025-11-24",
+  "auditors": [
+    "Adriro",
+    "HHK"
+  ],
+  "commits": [
+    {
+      "label": null,
+      "hash": "c9164fbb0fda1d9a757e5f790d1aea92eda963b1",
+      "url": "[c9164fbb0fda1d9a757e5f790d1aea92eda963b1](https://github.com/0xTwyne/twyne-contracts/tree/c9164fbb0fda1d9a757e5f790d1aea92eda963b1)"
+    }
+  ],
+  "finalCommits": [],
+  "repositories": [
+    "https://github.com/0xTwyne/twyne-contracts"
+  ],
+  "auditResources": [
+    "Code repositories and documentation"
+  ],
+  "treeOfAuditedFiles": "0xTwyne/twyne-contracts/src\n└── operators\n    ├── LeverageOperator_EulerFL.sol\n    ├── DeleverageOperator_EulerFL.sol\n    ├── AaveV3LeverageOperator.sol\n    ├── AaveV3DeleverageOperator.sol\n    └── AaveV3TeleportOperator.sol",
+  "finalRemarks": "The review focused on new operators for AAVE as well as rework on Euler operators. The AAVE operators will be a welcome addition to Twyne's new AAVE integration, while the Euler operators update will allow the use of Euler directly for flashloans instead of Morpho as in the previous version. The review did not discover any medium severity or above issues, highlighting the seriousness of the Twyne team.",
+  "nsloc": 541,
+  "evaluations": [],
+  "issues": [
+    {
+      "number": 1,
+      "title": "Incorrect disable controller call",
+      "severity": "Low",
+      "body": "#### Technical Details\n\nThe [leverage and deleverage operators](https://github.com/0xTwyne/twyne-contracts/blob/c9164fbb0fda1d9a757e5f790d1aea92eda963b1/src/operators/DeleverageOperator_EulerFL.sol#L125) that use Euler as the flashloan provider first enable the controller via `EVC.enableController()` and then disable it via `EVC.disableController()`, which is incorrect, since the controller must disable itself.\n\n```solidity\n120:         eulerFL_items[0] = IEVC.BatchItem({\n121:             targetContract: address(EULER_EVC),\n122:             onBehalfOfAccount: address(0),\n123:             value: 0,\n124:             data: abi.encodeCall(IEVC.enableController, (address(this), address(targetVault)))\n125:         });\n...          ...\n147:         // 5) Disable controller\n148:         eulerFL_items[4] = IEVC.BatchItem({\n149:             targetContract: address(EULER_EVC),\n150:             onBehalfOfAccount: address(0),\n151:             value: 0,\n152:             data: abi.encodeCall(IEVC.disableController, (address(this)))\n153:         });\n```\n\n#### Impact\n\nLow. The controller is not properly disabled and will remain enabled after the leverage or deleverage call.\n\n#### Recommendation\n\nIn `LeverageOperator_EulerFL` and `DeleverageOperator_EulerFL`, change the last element of the Euler batch and call `disableController()` directly through the `targetVault` / `collateralAsset`.\n\n#### Developer Response\n\nFixed in [PR#204](https://github.com/0xTwyne/twyne-contracts/pull/204/files)."
+    },
+    {
+      "number": 2,
+      "title": "Potential zero value transfers in `DeleverageOperator_EulerFL`",
+      "severity": "Gas",
+      "body": "#### Technical Details\n\nThe implementation of [`executeDeleverage()`](https://github.com/0xTwyne/twyne-contracts/blob/c9164fbb0fda1d9a757e5f790d1aea92eda963b1/src/operators/DeleverageOperator_EulerFL.sol#L134-L135) returns the leftovers to the caller without checking if the actual amounts are zero.\n\n```solidity\n134:         IERC20(targetAsset).safeTransfer(msgSender, IERC20(targetAsset).balanceOf(address(this)));\n135:         IERC20(underlyingCollateral).safeTransfer(msgSender, IERC20(underlyingCollateral).balanceOf(address(this)));\n```\n\n#### Impact\n\nGas savings.\n\n#### Recommendation\n\nCheck if balances are zero before transferring the assets.\n\n#### Developer Response\n\nAcknowledged."
+    },
+    {
+      "number": 3,
+      "title": "Inaccurate comment in `DeleverageOperator_EulerFL`",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nThe following comment in [`onFlashLoan()`](https://github.com/0xTwyne/twyne-contracts/blob/c9164fbb0fda1d9a757e5f790d1aea92eda963b1/src/operators/DeleverageOperator_EulerFL.sol#L177) hints that an automatic pull of assets would settle the Euler debt. However, repayment is explicitly performed using `collateralAsset.repay()`.\n\n```solidity\n177:         // Collateral asset will automatically pull the repayment amount\n```\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nRemove the comment.\n\n#### Developer Response\n\nFixed in [PR#206](https://github.com/0xTwyne/twyne-contracts/pull/206)."
+    },
+    {
+      "number": 4,
+      "title": "Unbounded debt repayment in AaveV3TeleportOperator",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nThe [teleport operation](https://github.com/0xTwyne/twyne-contracts/blob/c9164fbb0fda1d9a757e5f790d1aea92eda963b1/src/operators/AaveV3TeleportOperator.sol#L56) takes the `debtAmount` as user input and forwards that amount when repaying the debt using `AAVE_POOL.repay()`. Given that the inner implementation of `repay()` silently limits the repayment amount to the actual debt, using a higher amount would result in a leftover in the operator.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nCap `debtAmount` to the user's current debt.\n\n#### Developer Response\n\nFixed in [PR#208](https://github.com/0xTwyne/twyne-contracts/pull/208)."
+    },
+    {
+      "number": 5,
+      "title": "Morpho references in Euler flashloan operators",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nThe `LeverageOperator_EulerFL` and `DeleverageOperator_EulerFL` contracts refer to Morpho when checking the caller in the flashloan callbacks.\n\n- [`LeverageOperator_EulerFL.sol#L169`](https://github.com/0xTwyne/twyne-contracts/blob/c9164fbb0fda1d9a757e5f790d1aea92eda963b1/src/operators/LeverageOperator_EulerFL.sol#L169)\n- [`DeleverageOperator_EulerFL.sol#L151`](https://github.com/0xTwyne/twyne-contracts/blob/c9164fbb0fda1d9a757e5f790d1aea92eda963b1/src/operators/DeleverageOperator_EulerFL.sol#L151)\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nRename the error.\n\n#### Developer Response\n\nFixed in [PR#207](https://github.com/0xTwyne/twyne-contracts/pull/207)."
+    },
+    {
+      "number": 7,
+      "title": "Unnecessary 10 wei addition to flashloan amount",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nThe [`executeTeleport()`](https://github.com/0xTwyne/twyne-contracts/blob/c9164fbb0fda1d9a757e5f790d1aea92eda963b1/src/operators/AaveV3TeleportOperator.sol#L56-L56) function inside `AaveV3TeleportOperator` adds `10 wei` to the Morpho flashloan amount. It's unclear why this value is added, especially if a user already provides the full debt amount or `type(uint256).max`.\n\nInside `onMorphoFlashLoan()`, `debtAmount` is used for repayment which ignores this 10 wei addition, resulting in useless extra wei being flashloaned.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nRemove the `+ 10` from the call.\n\n#### Developer Response\n\nFixed in [PR#205](https://github.com/0xTwyne/twyne-contracts/pull/205)."
+    }
+  ]
+}

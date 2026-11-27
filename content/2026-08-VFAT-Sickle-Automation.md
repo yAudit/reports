@@ -1,6 +1,7 @@
 ---
 tags: ["solidity"]
 title: 2026-08-VFAT-Sickle-Automation
+repo: yAudit/sickle-automation-report
 description: Sickle Automation
 ---
 

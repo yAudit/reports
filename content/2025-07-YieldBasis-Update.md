@@ -1,6 +1,7 @@
 ---
 tags: ["vyper"]
 title: 2025-07-YieldBasis-Update
+repo: yAudit/yield-basis-report-2
 description: Yield Basis DAO Update
 ---
 

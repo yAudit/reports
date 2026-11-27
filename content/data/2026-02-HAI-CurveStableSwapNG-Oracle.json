@@ -1,0 +1,65 @@
+{
+  "repo": "yAudit/hai-curve-oracle-report",
+  "githubUrl": "https://github.com/yAudit/hai-curve-oracle-report",
+  "title": "HAI CurveStableSwapNG Oracle Review",
+  "protocolName": "HAI",
+  "protocolOverview": "HAI CurveStableSwapNG Oracle provides oracle infrastructure for price feeds. The reviewed component is a Curve StableSwap-NG relayer that combines Curve's EMA price oracle with external rate providers to deliver WAD-scaled price feeds via the IBaseOracle interface.",
+  "auditScope": "This audit covers 2 smart contracts totaling approximately 180 lines of code across 1 day of review.",
+  "overallAssessment": "The codebase is well-structured and minimal in scope. No critical or high severity issues were found. Findings are limited to a low severity precision loss, a gas optimization, and two informational issues around oracle reliability and factory ergonomics.",
+  "startDate": "2026-02-12",
+  "finishDate": "2026-02-13",
+  "auditors": [
+    "Adriro",
+    "HHK"
+  ],
+  "commits": [
+    {
+      "label": null,
+      "hash": "e0f2bff8d8e95c2995da2df44e3b884fbdbfa5e6",
+      "url": "https://github.com/hai-on-op/core/blob/e0f2bff8d8e95c2995da2df44e3b884fbdbfa5e6"
+    }
+  ],
+  "finalCommits": [],
+  "repositories": [
+    "https://github.com/hai-on-op/core"
+  ],
+  "auditResources": [
+    "Code repositories and documentation"
+  ],
+  "treeOfAuditedFiles": "src/contracts/\n       ├── oracles/CurveStableSwapNGRelayer.sol\n       └── factories/CurveStableSwapNGRelayerFactory.sol",
+  "finalRemarks": "The CurveStableSwapNG relayer is a compact and focused oracle integration. The main risk surface is the reliance on external rate providers via stored_rates(), which can revert or introduce sudden price changes. These risks are low in practice when restricted to battle-tested pools, as acknowledged by the team. The identified issues were promptly addressed. Overall the codebase is solid.",
+  "nsloc": 180,
+  "evaluations": [],
+  "issues": [
+    {
+      "number": 1,
+      "title": "Missing membership getter for `_curveStableSwapNGRelayers` set",
+      "severity": "Informational",
+      "body": "`CurveStableSwapNGRelayerFactory` stores deployed relayers in an `EnumerableSet.AddressSet` and exposes `curveStableSwapNGRelayersList()` to retrieve all entries, but provides no way to check whether a specific address belongs to the set.\n\n#### Technical Details\n\nThe factory uses OpenZeppelin's `EnumerableSet` which natively supports `contains()`, but this function is never exposed. Consumers that need to verify whether a given oracle was deployed by the factory must iterate over the full list returned by `curveStableSwapNGRelayersList()`, which is gas-inefficient and impractical for on-chain callers.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nAdd a public view that wraps `_curveStableSwapNGRelayers.contains()`:\n\n```solidity\nfunction isCurveStableSwapNGRelayer(address _relayer) external view returns (bool) {\n  return _curveStableSwapNGRelayers.contains(_relayer);\n}\n```\n\n#### Developer Response\n\nFixed in commit [fa1dff9fa41bd77c32201bced3a35ba661731a8d](https://github.com/hai-on-op/core/commit/fa1dff9fa41bd77c32201bced3a35ba661731a8d)."
+    },
+    {
+      "number": 2,
+      "title": "`getResultWithValidity()` may revert due to external dependency in `stored_rates()`",
+      "severity": "Informational",
+      "body": "`CurveStableSwapNGRelayer.getResultWithValidity()` calls `pool.stored_rates()`, which depending on the pool's asset types may query an external oracle or invoke an ERC4626 `convertToAssets()` call. Either of these can revert, violating the `IBaseOracle` requirement that `getResultWithValidity()` should never revert.\n\n#### Technical Details\n\nCurve StableSwap-NG pools support multiple asset types. For type 1 (oracle) assets, `stored_rates()` queries an external price oracle; for type 3 (ERC4626) assets, it calls `convertToAssets()` on the vault. If the external oracle is paused, deprecated, or the ERC4626 vault reverts (e.g., due to a paused state), the entire `stored_rates()` call will revert. This causes `getResultWithValidity()` to revert instead of returning `(0, false)`, breaking the contract specified by `IBaseOracle` which states that this method should never revert.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nConsider returning `(0, false)` instead of bubbling the error if an external call reverts.\n\n#### Developer Response\n\nFixed in commit [19ad26fe2d15e04c377531e76de3b9ec8ebbb2b7](https://github.com/hai-on-op/core/commit/19ad26fe2d15e04c377531e76de3b9ec8ebbb2b7)."
+    },
+    {
+      "number": 3,
+      "title": "Unnecessary precision loss in `_adjustForOracleRates()` due to intermediate WAD truncation",
+      "severity": "Low",
+      "body": "`_adjustForOracleRates()` computes `_price.wmul(_baseOracleRate).wdiv(_quoteOracleRate)`, which introduces an avoidable rounding step.\n\n#### Technical Details\n\nThe expression `_price.wmul(_baseOracleRate).wdiv(_quoteOracleRate)` expands to:\n\n```\n((_price * _baseOracleRate / WAD) * WAD) / _quoteOracleRate\n```\n\nThe intermediate division by `WAD` in `wmul()` truncates before the subsequent multiplication in `wdiv()`. This can be simplified to `_price * _baseOracleRate / _quoteOracleRate`, which avoids the intermediate truncation and preserves more precision. Since all three values are in WAD scale, the single division by `_quoteOracleRate` (1e18-denominated) produces the correct WAD-scaled result.\n\n#### Impact\n\nLow.\n\n#### Recommendation\n\nReplace the chained `wmul`/`wdiv` with a single multiplication and division:\n\n```solidity\nreturn _price * _baseOracleRate / _quoteOracleRate;\n```\n\n#### Developer Response\n\nAcknowledged. This is the same pattern used throughout the codebase."
+    },
+    {
+      "number": 4,
+      "title": "EMA price adjusted with current external rates can enable sudden price changes",
+      "severity": "Informational",
+      "body": "The relayer uses Curve's manipulation-resistant EMA but adjusts it with current rates from external oracles, which can change suddenly.\n\n### Technical Details\n\nThe relayer combines two data sources ([CurveStableSwapNGRelayer.sol#L82-94](src/contracts/oracles/CurveStableSwapNGRelayer.sol#L82-L94)):\n- `price_oracle()`: EMA of historical prices (slow-moving, manipulation-resistant)\n- `stored_rates()`: Current rates via external calls (can change instantly)\n\nFor pools on Optimism with asset_type 1 (custom rate providers) or asset_type 3 (ERC4626 vaults), `stored_rates()` makes external calls to fetch current rates. The relayer multiplies the EMA by the current rate ratio.\n\n**Example:** wstETH / ETH pool\n- EMA shows 1.0 (balanced pool in xp space)\n- Historical wstETH rate: 1.15\n- Current wstETH rate: 1.20 (sudden increase from staking rewards or oracle update)\n- Relayer immediately reports adjusted price using rate 1.20\n\nWhile this gives the correct current execution price, the EMA's manipulation resistance is partially bypassed since rates can spike instantly (e.g., ERC4626 donation inflation, or sudden oracle updates).\n\n### Impact\n\nInformational. Low risk in most situation with battle-tested rate providers / high TVL ERC4626 vaults.\n\n### Recommendation\n\nNo ideal fix (can't dynamically bound rates without storing history). Consider:\n- Setting hardcoded boundaries, to restrict how high/low a rate can go\n- Only deploying relayers on pools with well-established ERC4626 vaults and robust rates manipulation protection\n\n### Developer Response\n\nAcknowledged. This is mitigated through the selection of assets."
+    },
+    {
+      "number": 5,
+      "title": "State variables can be made immutable to save gas",
+      "severity": "Gas",
+      "body": "All state variables in `CurveStableSwapNGRelayer` are set once in the constructor and never modified, but are not marked as `immutable`.\n\n### Technical Details\n\nThe following variables at [CurveStableSwapNGRelayer.sol#L21-40](src/contracts/oracles/CurveStableSwapNGRelayer.sol#L21-L40) can be `immutable`:\n- `pool`\n- `baseToken`\n- `quoteToken`\n- `symbol`\n- `baseIndex`\n- `quoteIndex`\n- `baseRateMultiplier`\n- `quoteRateMultiplier`\n\n### Impact\n\nGas.\n\n### Recommendation\n\nConsider making all variables `immutable`.\n\n### Developer Response\n\nAcknowledged.\n\nOriginally I had these marked as immutable but if they are immutable we cannot use .runtimeCode in our unit tests."
+    }
+  ]
+}

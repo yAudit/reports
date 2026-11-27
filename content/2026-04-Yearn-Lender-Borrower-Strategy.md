@@ -1,6 +1,7 @@
 ---
 tags: ["solidity", "yearn"]
 title: 2026-04-Yearn-Lender-Borrower-Strategy
+repo: yAudit/lender-borrower-strategy-report
 description: Yearn Liquity V2 Lender Borrower Strategy Report
 ---
 

@@ -1,0 +1,84 @@
+{
+  "repo": "yAudit/3jane-pytlocker-report",
+  "githubUrl": "https://github.com/yAudit/3jane-pytlocker-report",
+  "title": "3Jane PYTLocker Security Review",
+  "protocolName": "3Jane",
+  "protocolOverview": "PYTLocker permanently locks Pendle Yield Tokens and distributes harvested yield to depositors using reward-per-share accounting.",
+  "auditScope": "This audit covers 1 smart contract totaling approximately 155 lines ofSolidity code across 2 days of review.",
+  "overallAssessment": "The reviewed contract is compact and generally straightforward, but it has meaningful integration risk because multiple Pendle markets, SY balances, payout assets, and market-specific redemption semantics are multiplexed through a single contract.",
+  "startDate": "2026-05-13",
+  "finishDate": "2026-05-14",
+  "auditors": [
+    "Fedebianlu",
+    "Panda"
+  ],
+  "commits": [
+    {
+      "label": null,
+      "hash": "67fab0a55a63a5bdabb4fa0768694d398ab26476",
+      "url": "https://github.com/3jane-protocol/moneymarket-contracts/commit/67fab0a55a63a5bdabb4fa0768694d398ab26476"
+    }
+  ],
+  "finalCommits": [],
+  "repositories": [
+    "https://github.com/3jane-protocol/moneymarket-contracts"
+  ],
+  "auditResources": [
+    "Source code in src/jane/PYTLocker.sol",
+    "Pendle docs"
+  ],
+  "treeOfAuditedFiles": "src/jane\n└── PYTLocker.sol",
+  "finalRemarks": null,
+  "nsloc": null,
+  "evaluations": [
+    {
+      "category": "access_control",
+      "score": "Excellent",
+      "description": "Centralized owner actions remain important for PYTLocker market onboarding, market caps, and sweep behavior."
+    },
+    {
+      "category": "mathematics",
+      "score": "Excellent",
+      "description": "The core reward-per-share accounting is simple and includes remainder handling"
+    },
+    {
+      "category": "complexity",
+      "score": "Good",
+      "description": "The contract is small, but PYTLocker combines custody and accounting for multiple externally-defined Pendle markets in one contract, which increases integration complexity and makes market isolation important."
+    },
+    {
+      "category": "libraries",
+      "score": "Excellent",
+      "description": "The contract relies on OpenZeppelin primitives for ownership, safe transfers, math, and reentrancy guards."
+    },
+    {
+      "category": "decentralization",
+      "score": "Excellent",
+      "description": "The owner can configure supported YT markets, set market caps, and sweep non-protected tokens."
+    },
+    {
+      "category": "documentation",
+      "score": "Excellent",
+      "description": "The code includes clear inline documentation for the core PYTLocker flow."
+    },
+    {
+      "category": "testing",
+      "score": "Good",
+      "description": "The repository includes unit, fork, and invariant tests for PYTLocker. However, the existing handler and mocks primarily model 1:1 SY behavior and do not fully cover real Pendle edge cases such as shared SY balances, non-1:1 wrappers, and rebasing payout assets."
+    }
+  ],
+  "issues": [
+    {
+      "number": 1,
+      "title": "Shared SY balances can be credited to the wrong YT market",
+      "severity": "High",
+      "body": "#### Technical Details\n\n[`addMarket()`](https://github.com/3jane-protocol/moneymarket-contracts/blob/67fab0a55a63a5bdabb4fa0768694d398ab26476/src/jane/PYTLocker.sol#L120) stores a per-YT SY `address` but does not enforce that each SY is unique across `markets`. During `_harvest`, the contract calls `redeemDueInterestAndRewards` for the requested YT and then redeems IERC20(m.sy).`balanceOf`(`address(this)`) in full, rather than only the SY amount produced by that call.\n\n`IPendleYT.redeemDueInterestAndRewards()` is permissionless: any external caller can invoke it with `user = address(pytLocker)` and force that YT to send the locker's pending interest into the locker as SY. This bypasses `PYTLocker._harvest` entirely, so no PYTLocker accounting is updated, no PYTLocker event is emitted, and the locker simply observes a raw SY balance increase it cannot attribute to a market.\n\nIf two enabled markets share the same SY, which is a valid Pendle configuration when multiple maturities are created for the same underlying SY, a subsequent [`harvest()`](https://github.com/3jane-protocol/moneymarket-contracts/blob/67fab0a55a63a5bdabb4fa0768694d398ab26476/src/jane/PYTLocker.sol#L159) on the other market reads the contract-wide SY balance, redeems it in full, and credits the wrong YT's `accYieldPerToken`. The attack requires no privileged access and no interaction with `PYTLocker` before the final harvest.\n\n#### Proof of Concept\n\n```solidity\nfunction test_poc() public {\n    address victim = makeAddr(\"pyt-victim\");\n    address attacker_ = makeAddr(\"pyt-attacker\");\n\n    PYTLocker pytLocker = new PYTLocker(address(this));\n    ERC20Mock payoutAsset = new ERC20Mock();\n    AudithorMockSY sharedSy = new AudithorMockSY(payoutAsset);\n    AudithorMockYT ytA = new AudithorMockYT(sharedSy);\n    AudithorMockYT ytB = new AudithorMockYT(sharedSy);\n\n    pytLocker.addMarket(address(ytA));\n    pytLocker.addMarket(address(ytB));\n\n    ytA.setBalance(victim, 100e18);\n    ytB.setBalance(attacker_, 100e18);\n\n    vm.startPrank(victim);\n    ytA.approve(address(pytLocker), 100e18);\n    pytLocker.deposit(address(ytA), 100e18);\n    vm.stopPrank();\n\n    vm.startPrank(attacker_);\n    ytB.approve(address(pytLocker), 100e18);\n    pytLocker.deposit(address(ytB), 100e18);\n    vm.stopPrank();\n\n    // Attacker step, executed outside PYTLocker. Anyone can call this directly on Pendle:\n    // it pushes YT_A's pending interest into the locker as SY, with no PYTLocker accounting.\n    ytA.setPendingInterest(address(pytLocker), 100e18);\n    ytA.redeemDueInterestAndRewards(address(pytLocker), true, false);\n\n    assertEq(sharedSy.balanceOf(address(pytLocker)), 100e18, \"YT_A direct redemption should leave shared SY in locker\");\n    assertEq(pytLocker.accYieldPerToken(address(ytA)), 0, \"YT_A accounting was not updated by direct redemption\");\n\n    pytLocker.harvest(address(ytB));\n\n    assertEq(pytLocker.accYieldPerToken(address(ytA)), 0, \"YT_A still receives no accounting credit\");\n    assertEq(pytLocker.accYieldPerToken(address(ytB)), 1e18, \"YT_B is credited with YT_A interest through shared SY balance\");\n    assertEq(pytLocker.claimable(address(ytB), attacker_), 100e18, \"attacker in YT_B can claim YT_A yield\");\n\n    vm.prank(attacker_);\n    pytLocker.claim(address(ytB));\n    assertEq(payoutAsset.balanceOf(attacker_), 100e18, \"attacker receives the misattributed asset yield\");\n}\n```\n\n#### Impact\n\nHigh. Depositors in one YT market can receive yield generated by another YT market, while the rightful market's depositors lose claimable rewards. If shared-SY `markets` are supported, an attacker positioned in one market may steal accrued yield from another market.\n\n#### Recommendation\n\nEnsure each YT market has a unique Pendle address that holds its YT and receives its SY interest. This can be implemented by deploying a dedicated market contract per YT through a factory/proxy pattern.\n\n#### Developer Response\n\nFixed. Code has been changed to have a single market per contract [here](https://github.com/3jane-protocol/moneymarket-contracts/pull/101/changes/e7a5a08709cb6a494de60b82ec181ea1b183347c)."
+    },
+    {
+      "number": 4,
+      "title": "Direct asset inflows are ignored by harvest accounting and cannot be swept",
+      "severity": "Low",
+      "body": "#### Technical Details\n\n[`PYTLocker._harvest()`](https://github.com/3jane-protocol/moneymarket-contracts/blob/2f6927a61238391d7aa42027686a704992aba7d5/src/jane/PYTLocker.sol#L148-L183) measures newly harvested yield with an asset balance delta. It snapshots `beforeBal`, calls Pendle, redeems the full SY balance into `asset`, and credits only `afterBal - beforeBal` to `accYieldPerToken`:\n\n```solidity\nuint256 beforeBal = IERC20(asset).balanceOf(address(this));\n\nIPendleYT(yt).redeemDueInterestAndRewards(address(this), true, true);\n\nuint256 syBal = IERC20(sy).balanceOf(address(this));\nif (syBal > 0) {\n    IPendleSY(sy).redeem(address(this), syBal, asset, 0, false);\n}\n\nuint256 gained = IERC20(asset).balanceOf(address(this)) - beforeBal;\n```\n\nThis correctly captures normal YT interest that arrives as SY, including SY that was externally pushed into the locker before harvest: `_harvest()` later redeems the existing SY balance after the asset snapshot, so the resulting asset delta is included in `gained`.\n\nHowever, direct `asset` inflows that arrive before `_harvest()` are already included in `beforeBal`. They are therefore ignored by `gained`, never added to `accYieldPerToken`, and cannot be distributed by `claim()`.\n\nThe locker also prevents owner recovery of direct `asset` inflows. It sets `asset` to [`IPendleSY(sy).yieldToken()`](https://github.com/3jane-protocol/moneymarket-contracts/blob/2f6927a61238391d7aa42027686a704992aba7d5/src/jane/PYTLocker.sol#L107-L114), and [`sweep()`](https://github.com/3jane-protocol/moneymarket-contracts/blob/2f6927a61238391d7aa42027686a704992aba7d5/src/jane/PYTLocker.sol#L129-L136) rejects that token:\n\n```solidity\nif (token == yt || token == sy || token == asset) revert CannotSweepProtectedToken();\n```\n\nThis affects manual transfers, airdrops, or incentive distributions sent directly as `asset`. It also affects Pendle rewards only in the specific case where one of the YT reward tokens equals `asset` and is redeemed outside `_harvest()` through [`redeemDueInterestAndRewards(address(locker), false, true)`](https://github.com/3jane-protocol/moneymarket-contracts/blob/2f6927a61238391d7aa42027686a704992aba7d5/src/jane/PYTLocker.sol#L12-L18). Pendle rewards are otherwise intentionally handled separately through `sweep()` and Merkle distribution.\n\n#### Impact\n\nLow. Extra value sent directly as `asset` to the locker can become stuck and undistributable. Users cannot claim it through `claim()`, and the owner cannot recover it with `sweep()` because `asset` is protected.\n\n#### Recommendation\n\nIf direct `asset` incentives should be supported, add an explicit privileged accounting path that credits existing excess `asset` balance into `accYieldPerToken`, or otherwise recovers it through a controlled distribution flow.\n\n#### Developer Response\n\nAcknowledged. For our initial use case, asset should never be received by non-harvest flows. we are willing to accept this limitation as we believe more complex accounting or management accounting overrides would add complexity and footguns."
+    }
+  ]
+}

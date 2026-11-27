@@ -1,6 +1,7 @@
 ---
 tags: ["solidity"]
 title: 2026-05-Sickle-Bridge-Strategies-Update-2
+repo: yAudit/sickle-bridge-strategy-update-2-report
 description: Sickle Bridge Strategies update
 ---
 

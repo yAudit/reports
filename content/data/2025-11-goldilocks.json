@@ -1,0 +1,142 @@
+{
+  "repo": "yAudit/goldilocks-goldilend-update-report",
+  "githubUrl": "https://github.com/yAudit/goldilocks-goldilend-update-report",
+  "title": "Goldilocks Goldilend update",
+  "protocolName": "Goldilocks",
+  "protocolOverview": "Goldilocks Goldilend is a fixed-term NFT lending protocol that enables users to borrow assets using NFTs as collateral. The protocol features two main lending contracts: RebaseGoldilend (supporting Rebase Bera NFTs with HONEY tokens) and BeraBondGoldilend (supporting BeraBond NFTs with native BERA tokens). The system implements dynamic interest rates based on utilization ratios and loan duration, with upfront interest payment and comprehensive liquidation mechanisms.",
+  "auditScope": "This audit covers two smart contracts totaling 408 lines of code across one and a half days of review.",
+  "overallAssessment": "The protocol exhibits a robust and improved architecture with well-structured NFT-backed lending mechanics. No critical bugs were discovered during the audit.",
+  "startDate": "2025-10-30",
+  "finishDate": "2025-10-31",
+  "auditors": [
+    "Panda",
+    "fedebianu"
+  ],
+  "commits": [
+    {
+      "label": null,
+      "hash": "2a658adcd27ef630b5b5c2f93b7626b2dda4c849",
+      "url": "https://github.com/0xgeeb/goldilocks-core/blob/2a658adcd27ef630b5b5c2f93b7626b2dda4c849/"
+    }
+  ],
+  "finalCommits": [],
+  "repositories": [
+    "https://github.com/0xgeeb/goldilocks-core/tree/og/src/core/goldilend"
+  ],
+  "auditResources": [
+    "Code repositories and documentation",
+    "Additional resources: whitepaper, previous audits, etc."
+  ],
+  "treeOfAuditedFiles": "src/core/goldilend/\n├── GoldilendDebtAsset.sol\n└── RebaseGoldilend.sol",
+  "finalRemarks": "The system has improved. The remaining items are of medium to low severity, except for a high-severity issue impacting protocol gains. Extend tests to cover edge timing (grace/auctions), threshold crossings, and oracle failure modes.",
+  "nsloc": 408,
+  "evaluations": [
+    {
+      "category": "access_control",
+      "score": "Good",
+      "description": "Roles and permissions are defined with restricted privileged actions and clear ownership patterns."
+    },
+    {
+      "category": "mathematics",
+      "score": "Good",
+      "description": "Rate and valuation calculations follow a coherent model using fixed-point arithmetic and established utilities."
+    },
+    {
+      "category": "complexity",
+      "score": "Good",
+      "description": "The system is modular with responsibilities separated across components, maintaining manageable complexity."
+    },
+    {
+      "category": "libraries",
+      "score": "Good",
+      "description": "Leverages established libraries like FixedPointMathLib for mathematical operations and OpenZeppelin contracts for standard functionality. Pyth libraries could be added."
+    },
+    {
+      "category": "decentralization",
+      "score": "Average",
+      "description": "The introduction of a timelock improves decentralization by adding delay and transparency to governance changes, though control remains primarily centralized."
+    },
+    {
+      "category": "code_stability",
+      "score": "Good",
+      "description": "The codebase remained stable throughout the review."
+    },
+    {
+      "category": "documentation",
+      "score": "Good",
+      "description": "High-level architecture and interfaces are described. Additional detail would benefit operators and integrators."
+    },
+    {
+      "category": "monitoring",
+      "score": "Good",
+      "description": "Core operations emit events that facilitate observability, accounting, and off-chain indexing."
+    },
+    {
+      "category": "testing",
+      "score": "Average",
+      "description": "Tests cover primary flows and behaviors, with room to broaden edge cases and scenario depth."
+    }
+  ],
+  "issues": [
+    {
+      "number": 1,
+      "title": "`renew()` cannot be called during grace period",
+      "severity": "Low",
+      "body": "#### Technical Details\n\n[`renew()`](https://github.com/0xgeeb/goldilocks-core/blob/2a658adcd27ef630b5b5c2f93b7626b2dda4c849/src/core/goldilend/RebaseGoldilend.sol#L224) intends to allow renewals until `endDate + LOAN_GRACE_PERIOD`. However, when the caller is within the grace period where `block.timestamp >= userLoan.endDate`, the subtraction `userLoan.endDate - block.timestamp` underflows, reverting and preventing renewals even though the previous line permits them up to `endDate + LOAN_GRACE_PERIOD`.\n\n#### Impact\n\nLow. Borrowers cannot renew during the intended grace period.\n\n#### Recommendation\n\n```diff\n-    if(userLoan.endDate - block.timestamp > renewMinDuration) revert InvalidRenew();\n+    if(userLoan.endDate + LOAN_GRACE_PERIOD - block.timestamp > renewMinDuration) revert InvalidRenew();\n```\n\n#### Developer Response\n\nFixed [here](https://github.com/0xgeeb/goldilocks-core/commit/38bb66134c7b414165f6f57119ad4035ce2af3be)."
+    },
+    {
+      "number": 2,
+      "title": "Hardcoded vesting duration mismatch",
+      "severity": "Medium",
+      "body": "#### Technical Details\n\nThe `_calculateFairValue` function hardcodes the vesting duration to 730 days on line 387:\n\n```solidity\nuint256 vestingDuration = 730 days;\n```\n\nHowever, the `StreamingNFT` contract accepts `vestingDuration` as a constructor parameter, meaning different NFT collections can have different vesting schedules. The function queries the `StreamingNFT` contract for `cliffEndTimestamp`, `cliffUnlockAmount`, and `vestedRewards`, but incorrectly assumes all collections use a 730-day vesting period.\n\nWhen calculating the remaining unvested portion (lines 401-403):\n\n```solidity\nuint256 elapsedPortion = FixedPointMathLib.divWad(timeSinceCliff, vestingDuration);\nuint256 remainingPortion = 1e18 - elapsedPortion;\nvest = FixedPointMathLib.mulWad(remainingPortion, vestedRewards);\n```\n\nThe calculation uses a hardcoded value rather than the actual vesting duration from the streaming contract.\n\n#### Impact\n\nMedium. \n\n#### Recommendation\n\nFetch the vesting duration dynamically from the `StreamingNFT` contract. \n\n#### Developer response\n\nFixed [here](https://github.com/0xgeeb/goldilocks-core/commit/cb1e7a0008b54a3689dc82cb772ffafaa35c9b6f)."
+    },
+    {
+      "number": 5,
+      "title": "`deposit()` enforces `liquidityThreshold` on pre-deposit supply",
+      "severity": "Medium",
+      "body": "#### Technical Details\n\n[`deposit()`](https://github.com/0xgeeb/goldilocks-core/blob/2a658adcd27ef630b5b5c2f93b7626b2dda4c849/src/core/goldilend/RebaseGoldilend.sol#L165) gates the minimum utilization check only if the current supply exceeds `liquidityThreshold`. The threshold gate is evaluated against the pre-deposit supply, while the utilization ratio uses the post-deposit supply. This allows a deposit that crosses the threshold to bypass the `minUtilization` constraint.\n\n#### Impact\n\nMedium. The minimum utilization invariant can be bypassed once the deposit pushes supply over the threshold.\n\n#### Recommendation\n\nEvaluate the threshold against the post-deposit supply:\n\n```diff\n    uint256 _ghoneySupply = GoldilendDebtAsset(glDebtAsset).totalSupply();\n    uint256 newghoneySupply = _ghoneySupply + amount;\n+   if (newghoneySupply > liquidityThreshold) {\n-   if (_ghoneySupply > liquidityThreshold) {\n        if (FixedPointMathLib.divWad(outstandingDebt, newghoneySupply) < minUtilization) {\n            revert MinUtilizationExceeded();\n        }\n    }\n```\n\n#### Developer Response\n\nFixed [here](https://github.com/0xgeeb/goldilocks-core/commit/a9e8cf685b275d1b787904b32c97340c26ec9d0a)."
+    },
+    {
+      "number": 6,
+      "title": "Timelock bypass via `initializeGovParams` callable by `multisig`",
+      "severity": "Medium",
+      "body": "#### Technical Details\n\n[`changeGovParams()`](https://github.com/0xgeeb/goldilocks-core/blob/2a658adcd27ef630b5b5c2f93b7626b2dda4c849/src/core/goldilend/RebaseGoldilend.sol#L442) correctly gates governance parameter changes behind the timelock, but [`initializeGovParams()`](https://github.com/0xgeeb/goldilocks-core/blob/2a658adcd27ef630b5b5c2f93b7626b2dda4c849/src/core/goldilend/RebaseGoldilend.sol#L483) sets the same parameters and is callable by `multisig` without any one-time guard. This lets `multisig` update governance parameters at any time, bypassing the timelock.\n\n#### Impact\n\nMedium. Undermines governance separation and delay guarantees. `multisig` can arbitrarily change critical constraints without timelock.\n\n#### Recommendation\n\nAdd a one-time guard to `initializeGovParams()`.\n\n#### Developer Response\n\nFixed [here](https://github.com/0xgeeb/goldilocks-core/commit/3fec8708e8f30439fed8550ee336c30c75c791b0)."
+    },
+    {
+      "number": 7,
+      "title": "Incorrect calculation: unvested vs unclaimed value",
+      "severity": "Medium",
+      "body": "#### Technical Details\n\nThe `_calculateFairValue` function in `RebaseGoldilend.sol` calculates the **unvested** (locked/not yet vested) value of an NFT, but should calculate the **unclaimed** (still in the NFT) value.\n\nThe function calculates how much value is still **locked in vesting schedule**, but ignores that vested-but-unclaimed rewards are equally valuable as collateral. This distinction is critical because:\n\n1. When an NFT is transferred to the contract as collateral, the borrower **cannot claim rewards**\n2. As time passes and rewards vest, they remain **locked in the NFT**\n3. Vested rewards are just as much collateral as unvested rewards\n4. The function treats them as if they have no value\n\n**The calculation progressively reduces collateral value over time, even though nothing has been claimed.**\n\n#### Impact\n\nMedium.  The most significant impact is on the `renew()` function. A large amount of tokens is vested at the cliff. If borrowing happens before the cliff, it's likely `renew()` will not have enough unvested tokens when the user wants to renew.\n\n#### Recommendation\n\nCalculate unclaimed value instead of unvested value.\n\n#### Developer Response\n\nAcknowledged. We decided that we only want to consider locked tokens as an extra precaution."
+    },
+    {
+      "number": 8,
+      "title": "Missing upper bound check on `unvestedWeights`",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nThe `changeUnvestedWeights` function (lines 514-527) allows setting collateral weights without bounds checking:\n\n```solidity\nfunction changeUnvestedWeights(\n    address[] calldata _beras,\n    uint256[] calldata _weights,\n    address[] calldata _streams\n) public {\n    if(msg.sender != multisig) revert NotMultisig();\n    if(_beras.length != _weights.length) revert ArrayMismatch();\n    if(_beras.length != _streams.length) revert ArrayMismatch();\n    uint256 weightsLength = _weights.length;\n    for(uint256 i; i < weightsLength; ++i) {\n        unvestedWeights[_beras[i]] = _weights[i];  // ❌ No validation\n        streamingAddresses[_beras[i]] = _streams[i];\n    }\n}\n```\n\nWeights are used as percentage multipliers in the fair value calculation (line 408):\n\n```solidity\nreturn FixedPointMathLib.mulWad(vest, formattedBeraPrice) * unvestedWeights[rebaseBera] / 100;\n```\n\nNo validation prevents weights > 100 (over-valuing collateral) or weight = 0 (disabling borrowing).\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nAdd validation to ensure weights are within acceptable bounds.\nYou could use a base percentage value of 10_000 to have more flexibility.\n\n#### Developer Response\n\nFixed [here](https://github.com/0xgeeb/goldilocks-core/commit/205bd3f4d7d1c6bf6f4c6261770e6b75a5905bbc)."
+    },
+    {
+      "number": 9,
+      "title": "Missing staleness checks on Pyth oracle",
+      "severity": "Medium",
+      "body": "#### Technical Details\n\n`RebaseGoldilend` reads the `BERA` price via deprecated [`IPythUpgradable.getPrice()`](https://api-reference.pyth.network/price-feeds/evm/getPrice) and directly uses it inside [`_calculateFairValue()`](https://github.com/0xgeeb/goldilocks-core/blob/2a658adcd27ef630b5b5c2f93b7626b2dda4c849/src/core/goldilend/RebaseGoldilend.sol#L382) without any freshness validation, so stale or low-confidence prices can drive collateral valuation. The interface exposes `publishTime` and `conf` but they are unused.\n\n#### Impact\n\nMedium. Stale prices can over/under-value collateral, allowing excessive borrowing or inducing improper liquidations. Attackers can exploit delayed updates or poor-quality prices to manipulate borrow limits and auction outcomes.\n\n#### Recommendation\n\nSwitch to [`getPriceNoOlderThan()`](https://api-reference.pyth.network/price-feeds/evm/getPriceNoOlderThan). Optionally:\n\n- Enforce a max relative confidence, e.g., `conf / |price| ≤ 5%`.\n- Convert the price using `PythUtils.convertToUint()` from [Pyth sdk](https://www.npmjs.com/package/@pythnetwork/pyth-sdk-solidity).\n\n#### Developer Response\n\nFixed [here](https://github.com/0xgeeb/goldilocks-core/commit/94dbe3144f2a18424a9f17ef8a391c1fab084867)."
+    },
+    {
+      "number": 10,
+      "title": "`winner` variable is used outside scope",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nIn [`closeAuction()`](https://github.com/0xgeeb/goldilocks-core/blob/2a658adcd27ef630b5b5c2f93b7626b2dda4c849/src/core/goldilend/RebaseGoldilend.sol#L300) `winner` is declared inside the `else` branch and then referenced after the `if/else`, which is out of scope and causes a compilation error.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nDeclare `winner` outside the conditional block.\n\n#### Developer Response\n\nFixed [here](https://github.com/0xgeeb/goldilocks-core/commit/d946f1c08b4359df61bcd76a39fd73d0c2ea3f52)."
+    },
+    {
+      "number": 11,
+      "title": "Wrong ternary precedence in `renew()` drops roll-over interest",
+      "severity": "High",
+      "body": "#### Technical Details\n\nIn [`renew()`](https://github.com/0xgeeb/goldilocks-core/blob/2a658adcd27ef630b5b5c2f93b7626b2dda4c849/src/core/goldilend/RebaseGoldilend.sol#L224), the expression that computes the additional interest for a renewal relies on a ternary without parentheses. In Solidity, arithmetic (`+`) has higher precedence than the ternary `? :`, so the whole expression is parsed incorrectly: the sum happens first, then the boolean comparison, and finally the ternary chooses only the top-up interest, discarding the interest for extending the existing principal.\n\nThis almost always evaluates the condition to true and sets `newInterest` to only the top-up interest, omitting the roll-over interest for the period old end to new end on the already borrowed amount.\n\n#### Impact\n\nHigh. Borrowers underpay interest on renewals. The protocol loses the interest component for extending the existing debt.\n\n#### Recommendation\n\nAdd parentheses so that only the second addend is conditional:\n\n```solidity\nuint256 newInterest = _calculateInterest(userLoan.borrowedAmount, _outstandingDebt, newEndDate - userLoan.endDate)\n    + (newBorrowAmount > 0 ? _calculateInterest(newBorrowAmount, _outstandingDebt, newDuration) : 0);\n```\n\n#### Developer Response\n\nFixed [here](https://github.com/0xgeeb/goldilocks-core/commit/610371d4b13dba513d145ab239fffafa50884fa1)."
+    },
+    {
+      "number": 12,
+      "title": "`utilizationRatioMultiplier` scales denominator and is not WAD-scaled",
+      "severity": "Low",
+      "body": "#### Technical Details\n\nThe interest calculation in [`_calculateInterest()`](https://github.com/0xgeeb/goldilocks-core/blob/fa8dbaf5e95732b62fde5cc23f83ce644198c381/src/core/goldilend/RebaseGoldilend.sol#L280) divides by `totalSupply * utilizationRatioMultiplier`. Placing the “multiplier” in the denominator means it arbitrarily rescales utilization in the opposite direction (higher multiplier → lower utilization), and it is not specified as a WAD-scaled parameter. This makes the parameter unintuitive and easy to misconfigure.\n\n#### Impact\n\nLow. Parameter semantics are ambiguous and can lead to unintended behavior (e.g. raising the multiplier decreases rates).\n\n#### Recommendation\n\nApplied multiplicatively to the utilization and make it WAD-scaled:\n\n```solidity\nuint256 utilizationRatio = FixedPointMathLib.divWad(debt + borrowAmount, GoldilendDebtAsset(glDebtAsset).totalSupply());\nuint256 ratio = FixedPointMathLib.mulWad(utilizationRatio, utilizationRatioMultiplier) + interestPaymentPercentage;\n```\n\n#### Developer Response\n\nThe variable is WAD-scaled in [this](https://github.com/0xgeeb/goldilocks-core/commit/e960862f49ff7fec21b63828eea3a35836d5e1e9) commit. Although we want to keep `utilizationRatioMultiplier` in the denominator as the variable is a constant. The idea is that it will initially be set to 2 and `interestPaymentPercentage` will be set to 0.75, which then means that the final ratio that gets applied to interest will be between 0.75 and 1.25."
+    }
+  ]
+}

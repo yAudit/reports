@@ -1,0 +1,113 @@
+{
+  "repo": "yAudit/paxos-station-report",
+  "githubUrl": "https://github.com/yAudit/paxos-station-report",
+  "title": "Paxos Labs Transit Station",
+  "protocolName": "Paxos Labs",
+  "protocolOverview": "The reviewed Transit Station module implements a 1:1 same-underlying asset order flow where users submit backend-signed quotes, source assets are collected locally, cross-chain order terms are relayed through LayerZero when needed, and a privileged executor fulfills pending orders from a configured want-asset source.",
+  "auditScope": "This audit covers 6 smart contract totaling approximately 618 lines of code across 3 days of review.",
+  "overallAssessment": "No Critical, High, or Medium vulnerabilities were identified under the stated trust model. The review reported one Low severity issue and several Informational findings, primarily around cross-chain liveness, operational recovery, observability, and documentation clarity.",
+  "startDate": "2026-06-16",
+  "finishDate": "2026-06-18",
+  "auditors": [
+    "watermelon",
+    "fedebianu"
+  ],
+  "commits": [
+    {
+      "label": null,
+      "hash": "5affe77657a9bf788a6f13c27f911047d8900616",
+      "url": "https://github.com/paxoslabs/nucleus-boring-vault/commit/5affe77657a9bf788a6f13c27f911047d8900616"
+    }
+  ],
+  "finalCommits": [
+    {
+      "label": null,
+      "hash": "4a0d21ec5837842cfdb8936816c5e248e5e68c10",
+      "url": null
+    }
+  ],
+  "repositories": [
+    "https://github.com/paxoslabs/nucleus-boring-vault"
+  ],
+  "auditResources": [
+    "Code repositories and documentation"
+  ],
+  "treeOfAuditedFiles": "src\n├── base\n│   └── Roles\n│       └── CrossChain\n│           └── OAppAuth\n│               ├── OAppAuthCore.sol\n│               ├── OAppAuthReceiver.sol\n│               ├── OAppAuthSender.sol\n│               └── OAppAuth.sol\n├── helper\n│   └── Pausable.sol\n└── transit\n    └── TransitStation.sol",
+  "finalRemarks": null,
+  "nsloc": 618,
+  "evaluations": [
+    {
+      "category": "access_control",
+      "score": "Good",
+      "description": "The reviewed contracts uses Solady's Auth contract to define different roles and privileged roles within its contracts. The roles are adequately defined and segregated, such that a single compromise in any low privilege account does not lead to catastrophic consequences. The highest privilege role, which is able to execute critical storage writes and grant or remove other roles, is intended to be assigned to a multisig account."
+    },
+    {
+      "category": "mathematics",
+      "score": "Good",
+      "description": "TransitStation contract uses very simple mathematical relations, particularly when a transit quote is submitted, in order to calculate the maximum amount of fees to be charged."
+    },
+    {
+      "category": "complexity",
+      "score": "Good",
+      "description": "The reviewed contracts present a low degree of complexity: their intended behaviour is clearly defined and accurately implemented. Layerzero's integration poses as a source of complexity, especially revolving the safety of the configuration used once the contracts are deployed."
+    },
+    {
+      "category": "libraries",
+      "score": "Good",
+      "description": "The contracts use the well established Solady library."
+    },
+    {
+      "category": "decentralization",
+      "score": "Low",
+      "description": "TransitStation is a strongly permissioned contract: order submission is gated via ECDSA signatures provided by a proprietary backend, order execution is only executable by accounts with appropriate privilege level and isn't guaranteed."
+    },
+    {
+      "category": "documentation",
+      "score": "Excellent",
+      "description": "Exceptional in-line documentation was provided within the code, along side external development documentation."
+    },
+    {
+      "category": "testing",
+      "score": "Average",
+      "description": "Unit tests for TransitStation are currently being developped within [PR 306](https://github.com/paxoslabs/nucleus-boring-vault/pull/306). The tests cover constructor validation and `submitOrder` failure paths, including route, fee, decimal-conversion, token-transfer and ECDSA signature checks. Furthermore, the protocol team is actively testing the contracts in testnet environments."
+    }
+  ],
+  "issues": [
+    {
+      "number": 1,
+      "title": "Same-chain order submissions can retain accidental native sent with the transaction",
+      "severity": "Low",
+      "body": "#### Technical Details\n\nBoth submission entrypoints, [`submitOrder()`](https://github.com/paxoslabs/nucleus-boring-vault/blob/5affe77657a9bf788a6f13c27f911047d8900616/src/transit/TransitStation.sol#L216) and [`submitOrderWithPermit()`](https://github.com/paxoslabs/nucleus-boring-vault/blob/5affe77657a9bf788a6f13c27f911047d8900616/src/transit/TransitStation.sol#L238), are payable because cross-chain orders use `msg.value` to pay LayerZero fees.\n\nBoth functions delegate to [`_submitOrder()`](https://github.com/paxoslabs/nucleus-boring-vault/blob/5affe77657a9bf788a6f13c27f911047d8900616/src/transit/TransitStation.sol#L453). When `quote.route.destEID == thisChainEID`, `_submitOrder()` queues the order locally through [`_pushOrder()`](https://github.com/paxoslabs/nucleus-boring-vault/blob/5affe77657a9bf788a6f13c27f911047d8900616/src/transit/TransitStation.sol#L574) and does not call [`_sendOrder()`](https://github.com/paxoslabs/nucleus-boring-vault/blob/5affe77657a9bf788a6f13c27f911047d8900616/src/transit/TransitStation.sol#L558), the only branch that forwards `msg.value` to LayerZero with `msg.sender` as the refund recipient.\n\nThe same-chain branch has no `msg.value` check and does not refund native. Any native accidentally attached to a local submission remains as stray contract balance and can later be swept to the owner through [`recoverETH()`](https://github.com/paxoslabs/nucleus-boring-vault/blob/5affe77657a9bf788a6f13c27f911047d8900616/src/transit/TransitStation.sol#L334), not to the original submitter.\n\n#### Impact\n\nLow. Users or integrations can accidentally lose native ETH attached to same-chain submissions. The loss is limited to accidental `msg.value`, and funds are recoverable only by the privileged owner path.\n\n#### Recommendation\n\nReject native for same-chain submissions:\n\n```solidity\nif (quote.route.destEID == thisChainEID && msg.value != 0) revert UnexpectedMsgValue();\n```\n\nAlternatively, immediately refund the full `msg.value` to `msg.sender` before queuing the local order.\n\n#### Developer Response\n\nFixed in commit [cff03ae](https://github.com/paxoslabs/nucleus-boring-vault/commit/cff03ae1b7c6ceecddc17a7854c94bb6028b111d)."
+    },
+    {
+      "number": 2,
+      "title": "`recoverETH()` / `recoverTokens()` emit no events",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\n[`recoverETH()`](https://github.com/paxoslabs/nucleus-boring-vault/blob/5affe77657a9bf788a6f13c27f911047d8900616/src/transit/TransitStation.sol#L334) and [`recoverTokens()`](https://github.com/paxoslabs/nucleus-boring-vault/blob/5affe77657a9bf788a6f13c27f911047d8900616/src/transit/TransitStation.sol#L343) move value out of the contract but emit nothing.\n\n#### Impact\n\nInformatioal.\n\n#### Recommendation\n\nEmit a dedicated event from each recovery function.\n\n#### Developer Response\n\nFixed in commit [b1d6ac7](https://github.com/paxoslabs/nucleus-boring-vault/commit/b1d6ac757abb5e790ab11d90f40d4ee58cbfc300)."
+    },
+    {
+      "number": 3,
+      "title": "Constructor does not code-check `_authority`",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\nThe [constructor()](https://github.com/paxoslabs/nucleus-boring-vault/blob/5affe77657a9bf788a6f13c27f911047d8900616/src/transit/TransitStation.sol#L184) verifies `_endpoint.code.length != 0` but performs no code-existence check on `_authority`, although the project's design notes describe a code-existence check on `_authority`.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nAlign implementation and documentation: add the documented `_authority` code-existence check.\n\n#### Developer Response\n\nAcknowledged, we perhaps mistakenly mentioned a code-existence check on `_authority` but it should not exist. A 0 address authority is equivalent to using Auth as a simple owner only contract which is desired sometimes even if only during the deployment process."
+    },
+    {
+      "number": 4,
+      "title": "`_pushOrder()` has no local idempotency guard for the order UUID",
+      "severity": "Informational",
+      "body": "[`_pushOrder()`](https://github.com/paxoslabs/nucleus-boring-vault/blob/5affe77657a9bf788a6f13c27f911047d8900616/src/transit/TransitStation.sol#L574) unconditionally writes `pendingOrders[terms.uuid]`, with no check that the UUID is not already pending. UUID uniqueness is therefore guaranteed entirely by two external invariants rather than by the function itself. Under the current trust model and topology this is sound and not reachable, but a single duplicate push would reset a partially-filled order's `amountDue` back to its full value. A one-line local guard makes the invariant self-contained.\n\n#### Technical Details\n\nThe reason a duplicate `uuid` cannot reach this code today:\n\n1. **Same-chain / source side** — `_verifyAndCollect()` sets `usedDigests[digest] = true` before dispatch, and the `uuid` _is_ the digest, so a quote cannot be submitted (and thus pushed/bridged) twice.\n2. **Cross-chain receive side** — `_lzReceive()` performs no `usedDigests` check, so it relies solely on the LayerZero endpoint delivering each committed packet at most once.\n\nHowever, `_pushOrder()` does not enforce that invariant itself. `EnumerableSet.add()` is idempotent and its return value is ignored, while `pendingOrders[terms.uuid] = order` blindly overwrites any existing order.\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nMake the uniqueness self-contained. `EnumerableSet.add()` already returns whether the element was newly added, so the guard is free:\n\n```solidity\nif (!pendingOrderIds.add(terms.uuid)) revert OrderAlreadyPending(terms.uuid);\n```\n\n#### Developer Response\n\nFixed in commit [fc99730](https://github.com/paxoslabs/nucleus-boring-vault/commit/fc997304bae03ee0577b0ade4ac000fa26053c42)."
+    },
+    {
+      "number": 5,
+      "title": "Cross-chain dust orders can collect source funds without creating a destination order",
+      "severity": "Informational",
+      "body": "#### Technical Details\n\n`TransitStation._verifyAndCollect` validates that the source-chain net amount is nonzero in offer-asset token units before collecting funds from the caller. The method then transfers the protocol fee, integrator fee, and net amount, and returns `offerAmountNormalized18AfterFees` derived from the nominal net amount collected.\n\nFor cross-chain orders, `_submitOrder` sends the resulting `OrderTerms` to the destination chain after the source funds have already been collected. The destination later calls `_pushOrder`, which converts `terms.offerAmountNormalized18AfterFees` into want-asset token units and reverts with `ZeroAmountDue` if the conversion truncates to zero.\n\nAs a result, an order can pass the source-chain `NetTruncatesToZero` check and still truncate to zero on the destination. For example, if the offer asset has more decimals than the destination want asset, a low-value order may collect a nonzero offer amount on the source while producing zero want-asset units on the destination. In this case the source transaction has already completed, while the destination LayerZero delivery remains retryable and cannot create a pending order without a protocol-side intervention or refund process.\n\n#### Impact\n\nInformational. Small cross-chain orders may collect user funds without creating a fillable destination order. The issue may be limited by backend quote signing and route approval, but it can still cause avoidable stuck orders and manual refund handling.\n\n#### Recommendation\n\nEnforce a source-chain minimum that accounts for the destination want asset's decimals before collecting funds. If implementing and maintaining such data structure is deemed to cumbersome, enforcing a minimum order amount for a given want asset can also suffice.\n\n#### Developer Response\n\nAcknowledged, the backend quote signer may apply minimums effectively and this is not considered an issue as any rounding occurs only in protocol favor and is capped to asset decimals."
+    },
+    {
+      "number": 6,
+      "title": "Removing a peer does not immediately disable established inbound Transit routes",
+      "severity": "Informational",
+      "body": "Removing a destination LayerZero peer is a receive-side quarantine action, not a complete route shutdown. If the source station, source route approval, and backend quote issuance remain active, users can still submit cross-chain orders and have source funds collected before the destination rejects delivery.\n\n#### Technical Details\n\nTransit uses LayerZero's peer authentication model to control which remote chains can deliver cross-chain orders. The `setPeer(eid, peer)` function in `OAppAuthCore` sets the trusted sender address for a given source endpoint, and `setPeer(eid, 0)` removes that trust relationship.\n\nWhen an operator calls `setPeer(eid, 0)` on the destination chain while the source chain remains active, subsequent cross-chain orders encounter this flow:\n\n1. A user submits a valid quote through `submitOrder()` on the source station\n2. `_verifyAndCollect()` immediately transfers the user's offer asset to `protocolFeeRecipient`, `integratorFeeReceiver`, and `offerReceiver`\n3. `_sendOrder()` emits a LayerZero packet containing the `OrderTerms`\n4. The destination endpoint verifies the packet successfully because the path was already established\n5. When execution reaches `lzReceive()` in `OAppAuthReceiver.sol:113-128`, the call to `_getPeerOrRevert(_origin.srcEid)` reverts because the peer mapping now returns zero\n6. The revert prevents `_lzReceive()` from queueing the pending order, leaving the user's funds collected on the source chain without a corresponding order on the destination\n\nThe user has paid into a route that operators intended to disable. Because the LayerZero delivery reverted atomically, the verified payload remains retryable on the endpoint but cannot be consumed until the peer is restored.\n\n#### Impact\n\nInformational.\n\n#### Recommendation\n\nDocument peer removal as a coordinated shutdown step rather than a unilateral route kill switch. Operators should first stop new source-side admissions by disabling backend quote issuance and deapproving the affected route on the source station, or by pausing submissions when a broader stop is required. After in-flight LayerZero packets have delivered or been reconciled, the destination peer can be removed safely.\n\n#### Developer Response\n\nAcknowledged, considering this is assuming misuse we will take the consideration but change nothing in the code."
+    }
+  ]
+}
